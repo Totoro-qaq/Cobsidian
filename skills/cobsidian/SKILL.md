@@ -11,7 +11,7 @@ Maintain the vault as a linked knowledge system. Do not just generate a standalo
 
 ## Mode Selection
 
-If the user explicitly selects a mode, use it. If no mode is selected, infer the smallest useful mode. If the mode is ambiguous and file edits are involved, ask briefly before writing.
+If the user explicitly selects a mode, use it and do not show the full mode menu. If no mode is selected, infer the smallest useful mode and state it before writing. If the mode is ambiguous and file edits are involved, introduce the modes briefly and ask one concise question before writing.
 
 | Mode | Chinese triggers | Use for |
 |---|---|---|
@@ -23,11 +23,41 @@ If the user explicitly selects a mode, use it. If no mode is selected, infer the
 | `capture` | 捕获模式, 日常记录, 先记下来, daily capture | Lightweight daily capture before deeper organization. |
 | `dissection` | 拆解模式, 源码拆解, 框架拆解, skill拆解 | Reverse engineering tools, repos, frameworks, agent systems, prompts, skills, workflows. |
 
+## Interactive Mode Introduction
+
+Do not assume the user has read the README or mode docs. Explain modes in the conversation when:
+
+- the user is new to Cobsidian or asks what Cobsidian can do
+- the user broadly asks to organize/write material into Obsidian without a clear note type
+- the same material could reasonably become different note types
+- the target edit would differ by mode, such as polished learning note vs rough daily capture
+
+Skip the picker when the user already chose a mode, the mode is obvious, or the user asked for direct execution. In that case, state the inferred mode and continue:
+
+```text
+Mode: dissection / 拆解, because this is a framework or workflow teardown.
+```
+
+When the picker is needed, use this compact form:
+
+```text
+Cobsidian can organize this in several modes:
+- learning / 学习: concepts, courses, videos, papers
+- project / 项目: repos, architecture, implementation, operations
+- review / 复盘: failures, incidents, experiments, lessons
+- comparison / 对比: tool/model/database/architecture choices
+- index / 索引: topic maps, learning paths, hub notes
+- capture / 捕获: quick rough notes for later cleanup
+- dissection / 拆解: internals of tools, frameworks, repos, skills, prompts
+
+Choose one mode, or tell me to infer it.
+```
+
 ## Workflow
 
 1. Identify the user's vault path and target topic.
 2. Search existing notes before writing.
-3. Select or infer a mode.
+3. Select, infer, or introduce the mode before writing.
 4. Decide one of:
    - create a new note
    - append to an existing note

@@ -6,6 +6,8 @@ Cobsidian modes help users tell the agent what kind of note they want. The mode 
 
 If the user does not choose a mode, the agent should infer one and report the inferred mode before or after writing.
 
+The user should not need to read this file first. In conversation, the agent should briefly introduce the available modes when the request is broad, ambiguous, or could produce different note shapes. If the mode is obvious, the agent should state the inferred mode and continue.
+
 ## Quick Selection
 
 | If you want to... | Use |
@@ -162,4 +164,3 @@ Typical sections:
 - Related Notes
 
 Dissection mode is different from project mode: project mode documents your own project; dissection mode extracts reusable patterns from something you are studying.
-

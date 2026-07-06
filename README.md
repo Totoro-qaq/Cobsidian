@@ -102,6 +102,8 @@ Cobsidian supports modes so users can tell the agent what kind of note they want
 
 If you do not choose a mode, the agent should infer one and report the choice.
 
+When the request is unclear, the agent should introduce the mode choices in the conversation instead of expecting users to read this README first.
+
 See [Modes](docs/modes.md) for details.
 
 ## CLI Utilities
