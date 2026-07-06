@@ -88,6 +88,24 @@ Use Cobsidian to compare these two project attempts and write a comparison note.
 If a related note already exists, append instead of creating a duplicate.
 ```
 
+## 模式
+
+Cobsidian 支持模式选择，用户可以直接告诉 Agent 想生成哪类笔记。
+
+| 模式 | 适用场景 | 示例提示词 |
+|---|---|---|
+| 学习模式 | 学习概念、课程、论文、视频、技术主题。 | `用 Cobsidian 学习模式整理这段解释。` |
+| 项目模式 | 整理项目、仓库、架构、实现、运维过程。 | `用 Cobsidian 项目模式总结这次源码分析。` |
+| 复盘模式 | 复盘事故、失败实验、技术决策、运行结果。 | `用 Cobsidian 复盘模式整理这次失败原因。` |
+| 对比模式 | 对比工具、架构、模型、库、数据库或方案。 | `用 Cobsidian 对比模式比较这些选型。` |
+| 索引模式 | 建主题地图、学习路线、总览页、导航页。 | `用 Cobsidian 索引模式做一个知识地图。` |
+| 日常捕获模式 | 先快速保存碎片材料，后续再深度整理。 | `用 Cobsidian 日常捕获模式先记下来。` |
+| 拆解模式 | 拆解工具、框架、仓库、skill、提示词系统或源码。 | `用 Cobsidian 拆解模式分析这个 Agent 框架。` |
+
+如果用户不指定模式，Agent 应该自动推断，并在结果里说明选择了哪个模式。
+
+详见 [模式说明](modes.zh-CN.md)。
+
 ## CLI 工具
 
 需要确定性检查时，可以直接运行脚本：

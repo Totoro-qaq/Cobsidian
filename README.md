@@ -86,6 +86,24 @@ Use Cobsidian to compare these two project attempts and write a comparison note.
 If a related note already exists, append instead of creating a duplicate.
 ```
 
+## Modes
+
+Cobsidian supports modes so users can tell the agent what kind of note they want.
+
+| Mode | Use when | Example prompt |
+|---|---|---|
+| Learning | You are studying a concept, course, paper, video, or technical topic. | `Use Cobsidian in learning mode to organize this explanation.` |
+| Project | You are documenting a project, repository, architecture, implementation, or operation. | `Use Cobsidian in project mode to summarize this repo analysis.` |
+| Review | You are reviewing an incident, failed experiment, decision, or result. | `Use Cobsidian in review mode to write a failure review.` |
+| Comparison | You are comparing tools, architectures, models, libraries, databases, or approaches. | `Use Cobsidian in comparison mode to compare these options.` |
+| Index | You need a topic map, learning path, hub note, or navigation page. | `Use Cobsidian in index mode to build a knowledge map.` |
+| Daily Capture | You want to save rough material quickly before deep organization. | `Use Cobsidian in daily capture mode to save this for later.` |
+| Dissection | You are breaking down a tool, framework, repo, skill, prompt system, or source code. | `Use Cobsidian in dissection mode to analyze this agent framework.` |
+
+If you do not choose a mode, the agent should infer one and report the choice.
+
+See [Modes](docs/modes.md) for details.
+
 ## CLI Utilities
 
 Run helper scripts when you need deterministic vault checks:
