@@ -7,6 +7,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable
 
+from cobsidian_config import CobsidianConfig, load_config, resolve_vault_path
+
 
 WIKILINK_RE = re.compile(r"\[\[([^\]]+)\]\]")
 TAG_RE = re.compile(r"(?<!\w)#([A-Za-z0-9_/\-]+)")
@@ -77,23 +79,32 @@ def scan_vault(vault_path: Path) -> list[NoteInfo]:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Scan an Obsidian vault and summarize Markdown notes.")
-    parser.add_argument("vault", type=Path, help="Path to the Obsidian vault or note folder.")
+    parser.add_argument("vault", nargs="?", type=Path, help="Path to the Obsidian vault or note folder.")
+    parser.add_argument("--config", type=Path, help="Path to cobsidian.config.yml.")
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON.")
     return parser
 
 
-def main() -> int:
-    args = build_parser().parse_args()
-    vault_path = args.vault.expanduser().resolve()
-    if not vault_path.exists() or not vault_path.is_dir():
-        raise SystemExit(f"Vault path does not exist or is not a directory: {vault_path}")
-
-    notes = scan_vault(vault_path)
-    payload = {
+def build_payload(vault_path: Path, notes: list[NoteInfo], config: CobsidianConfig) -> dict[str, object]:
+    payload: dict[str, object] = {
         "vault": str(vault_path),
         "note_count": len(notes),
         "notes": [asdict(note) for note in notes],
     }
+    if config.config_path:
+        payload["config"] = config.public_summary()
+    return payload
+
+
+def main() -> int:
+    args = build_parser().parse_args()
+    config = load_config(args.config)
+    vault_path = resolve_vault_path(args.vault, config)
+    if not vault_path.exists() or not vault_path.is_dir():
+        raise SystemExit(f"Vault path does not exist or is not a directory: {vault_path}")
+
+    notes = scan_vault(vault_path)
+    payload = build_payload(vault_path, notes, config)
 
     if args.json:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
@@ -107,4 +118,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

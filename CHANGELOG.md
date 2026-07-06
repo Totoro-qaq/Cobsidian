@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased
+## v0.2.0
 
 - Add installation guide, prompt examples, and example config conventions.
+- Add config-aware helper scripts and dry-run JSON planning.
 
 ## v0.1.0
 

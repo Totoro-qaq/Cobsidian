@@ -94,6 +94,46 @@ Use Cobsidian to compare these two project attempts and write a comparison note.
 If a related note already exists, append instead of creating a duplicate.
 ```
 
+## Before / After
+
+Given existing notes:
+
+```text
+examples/demo-vault/
+├── AI Conversations.md
+├── Agent Workflows.md
+└── Vector Search.md
+```
+
+Run a config-aware dry run:
+
+```bash
+python skills/cobsidian/scripts/dry_run.py examples/demo-vault \
+  --topic "AI Conversations" \
+  --mode learning \
+  --text "AI chats should become linked notes with duplicate checks, backlinks, and agent workflows." \
+  --json
+```
+
+Cobsidian reports an excerpt like this, without writing files:
+
+```json
+{
+  "dry_run": true,
+  "decision": {
+    "action": "append",
+    "target_note": "AI Conversations.md"
+  },
+  "suggested_backlinks": [
+    {
+      "title": "Agent Workflows",
+      "path": "Agent Workflows.md"
+    }
+  ],
+  "writes": []
+}
+```
+
 ## Modes
 
 Cobsidian supports modes so users can tell the agent what kind of note they want.
@@ -123,7 +163,10 @@ python skills/cobsidian/scripts/scan_vault.py /path/to/vault --json
 python skills/cobsidian/scripts/find_duplicates.py /path/to/vault
 python skills/cobsidian/scripts/suggest_backlinks.py /path/to/vault --file draft.md
 python skills/cobsidian/scripts/validate_notes.py /path/to/vault
+python skills/cobsidian/scripts/dry_run.py /path/to/vault --topic "RAG" --text "draft text" --json
 ```
+
+Each script also accepts `--config cobsidian.config.yml` when the config contains `vault.path`.
 
 ### `scan_vault.py`
 
@@ -157,6 +200,14 @@ Reports missing wiki-link targets, duplicate titles, and empty notes.
 python skills/cobsidian/scripts/validate_notes.py examples --strict
 ```
 
+### `dry_run.py`
+
+Plans a write without modifying files. It reports create/append decision, duplicate risks, backlink suggestions, validation intent, and an empty `writes` list.
+
+```bash
+python skills/cobsidian/scripts/dry_run.py examples/demo-vault --topic "AI Conversations" --text "agent workflow notes" --json
+```
+
 ## Repository Layout
 
 ```text
@@ -170,6 +221,7 @@ Cobsidian/
 │   │   └── note-types.md
 │   └── scripts/
 ├── examples/
+│   └── demo-vault/
 ├── docs/
 ├── .github/workflows/
 ├── cobsidian.config.example.yml
@@ -195,12 +247,11 @@ When Cobsidian is used by an agent, the expected behavior is:
 
 `cobsidian.config.example.yml` documents optional vault, naming, safety, linking, and validation conventions for agents or adapters. Copy it to `cobsidian.config.yml` if you want a reusable local convention.
 
-The current helper scripts do not automatically read this file yet.
+The helper scripts read it with `--config`.
 
 ## Roadmap
 
 - Better duplicate detection with configurable thresholds.
-- Script support for `cobsidian.config.yml`.
 - Frontmatter support for vaults that use YAML metadata.
 - Optional note templates.
 - Configurable naming rules.

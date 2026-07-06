@@ -77,7 +77,14 @@ Windows PowerShell:
 Copy-Item .\cobsidian.config.example.yml .\cobsidian.config.yml
 ```
 
-The config file is currently an agent/adapter convention. The helper scripts do not automatically read it yet, so include it in your prompt:
+The helper scripts can read this file with `--config`:
+
+```bash
+python skills/cobsidian/scripts/scan_vault.py --config cobsidian.config.yml --json
+python skills/cobsidian/scripts/dry_run.py --config cobsidian.config.yml --topic "RAG" --text "RAG and vector search notes" --json
+```
+
+Also include it in your agent prompt:
 
 ```text
 Use Cobsidian and follow cobsidian.config.yml for vault path, naming, safety, and validation rules.
@@ -91,6 +98,7 @@ Run the scripts against the bundled examples:
 python skills/cobsidian/scripts/scan_vault.py examples --json
 python skills/cobsidian/scripts/find_duplicates.py examples
 python skills/cobsidian/scripts/validate_notes.py examples --strict
+python -m unittest discover tests
 ```
 
 Expected result:
@@ -98,6 +106,7 @@ Expected result:
 - `scan_vault.py` prints note metadata.
 - `find_duplicates.py` reports no duplicate or highly similar titles.
 - `validate_notes.py --strict` reports no basic note hygiene issues.
+- `unittest` reports all tests passing.
 
 ## Update
 

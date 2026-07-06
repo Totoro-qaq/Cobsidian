@@ -96,6 +96,46 @@ Use Cobsidian to compare these two project attempts and write a comparison note.
 If a related note already exists, append instead of creating a duplicate.
 ```
 
+## Before / After
+
+已有示例笔记：
+
+```text
+examples/demo-vault/
+├── AI Conversations.md
+├── Agent Workflows.md
+└── Vector Search.md
+```
+
+运行一次不会写文件的 dry run：
+
+```bash
+python skills/cobsidian/scripts/dry_run.py examples/demo-vault \
+  --topic "AI Conversations" \
+  --mode learning \
+  --text "AI chats should become linked notes with duplicate checks, backlinks, and agent workflows." \
+  --json
+```
+
+Cobsidian 会报告类似下面的片段，并且不会写文件：
+
+```json
+{
+  "dry_run": true,
+  "decision": {
+    "action": "append",
+    "target_note": "AI Conversations.md"
+  },
+  "suggested_backlinks": [
+    {
+      "title": "Agent Workflows",
+      "path": "Agent Workflows.md"
+    }
+  ],
+  "writes": []
+}
+```
+
 ## 模式
 
 Cobsidian 支持模式选择，用户可以直接告诉 Agent 想生成哪类笔记。
@@ -125,7 +165,10 @@ python skills/cobsidian/scripts/scan_vault.py /path/to/vault --json
 python skills/cobsidian/scripts/find_duplicates.py /path/to/vault
 python skills/cobsidian/scripts/suggest_backlinks.py /path/to/vault --file draft.md
 python skills/cobsidian/scripts/validate_notes.py /path/to/vault
+python skills/cobsidian/scripts/dry_run.py /path/to/vault --topic "RAG" --text "draft text" --json
 ```
+
+当配置里写了 `vault.path` 时，这些脚本也支持 `--config cobsidian.config.yml`。
 
 ### `scan_vault.py`
 
@@ -159,6 +202,14 @@ python skills/cobsidian/scripts/suggest_backlinks.py examples --text "vector sea
 python skills/cobsidian/scripts/validate_notes.py examples --strict
 ```
 
+### `dry_run.py`
+
+只规划，不写文件。它会报告新建/追加判断、重复风险、反链建议、是否会校验，以及空的 `writes` 列表。
+
+```bash
+python skills/cobsidian/scripts/dry_run.py examples/demo-vault --topic "AI Conversations" --text "agent workflow notes" --json
+```
+
 ## 仓库结构
 
 ```text
@@ -172,6 +223,7 @@ Cobsidian/
 │   │   └── note-types.md
 │   └── scripts/
 ├── examples/
+│   └── demo-vault/
 ├── docs/
 ├── .github/workflows/
 ├── cobsidian.config.example.yml
@@ -197,12 +249,11 @@ Agent 使用 Cobsidian 时，应遵循：
 
 `cobsidian.config.example.yml` 提供 vault、命名、安全、链接和校验规则的示例约定。需要固定个人规则时，可以复制为 `cobsidian.config.yml`。
 
-当前辅助脚本还不会自动读取这个文件，它主要给 Agent 或后续适配器使用。
+辅助脚本可以通过 `--config` 读取这个文件。
 
 ## 路线图
 
 - 更好的重复检测和可配置阈值。
-- 支持脚本读取 `cobsidian.config.yml`。
 - 支持使用 YAML frontmatter 的 vault。
 - 可选笔记模板。
 - 可配置命名规则。
