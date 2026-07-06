@@ -82,6 +82,9 @@ Choose one mode, or tell me to infer it.
 - `scripts/find_duplicates.py`: detect duplicate or similar note titles.
 - `scripts/suggest_backlinks.py`: suggest related notes for a draft or target note.
 - `scripts/validate_notes.py`: report missing wiki links and basic hygiene issues.
+- `scripts/dry_run.py`: plan a write without changing files; reports create/append decision, duplicate risks, backlink suggestions, validation intent, and empty writes.
+
+Use `--config cobsidian.config.yml` when the user has a project config with `vault.path`, thresholds, backlink limits, and validation preferences.
 
 Read `references/note-types.md` when choosing the note shape.
 Read `references/backlink-policy.md` when adding links.

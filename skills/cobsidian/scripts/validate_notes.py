@@ -5,6 +5,8 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
+from cobsidian_config import load_config, resolve_vault_path
+
 
 WIKILINK_RE = re.compile(r"\[\[([^\]]+)\]\]")
 
@@ -45,11 +47,14 @@ def extract_wikilinks(text: str) -> list[str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Validate basic Obsidian Markdown note hygiene.")
-    parser.add_argument("vault", type=Path)
+    parser.add_argument("vault", nargs="?", type=Path)
+    parser.add_argument("--config", type=Path, help="Path to cobsidian.config.yml.")
     parser.add_argument("--strict", action="store_true", help="Exit non-zero when warnings are found.")
     args = parser.parse_args()
 
-    vault_path = args.vault.expanduser().resolve()
+    config = load_config(args.config)
+    vault_path = resolve_vault_path(args.vault, config)
+    strict = args.strict or config.validation_strict
     if not vault_path.exists() or not vault_path.is_dir():
         raise SystemExit(f"Vault path does not exist or is not a directory: {vault_path}")
 
@@ -88,9 +93,8 @@ def main() -> int:
     else:
         print("No basic note hygiene issues found.")
 
-    return 1 if warnings and args.strict else 0
+    return 1 if warnings and strict else 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

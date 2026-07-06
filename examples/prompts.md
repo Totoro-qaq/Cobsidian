@@ -131,3 +131,17 @@ Use Cobsidian and follow cobsidian.config.yml.
 Organize the following material into the configured vault.
 Respect naming, directory, safety, linking, and validation rules from the config.
 ```
+
+## Config-Aware Dry Run
+
+```text
+Use Cobsidian and follow cobsidian.config.yml.
+Do not write files yet.
+
+Run a dry run and return JSON with:
+- create/append decision
+- duplicate risks
+- suggested backlinks
+- validation intent
+- writes as an empty list
+```

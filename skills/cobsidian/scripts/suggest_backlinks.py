@@ -5,6 +5,8 @@ import re
 from collections import Counter
 from pathlib import Path
 
+from cobsidian_config import load_config, resolve_vault_path
+
 
 TOKEN_RE = re.compile(r"[A-Za-z0-9_+\-.#]{2,}|[\u4e00-\u9fff]{2,}")
 STOPWORDS = {
@@ -59,16 +61,19 @@ def score_note(query_tokens: Counter[str], note_tokens: Counter[str]) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Suggest related Obsidian notes for a draft or note.")
-    parser.add_argument("vault", type=Path)
+    parser.add_argument("vault", nargs="?", type=Path)
+    parser.add_argument("--config", type=Path, help="Path to cobsidian.config.yml.")
     parser.add_argument("--file", type=Path, help="Draft or note file to compare against the vault.")
     parser.add_argument("--text", type=str, help="Raw text to compare against the vault.")
-    parser.add_argument("--limit", type=int, default=8)
+    parser.add_argument("--limit", type=int, default=None)
     args = parser.parse_args()
 
     if not args.file and not args.text:
         raise SystemExit("Provide --file or --text.")
 
-    vault_path = args.vault.expanduser().resolve()
+    config = load_config(args.config)
+    vault_path = resolve_vault_path(args.vault, config)
+    limit = args.limit if args.limit is not None else config.max_suggested_backlinks
     if not vault_path.exists() or not vault_path.is_dir():
         raise SystemExit(f"Vault path does not exist or is not a directory: {vault_path}")
 
@@ -89,7 +94,7 @@ def main() -> int:
         if score > 0:
             suggestions.append((score, title, path.relative_to(vault_path).as_posix()))
 
-    for score, title, relative_path in sorted(suggestions, reverse=True)[: args.limit]:
+    for score, title, relative_path in sorted(suggestions, reverse=True)[:limit]:
         print(f"- [[{title}]] score={score} path={relative_path}")
     if not suggestions:
         print("No backlink suggestions found.")
@@ -98,4 +103,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

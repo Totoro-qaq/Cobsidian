@@ -1,7 +1,7 @@
 # Cobsidian example config.
 # Copy to cobsidian.config.yml and adjust for your vault.
-# Current helper scripts do not load this file automatically yet.
-# Treat it as a convention for agents and future adapters.
+# Helper scripts can read this file with --config.
+# Treat it as a convention for agents and adapters.
 
 vault:
   # Absolute path is safest. Relative paths are resolved from the current working directory.

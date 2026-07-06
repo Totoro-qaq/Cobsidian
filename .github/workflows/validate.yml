@@ -16,6 +16,8 @@ jobs:
           python-version: "3.11"
       - name: Check Python syntax
         run: python -m compileall skills/cobsidian/scripts
+      - name: Run unit tests
+        run: python -m unittest discover tests
       - name: Validate examples
         run: |
           python skills/cobsidian/scripts/scan_vault.py examples --json

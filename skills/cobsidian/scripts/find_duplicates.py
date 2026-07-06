@@ -6,6 +6,8 @@ from collections import defaultdict
 from difflib import SequenceMatcher
 from pathlib import Path
 
+from cobsidian_config import load_config, resolve_vault_path
+
 
 def iter_markdown_files(vault_path: Path) -> list[Path]:
     ignored_dirs = {".obsidian", ".git", "__pycache__", ".trash"}
@@ -39,11 +41,14 @@ def normalize_title(title: str) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Find duplicate or similar Obsidian note titles.")
-    parser.add_argument("vault", type=Path)
-    parser.add_argument("--threshold", type=float, default=0.86, help="Similarity threshold from 0 to 1.")
+    parser.add_argument("vault", nargs="?", type=Path)
+    parser.add_argument("--config", type=Path, help="Path to cobsidian.config.yml.")
+    parser.add_argument("--threshold", type=float, default=None, help="Similarity threshold from 0 to 1.")
     args = parser.parse_args()
 
-    vault_path = args.vault.expanduser().resolve()
+    config = load_config(args.config)
+    vault_path = resolve_vault_path(args.vault, config)
+    threshold = args.threshold if args.threshold is not None else config.similar_title_threshold
     if not vault_path.exists() or not vault_path.is_dir():
         raise SystemExit(f"Vault path does not exist or is not a directory: {vault_path}")
 
@@ -72,7 +77,7 @@ def main() -> int:
             if not left[2] or not right[2] or left[2] == right[2]:
                 continue
             score = SequenceMatcher(None, left[2], right[2]).ratio()
-            if score >= args.threshold:
+            if score >= threshold:
                 found = True
                 print(f"- {score:.2f}: {left[1]} :: {left[0]} <-> {right[1]} :: {right[0]}")
 
@@ -83,4 +88,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
