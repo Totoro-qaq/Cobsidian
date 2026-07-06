@@ -1,0 +1,4 @@
+display_name: Cobsidian
+short_description: Maintain Obsidian notes with duplicate checks, wiki links, and backlink suggestions.
+default_prompt: Use Cobsidian to organize this material into my Obsidian vault. Check for existing notes, decide whether to create or append, add useful wiki links, and report validation results.
+
