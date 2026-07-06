@@ -2,7 +2,7 @@
 
 English | [简体中文](docs/README.zh-CN.md)
 
-Cobsidian is an agent workflow skill for maintaining an Obsidian knowledge base.
+Cobsidian is an agent-agnostic workflow skill for maintaining an Obsidian knowledge base.
 
 It helps AI agents turn conversations, study material, logs, documents, and project analysis into durable Markdown notes with duplicate checks, wiki links, backlink suggestions, and basic vault validation.
 
@@ -36,11 +36,13 @@ input material
 
 Early MVP.
 
-The first version is a Codex-compatible agent skill plus small Python utilities. It is not an Obsidian plugin, cloud sync service, or vector database.
+The first version ships as a Codex-compatible skill plus small Python utilities, but the workflow is intentionally portable to Hermes, Claude Code, Cursor, and other coding agents that can read project instructions and run local commands.
+
+It is not an Obsidian plugin, cloud sync service, or vector database.
 
 ## Install
 
-Copy the skill folder into your agent's skill directory:
+### Codex Skill
 
 ```bash
 cp -r skills/cobsidian ~/.codex/skills/cobsidian
@@ -51,6 +53,16 @@ On Windows PowerShell:
 ```powershell
 Copy-Item -Recurse -Force .\skills\cobsidian "$env:USERPROFILE\.codex\skills\cobsidian"
 ```
+
+### Other Agents
+
+For Hermes, Claude Code, Cursor, and other agents, use the same core workflow:
+
+1. Point the agent to `skills/cobsidian/SKILL.md`.
+2. Allow it to call the helper scripts in `skills/cobsidian/scripts/`.
+3. Ask it to report create/append decisions, duplicate checks, backlink changes, and validation results.
+
+See [Agent Compatibility](docs/agent-compatibility.md).
 
 ## Agent Usage
 
@@ -156,6 +168,7 @@ When Cobsidian is used by an agent, the expected behavior is:
 - Optional note templates.
 - Configurable naming rules.
 - Safer dry-run mode for proposed edits.
+- Thin adapters for Hermes, Claude Code, and Cursor.
 - Optional Obsidian plugin integration after the workflow stabilizes.
 
 ## Contributing
