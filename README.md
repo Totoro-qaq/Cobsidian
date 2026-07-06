@@ -2,6 +2,10 @@
 
 English | [简体中文](docs/README.zh-CN.md)
 
+[![validate](https://github.com/Totoro-qaq/Cobsidian/actions/workflows/validate.yml/badge.svg)](https://github.com/Totoro-qaq/Cobsidian/actions/workflows/validate.yml)
+[![codeql](https://github.com/Totoro-qaq/Cobsidian/actions/workflows/codeql.yml/badge.svg)](https://github.com/Totoro-qaq/Cobsidian/actions/workflows/codeql.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Cobsidian is an agent-agnostic workflow skill for maintaining an Obsidian knowledge base.
 
 It helps AI agents turn conversations, study material, logs, documents, and project analysis into durable Markdown notes with duplicate checks, wiki links, backlink suggestions, and basic vault validation.

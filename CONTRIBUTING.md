@@ -36,6 +36,8 @@ For GitHub repository settings:
 - protect `main`
 - require pull requests before merging
 - require CI checks to pass
+- enable CodeQL default scanning for Python
+- enable Dependabot alerts and GitHub Actions version updates
 - require linear history if you prefer clean history
 - disallow force pushes to `main`
 - disallow deletion of `main`
@@ -62,4 +64,3 @@ fix: handle empty markdown files
 docs: clarify vault write workflow
 chore: add CI validation
 ```
-

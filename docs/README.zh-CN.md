@@ -2,6 +2,10 @@
 
 [English](../README.md) | 简体中文
 
+[![validate](https://github.com/Totoro-qaq/Cobsidian/actions/workflows/validate.yml/badge.svg)](https://github.com/Totoro-qaq/Cobsidian/actions/workflows/validate.yml)
+[![codeql](https://github.com/Totoro-qaq/Cobsidian/actions/workflows/codeql.yml/badge.svg)](https://github.com/Totoro-qaq/Cobsidian/actions/workflows/codeql.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE)
+
 Cobsidian 是一个 agent-agnostic 的 Obsidian 知识库维护工作流 Skill。
 
 它可以帮助 Agent 把对话、学习材料、日志、文档和项目分析整理成长期可维护的 Markdown 笔记，并在写入前检查重复内容、补充 `[[双链]]`、建议反链、做基础知识库校验。
