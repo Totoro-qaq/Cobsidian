@@ -46,6 +46,8 @@ It is not an Obsidian plugin, cloud sync service, or vector database.
 
 ## Install
 
+See [INSTALL.md](INSTALL.md) for full setup, update, and uninstall instructions.
+
 ### Codex Skill
 
 ```bash
@@ -69,6 +71,8 @@ For Hermes, Claude Code, Cursor, and other agents, use the same core workflow:
 See [Agent Compatibility](docs/agent-compatibility.md).
 
 ## Agent Usage
+
+See [Prompt Examples](examples/prompts.md) for copy-ready prompts.
 
 Ask your agent to use Cobsidian when you want to write into an Obsidian vault:
 
@@ -168,6 +172,8 @@ Cobsidian/
 ├── examples/
 ├── docs/
 ├── .github/workflows/
+├── cobsidian.config.example.yml
+├── INSTALL.md
 ├── CONTRIBUTING.md
 ├── LICENSE
 └── README.md
@@ -185,9 +191,16 @@ When Cobsidian is used by an agent, the expected behavior is:
 6. Run validation or report why validation was skipped.
 7. Return a short change summary.
 
+## Optional Config
+
+`cobsidian.config.example.yml` documents optional vault, naming, safety, linking, and validation conventions for agents or adapters. Copy it to `cobsidian.config.yml` if you want a reusable local convention.
+
+The current helper scripts do not automatically read this file yet.
+
 ## Roadmap
 
 - Better duplicate detection with configurable thresholds.
+- Script support for `cobsidian.config.yml`.
 - Frontmatter support for vaults that use YAML metadata.
 - Optional note templates.
 - Configurable naming rules.

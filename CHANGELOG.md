@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add installation guide, prompt examples, and example config conventions.
+
 ## v0.1.0
 
 Initial public MVP:
