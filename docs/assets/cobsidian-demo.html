@@ -453,10 +453,16 @@
   <main class="stage" aria-label="Cobsidian Demo Preview">
     <header class="topbar">
       <div class="brand">
-        <div class="linked-note-mark" aria-hidden="true"><span>[[ ]]</span></div>
+        <div class="linked-note-mark" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="12" height="15" rx="2.5"/>
+            <rect x="10" y="4" width="12" height="15" rx="2.5"/>
+            <path d="M8 13 L16 11" stroke-dasharray="2 2"/>
+          </svg>
+        </div>
         <div>
           <h1>Cobsidian Demo Preview</h1>
-          <p class="tagline">A recording-safe mock flow: prompt, dry-run plan, linked Obsidian note.</p>
+          <p class="tagline">From AI conversation to linked Obsidian vault — plan first, write safely.</p>
         </div>
       </div>
       <div class="timer">12s loop asset</div>
@@ -473,16 +479,16 @@
           <div class="panel-title">agent terminal</div>
         </div>
         <div class="terminal">
-          <div class="line" style="--delay: 0.3s"><span class="prompt">$</span> Use Cobsidian to organize this material into my Obsidian vault.<span class="cursor"></span></div>
-          <div class="line muted" style="--delay: 1.4s">vault: ./examples/demo-vault</div>
-          <div class="line muted" style="--delay: 2.0s">mode: learning | policy: dry-run first</div>
-          <div class="line" style="--delay: 2.7s">scan: 3 notes, 2 wiki links, 0 missing targets</div>
-          <div class="line" style="--delay: 3.4s">decision: append to "AI Conversations.md"</div>
+          <div class="line" style="--delay: 0.3s"><span class="prompt">$</span> Use Cobsidian to organize this material — 把 RAG 知识点整理一下<span class="cursor"></span></div>
+          <div class="line muted" style="--delay: 1.4s">vault: ~/obsidian-notes · config loaded</div>
+          <div class="line muted" style="--delay: 2.0s">mode: learning | dry-run first</div>
+          <div class="line" style="--delay: 2.7s">scan: 8 notes, 5 wiki links · found existing "RAG.md"</div>
+          <div class="line" style="--delay: 3.4s">→ append to "RAG.md" — topic overlap 0.91</div>
           <pre class="json">{
   "dry_run": true,
   "status": "dry-run complete",
   "decision": "append",
-  "target_note": "AI Conversations.md",
+  "target_note": "RAG.md",
   "writes": [],
   "suggested_backlinks": [
     "Agent Workflows",
@@ -499,25 +505,24 @@
         </div>
         <div class="note-shell">
           <aside class="sidebar" aria-label="Mock vault sidebar">
-            <div class="folder">demo-vault</div>
-            <div class="note-tab">AI Conversations.md</div>
+            <div class="folder">obsidian-notes</div>
+            <div class="note-tab">RAG.md</div>
             <div class="note-tab ghost">Agent Workflows.md</div>
             <div class="note-tab ghost">Vector Search.md</div>
           </aside>
           <section class="note">
-            <h2 class="note-row" style="--delay: 4.9s">AI Conversations</h2>
+            <h2 class="note-row" style="--delay: 4.9s">RAG Pipeline</h2>
             <div class="pill-row note-row" style="--delay: 5.5s">
               <span class="pill">#learning</span>
-              <span class="pill">#agent-workflow</span>
-              <span class="pill">dry-run</span>
+              <span class="pill">#retrieval</span>
             </div>
             <p class="note-row" style="--delay: 6.1s">
-              Cobsidian turns useful AI conversations into durable notes instead of leaving them in chat history.
+              Retrieval-Augmented Generation 让 LLM 基于检索到的领域知识回答，而非纯靠参数记忆。
             </p>
             <ul>
-              <li class="note-row" style="--delay: 6.7s">Check existing notes before writing to reduce duplicates.</li>
-              <li class="note-row" style="--delay: 7.2s">Prefer append, merge, or split decisions before creating new files.</li>
-              <li class="note-row" style="--delay: 7.7s">Add durable links like <span class="wiki">[[Agent Workflows]]</span> and <span class="wiki">[[Vector Search]]</span>.</li>
+              <li class="note-row" style="--delay: 6.7s">Chunk → Embed → 存入 vector DB，建立检索索引。</li>
+              <li class="note-row" style="--delay: 7.2s">Query → retrieve top-k → 喂给 LLM 生成最终回答。</li>
+              <li class="note-row" style="--delay: 7.7s">See <span class="wiki">[[Agent Workflows]]</span> and <span class="wiki">[[Vector Search]]</span>.</li>
             </ul>
           </section>
         </div>
@@ -527,15 +532,15 @@
     <section class="link-panel" id="link-panel" aria-label="Backlink suggestions">
       <div class="link-card">
         <div class="link-label">decision</div>
-        <div class="link-value">append existing note, no duplicate file</div>
+        <div class="link-value">append to existing note</div>
       </div>
       <div class="link-card">
-        <div class="link-label">wiki link</div>
-        <div class="link-value">[[Agent Workflows]]</div>
+        <div class="link-label">backlinks</div>
+        <div class="link-value">[[Agent Workflows]] +1 suggested</div>
       </div>
       <div class="link-card">
         <div class="link-label">validation</div>
-        <div class="link-value">0 missing links, writes still empty</div>
+        <div class="link-value">0 issues, dry-run clean</div>
       </div>
     </section>
   </main>

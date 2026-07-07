@@ -41,20 +41,20 @@
     <style>
       .title {
         fill: #1f2937;
-        font-family: Aptos Display, Segoe UI Variable Display, Segoe UI, sans-serif;
+        font-family: "Aptos Display", "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", "Helvetica Neue", sans-serif;
         font-size: 88px;
         font-weight: 850;
         letter-spacing: 1px;
       }
       .subtitle {
         fill: #334155;
-        font-family: Aptos, Segoe UI Variable, Segoe UI, sans-serif;
+        font-family: "Aptos", "SF Pro", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
         font-size: 26px;
         font-weight: 500;
       }
       .chip-text {
         fill: #1f2937;
-        font-family: Aptos, Segoe UI Variable, Segoe UI, sans-serif;
+        font-family: "Aptos", "SF Pro", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
         font-size: 17px;
         font-weight: 700;
       }
@@ -91,34 +91,38 @@
   <rect width="1200" height="360" rx="34" fill="url(#orbA)"/>
   <rect width="1200" height="360" rx="34" fill="url(#orbB)"/>
   <rect width="1200" height="360" rx="34" fill="url(#grid)" opacity="0.95"/>
-  <path d="M150 118 C235 70 314 88 395 124 S563 166 652 112 841 46 1015 106" class="circuit-line"/>
-  <path d="M770 286 C850 270 930 274 990 300 S1080 324 1134 282" class="circuit-line"/>
-  <circle cx="151" cy="118" r="5" class="node"/>
-  <circle cx="395" cy="124" r="5" class="node"/>
-  <circle cx="652" cy="112" r="5" class="node"/>
-  <circle cx="1015" cy="106" r="5" class="node"/>
-  <circle cx="970" cy="245" r="5" class="node"/>
-  <circle cx="1134" cy="236" r="5" class="node"/>
+  <path d="M100 38 C240 18 400 42 560 24 S760 14 920 34 1100 20" class="circuit-line"/>
+  <path d="M770 316 C850 302 930 306 990 322 S1080 334 1140 310" class="circuit-line"/>
+  <circle cx="100" cy="38" r="5" class="node"/>
+  <circle cx="560" cy="24" r="5" class="node"/>
+  <circle cx="920" cy="34" r="5" class="node"/>
+  <circle cx="1100" cy="20" r="5" class="node"/>
+  <circle cx="990" cy="322" r="5" class="node"/>
+  <circle cx="1140" cy="310" r="5" class="node"/>
   <g filter="url(#soft-shadow)">
     <rect x="78" y="58" width="1044" height="244" rx="28" class="glass-panel"/>
     <rect x="100" y="82" width="1000" height="196" rx="22" fill="#ffffff" fill-opacity="0.52" stroke="#cbd5e1" stroke-opacity="0.58"/>
   </g>
   <g transform="translate(132 115)">
     <rect x="0" y="-26" width="154" height="34" rx="17" fill="#ffffff" fill-opacity="0.58" stroke="#c4b5fd" stroke-opacity="0.56"/>
-    <text x="77" y="-9" class="micro" text-anchor="middle" dominant-baseline="middle">VAULT SAFE</text>
+    <text x="77" y="-9" class="micro" text-anchor="middle" dominant-baseline="middle">LOCAL FIRST</text>
     <text x="0" y="80" class="title">Cobsidian</text>
     <text x="4" y="126" class="subtitle">Turn AI conversations into linked Obsidian knowledge, safely.</text>
   </g>
   <g transform="translate(770 92)">
     <rect x="0" y="0" width="286" height="142" rx="22" fill="#ffffff" fill-opacity="0.62" stroke="#cbd5e1" stroke-opacity="0.78"/>
-    <g class="linked-note-mark" transform="translate(34 27)">
-      <rect x="0" y="26" width="74" height="54" rx="13" fill="#ffffff" stroke="#c4b5fd" stroke-width="2"/>
-      <rect x="120" y="0" width="74" height="54" rx="13" fill="#ffffff" stroke="#99f6e4" stroke-width="2"/>
-      <path d="M76 52 C92 52 100 28 118 28" fill="none" stroke="url(#accent)" stroke-width="5" stroke-linecap="round"/>
-      <text x="37" y="60" class="micro" text-anchor="middle">[[ ]]</text>
-      <text x="157" y="34" class="micro" text-anchor="middle">[[ ]]</text>
+    <g class="linked-note-mark" transform="translate(16 10)">
+      <path d="M68 24 C106 22 130 14 168 14" fill="none" stroke="url(#accent)" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+      <path d="M35 40 C40 50 74 54 96 58" fill="none" stroke="url(#accent)" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+      <path d="M207 32 C207 46 164 54 148 58" fill="none" stroke="url(#accent)" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+      <rect x="2" y="8" width="66" height="32" rx="10" fill="#ffffff" stroke="#c4b5fd" stroke-width="1.5"/>
+      <text x="35" y="28" class="micro" text-anchor="middle">RAG</text>
+      <rect x="166" y="0" width="82" height="32" rx="10" fill="#ffffff" stroke="#99f6e4" stroke-width="1.5"/>
+      <text x="207" y="20" class="micro" text-anchor="middle">Agents</text>
+      <rect x="66" y="56" width="110" height="32" rx="10" fill="#ffffff" stroke="#a78bfa" stroke-width="1.5"/>
+      <text x="121" y="76" class="micro" text-anchor="middle">Vector DB</text>
     </g>
-    <text x="143" y="116" class="micro" text-anchor="middle">dry-run / backlinks / vault lint</text>
+    <text x="143" y="126" class="micro" text-anchor="middle">7 modes · auto-link · dry-run</text>
   </g>
   <g transform="translate(132 246)">
     <rect x="0" y="0" width="132" height="38" rx="19" fill="#ffffff" fill-opacity="0.66" stroke="#c4b5fd" stroke-opacity="0.66"/>
