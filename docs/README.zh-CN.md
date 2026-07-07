@@ -6,25 +6,109 @@
 [![codeql](https://github.com/Totoro-qaq/Cobsidian/actions/workflows/codeql.yml/badge.svg)](https://github.com/Totoro-qaq/Cobsidian/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE)
 
-Cobsidian 是一个 agent-agnostic 的 Obsidian 知识库维护工作流 Skill。
+```text
+   ______      _         _     _ _
+  / _____)    | |       (_)   | (_)
+ | /      ___ | |__  ___ _  __| |_  __ _ _ __
+ | |     / _ \| '_ \/ __| |/ _` | |/ _` | '_ \
+ | \____| (_) | |_) \__ \ | (_| | | (_| | | | |
+  \_____)\___/|_.__/|___/_|\__,_|_|\__,_|_| |_|
+```
 
-它可以帮助 Agent 把对话、学习材料、日志、文档和项目分析整理成长期可维护的 Markdown 笔记，并在写入前检查重复内容、补充 `[[双链]]`、建议反链、做基础知识库校验。
+> 安全地把 AI 对话整理成带双链的 Obsidian 知识库。
 
-它的目标不是“生成一篇 Markdown”，而是维护一个可持续增长的 Obsidian 知识系统。
+Cobsidian 是一个 agent-agnostic 的 Obsidian / Markdown 知识库维护工作流 Skill。它让 Agent 把对话、学习材料、日志、文档和项目分析整理成长期可维护的笔记，并在写入前检查重复内容、补充 `[[双链]]`、建议反链、做基础校验。
+
+[快速开始](#快速开始) · [MCP Server](mcp-server.zh-CN.md) · [Prompt Examples](../examples/prompts.md) · [Agent 兼容性](agent-compatibility.zh-CN.md)
+
+## Cobsidian 做什么
+
+- 把 AI 对话里有复用价值的内容整理成长期可维护的 Markdown 笔记。
+- 写入前先扫描已有笔记，优先追加或合并，减少重复笔记。
+- 通过 dry-run、反链建议和校验结果，让 Agent 写入变得可审阅。
+
+## 快速开始
+
+```bash
+git clone https://github.com/Totoro-qaq/Cobsidian.git
+cd Cobsidian
+python skills/cobsidian/scripts/dry_run.py examples/demo-vault --topic "AI Conversations" --text "agent workflow notes" --json
+```
+
+然后让 Agent 读取 `skills/cobsidian/SKILL.md`，并提供 vault 路径或 `cobsidian.config.yml`。
+
+```text
+Use Cobsidian to organize this material into my Obsidian vault.
+Vault: /absolute/path/to/obsidian-vault
+Run a dry run first, check duplicates, suggest backlinks, and wait for confirmation before writing.
+```
+
+## 前后对比
+
+```mermaid
+flowchart LR
+    A["AI 对话、日志、项目分析"] --> B["Cobsidian dry run"]
+    B --> C["扫描已有 vault 笔记"]
+    C --> D{"新建、追加、拆分？"}
+    D --> E["结构清晰的 Markdown 笔记"]
+    E --> F["双链和相关笔记"]
+    F --> G["经过校验的 Obsidian vault"]
+```
+
+| 使用前 | 使用后 |
+|---|---|
+| 有价值内容留在聊天记录里 | 进入你的 Obsidian vault |
+| 零散 Markdown 文件 | 带 `[[双链]]` 的知识网络 |
+| 重复问一次就多一篇重复笔记 | 先判断新建、追加还是拆分 |
+| Agent 直接写入，不好审 | dry-run 先给计划，再确认写入 |
+
+## Dry-run 预览
+
+Dry run 是默认安全路径：只规划，不写文件；它会报告重复风险、目标笔记和建议反链，并保持 `writes` 为空。
+
+```json
+{
+  "dry_run": true,
+  "mode": "learning",
+  "decision": {
+    "action": "append",
+    "target_note": "AI Conversations.md"
+  },
+  "suggested_backlinks": [
+    {
+      "title": "Agent Workflows",
+      "path": "Agent Workflows.md"
+    }
+  ],
+  "writes": []
+}
+```
+
+## 不是普通 Markdown 生成器
+
+| 普通 Markdown 生成 | Cobsidian |
+|---|---|
+| 生成一篇孤立文件 | 维护一个带链接的知识系统 |
+| 不看已有笔记 | 写入前扫描 vault |
+| 容易重复建主题 | 优先判断追加、合并或拆分 |
+| 链接靠临场发挥 | 根据已有笔记建议反链 |
+| 直接写入 | 支持 dry-run 审阅后再写 |
+
+## Obsidian Vault 工作流
+
+```mermaid
+flowchart TD
+    U["用户材料"] --> R["解析 vault 路径或配置"]
+    R --> S["扫描笔记、标题、标签、双链"]
+    S --> P["规划：新建、追加、拆分或询问"]
+    P --> L["建议反链"]
+    L --> V["校验笔记卫生"]
+    V --> O["汇报文件、决策、链接和校验结果"]
+```
 
 ## 为什么需要 Cobsidian
 
-AI 对话里经常产生有价值的信息，但这些内容通常留在聊天记录里，或者变成孤立的 Markdown 文件。Cobsidian 给 Agent 一套可复用流程：
-
-```text
-输入材料
--> 搜索已有笔记
--> 判断新建 / 追加 / 拆分
--> 写成干净 Markdown
--> 添加有用的 [[双链]]
--> 建议反链
--> 校验基础知识库卫生
-```
+AI 对话里经常产生有价值的信息，但这些内容通常留在聊天记录里，或者变成孤立的 Markdown 文件。Cobsidian 给 Agent 一套可复用、可审阅的流程，用来维护知识库，而不是再生成一篇孤立笔记。
 
 ## 功能
 
@@ -113,46 +197,6 @@ Preserve only reusable lessons, check for existing related notes, and add backli
 ```text
 Use Cobsidian to compare these two project attempts and write a comparison note.
 If a related note already exists, append instead of creating a duplicate.
-```
-
-## Before / After
-
-已有示例笔记：
-
-```text
-examples/demo-vault/
-├── AI Conversations.md
-├── Agent Workflows.md
-└── Vector Search.md
-```
-
-运行一次不会写文件的 dry run：
-
-```bash
-python skills/cobsidian/scripts/dry_run.py examples/demo-vault \
-  --topic "AI Conversations" \
-  --mode learning \
-  --text "AI chats should become linked notes with duplicate checks, backlinks, and agent workflows." \
-  --json
-```
-
-Cobsidian 会报告类似下面的片段，并且不会写文件：
-
-```json
-{
-  "dry_run": true,
-  "decision": {
-    "action": "append",
-    "target_note": "AI Conversations.md"
-  },
-  "suggested_backlinks": [
-    {
-      "title": "Agent Workflows",
-      "path": "Agent Workflows.md"
-    }
-  ],
-  "writes": []
-}
 ```
 
 ## 模式
