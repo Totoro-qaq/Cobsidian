@@ -14,8 +14,10 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - name: Install MCP dependencies
+        run: python -m pip install -r requirements-mcp.txt
       - name: Check Python syntax
-        run: python -m compileall skills/cobsidian/scripts
+        run: python -m compileall skills/cobsidian
       - name: Run unit tests
         run: python -m unittest discover tests
       - name: Validate examples

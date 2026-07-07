@@ -19,6 +19,7 @@ read instructions
 | Agent | Support level | Recommended usage |
 |---|---|---|
 | Codex | First-class | Install `skills/cobsidian` as a Codex skill. |
+| MCP hosts | First-class local server | Launch `skills/cobsidian/mcp_server.py` over local `stdio`. |
 | Hermes | Portable workflow | Register or reference `skills/cobsidian/SKILL.md` as a local workflow/skill and allow script execution. |
 | Claude Code | Portable workflow | Reference `skills/cobsidian/SKILL.md` from project instructions or a local skill setup, then run scripts from the terminal. |
 | Cursor | Portable workflow | Reference the workflow from Cursor rules or project instructions, then run scripts from the integrated terminal. |
@@ -53,6 +54,8 @@ adapter = how this agent loads Cobsidian
 core = what Cobsidian tells the agent to do
 ```
 
+For MCP hosts, the adapter is `skills/cobsidian/mcp_server.py`. See [MCP Server](mcp-server.md).
+
 ## Suggested Prompts
 
 Generic prompt:
@@ -69,4 +72,3 @@ Safer dry-run prompt:
 Use the Cobsidian workflow in skills/cobsidian/SKILL.md.
 Do not edit files yet. First report the target note, duplicate risks, suggested backlinks, and proposed Markdown outline.
 ```
-

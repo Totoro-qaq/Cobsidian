@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.3.0
+
+- Add local MCP server with read/planning tools, prompts, and safe note resources.
+
 ## v0.2.0
 
 - Add installation guide, prompt examples, and example config conventions.
