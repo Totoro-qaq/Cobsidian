@@ -63,6 +63,7 @@ class ReadmeLandingContractTests(unittest.TestCase):
         ET.fromstring(banner)
 
         required_fragments = [
+            'width="1200" height="360" viewBox="0 0 1200 360"',
             "<title>Cobsidian banner</title>",
             "Turn AI conversations into linked Obsidian knowledge, safely.",
             "glass-panel",
@@ -77,6 +78,23 @@ class ReadmeLandingContractTests(unittest.TestCase):
         self.assertNotIn('href="http://', banner)
         self.assertNotIn('href="https://', banner)
         self.assertNotIn('xlink:href="http', banner)
+
+    def test_banner_labels_use_centered_layout(self) -> None:
+        banner_path = REPO_ROOT / "docs" / "assets" / "cobsidian-banner.svg"
+        banner = banner_path.read_text(encoding="utf-8")
+
+        required_fragments = [
+            '<text x="77" y="-9" class="micro" text-anchor="middle" dominant-baseline="middle">AGENT SAFE</text>',
+            '<text x="66" y="19" class="chip-text" text-anchor="middle" dominant-baseline="middle">dry-run first</text>',
+            '<text x="212" y="19" class="chip-text" text-anchor="middle" dominant-baseline="middle">wiki links</text>',
+            '<text x="354" y="19" class="chip-text" text-anchor="middle" dominant-baseline="middle">MCP ready</text>',
+            '<text x="143" y="116" class="micro" text-anchor="middle">dry-run / backlinks / vault lint</text>',
+            '<path d="M770 286 C850 270 930 274 990 300 S1080 324 1134 282" class="circuit-line"/>',
+        ]
+
+        for fragment in required_fragments:
+            with self.subTest(fragment=fragment):
+                self.assertIn(fragment, banner)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" role="img" viewBox="0 0 1200 360">
+<svg xmlns="http://www.w3.org/2000/svg" role="img" width="1200" height="360" viewBox="0 0 1200 360">
   <title>Cobsidian banner</title>
   <desc>Glassmorphism banner for Cobsidian. Turn AI conversations into linked Obsidian knowledge, safely.</desc>
   <defs>
@@ -88,7 +88,7 @@
   <rect width="1200" height="360" rx="34" fill="url(#orbB)"/>
   <rect width="1200" height="360" rx="34" fill="url(#grid)" opacity="0.95"/>
   <path d="M150 118 C235 70 314 88 395 124 S563 166 652 112 841 46 1015 106" class="circuit-line"/>
-  <path d="M750 244 C829 199 910 208 970 245 S1076 288 1134 236" class="circuit-line"/>
+  <path d="M770 286 C850 270 930 274 990 300 S1080 324 1134 282" class="circuit-line"/>
   <circle cx="151" cy="118" r="5" class="node"/>
   <circle cx="395" cy="124" r="5" class="node"/>
   <circle cx="652" cy="112" r="5" class="node"/>
@@ -100,12 +100,12 @@
     <rect x="100" y="82" width="1000" height="196" rx="22" fill="#071421" fill-opacity="0.34" stroke="#bffcff" stroke-opacity="0.16"/>
   </g>
   <g transform="translate(132 115)">
-    <rect x="0" y="-26" width="138" height="34" rx="17" fill="#a7f3d0" fill-opacity="0.14" stroke="#a7f3d0" stroke-opacity="0.42"/>
-    <text x="20" y="-4" class="micro">AGENT SAFE</text>
+    <rect x="0" y="-26" width="154" height="34" rx="17" fill="#a7f3d0" fill-opacity="0.14" stroke="#a7f3d0" stroke-opacity="0.42"/>
+    <text x="77" y="-9" class="micro" text-anchor="middle" dominant-baseline="middle">AGENT SAFE</text>
     <text x="0" y="80" class="title">Cobsidian</text>
     <text x="4" y="126" class="subtitle">Turn AI conversations into linked Obsidian knowledge, safely.</text>
   </g>
-  <g transform="translate(742 111)">
+  <g transform="translate(770 92)">
     <rect x="0" y="0" width="286" height="142" rx="22" fill="#ffffff" fill-opacity="0.10" stroke="#ffffff" stroke-opacity="0.24"/>
     <path d="M40 70 L88 36 L136 70 L184 38 L238 72" fill="none" stroke="url(#accent)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
     <circle cx="40" cy="70" r="8" fill="#88f7ff"/>
@@ -113,14 +113,14 @@
     <circle cx="136" cy="70" r="8" fill="#c4b5fd"/>
     <circle cx="184" cy="38" r="8" fill="#88f7ff"/>
     <circle cx="238" cy="72" r="8" fill="#a7f3d0"/>
-    <text x="32" y="114" class="micro">dry-run / backlinks / vault lint</text>
+    <text x="143" y="116" class="micro" text-anchor="middle">dry-run / backlinks / vault lint</text>
   </g>
   <g transform="translate(132 270)">
     <rect x="0" y="0" width="132" height="38" rx="19" fill="#67e8f9" fill-opacity="0.14" stroke="#67e8f9" stroke-opacity="0.35"/>
-    <text x="22" y="25" class="chip-text">dry-run first</text>
+    <text x="66" y="19" class="chip-text" text-anchor="middle" dominant-baseline="middle">dry-run first</text>
     <rect x="154" y="0" width="116" height="38" rx="19" fill="#a7f3d0" fill-opacity="0.13" stroke="#a7f3d0" stroke-opacity="0.34"/>
-    <text x="180" y="25" class="chip-text">wiki links</text>
-    <rect x="292" y="0" width="116" height="38" rx="19" fill="#c4b5fd" fill-opacity="0.13" stroke="#c4b5fd" stroke-opacity="0.34"/>
-    <text x="319" y="25" class="chip-text">MCP ready</text>
+    <text x="212" y="19" class="chip-text" text-anchor="middle" dominant-baseline="middle">wiki links</text>
+    <rect x="292" y="0" width="124" height="38" rx="19" fill="#c4b5fd" fill-opacity="0.13" stroke="#c4b5fd" stroke-opacity="0.34"/>
+    <text x="354" y="19" class="chip-text" text-anchor="middle" dominant-baseline="middle">MCP ready</text>
   </g>
 </svg>
