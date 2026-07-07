@@ -39,7 +39,7 @@ input material
 
 ## Status
 
-Early MVP.
+Usable public early release.
 
 The first version ships as a Codex-compatible skill plus small Python utilities, but the workflow is intentionally portable to Hermes, Claude Code, Cursor, and other coding agents that can read project instructions and run local commands.
 
