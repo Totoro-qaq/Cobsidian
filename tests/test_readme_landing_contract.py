@@ -88,12 +88,12 @@ class ReadmeLandingContractTests(unittest.TestCase):
         banner = banner_path.read_text(encoding="utf-8")
 
         required_fragments = [
-            '<text x="77" y="-9" class="micro" text-anchor="middle" dominant-baseline="middle">VAULT SAFE</text>',
+            '<text x="77" y="-9" class="micro" text-anchor="middle" dominant-baseline="middle">LOCAL FIRST</text>',
             '<text x="66" y="19" class="chip-text" text-anchor="middle" dominant-baseline="middle">dry-run first</text>',
             '<text x="212" y="19" class="chip-text" text-anchor="middle" dominant-baseline="middle">wiki links</text>',
             '<text x="354" y="19" class="chip-text" text-anchor="middle" dominant-baseline="middle">MCP ready</text>',
-            '<text x="143" y="116" class="micro" text-anchor="middle">dry-run / backlinks / vault lint</text>',
-            '<path d="M770 286 C850 270 930 274 990 300 S1080 324 1134 282" class="circuit-line"/>',
+            '<text x="143" y="126" class="micro" text-anchor="middle">7 modes · auto-link · dry-run</text>',
+            '<path d="M770 316 C850 302 930 306 990 322 S1080 334 1140 310" class="circuit-line"/>',
         ]
 
         for fragment in required_fragments:

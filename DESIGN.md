@@ -15,8 +15,8 @@ Light Codex-like workbench: warm neutral surface, restrained glass panels, small
 
 ## Type Stack
 
-- Display: Aptos Display or Segoe UI Variable Display fallback.
-- Body: Aptos or Segoe UI fallback.
+- Display: Aptos Display, SF Pro Display, or Segoe UI Variable Display fallback. Then Helvetica Neue, sans-serif.
+- Body: Aptos, SF Pro, or Segoe UI Variable fallback. Then Helvetica Neue, sans-serif.
 - Mono: Cascadia Code, JetBrains Mono, or Consolas fallback.
 - Banned: Inter, Roboto, Arial, generic `system-ui` as primary.
 
@@ -44,7 +44,7 @@ Banned:
 - External image or font dependencies for README/demo assets.
 - Official Obsidian, OpenAI, Codex, Claude, Cursor, or other vendor logos in Cobsidian visuals.
 
-Use generic linked-note marks such as `[[ ]]` or abstract note-link diagrams. Do not use crystal marks or modified vendor icons.
+Use abstract note-link diagrams with concrete note titles (e.g., three connected note cards showing "RAG", "Agents", "Vector DB") to illustrate the linking concept. Avoid empty bracket-only icons like `[[ ]]` in isolation — they read as placeholders rather than meaningful symbols. Do not use crystal marks or modified vendor icons.
 
 ## Motion
 
@@ -62,6 +62,7 @@ Use generic linked-note marks such as `[[ ]]` or abstract note-link diagrams. Do
 
 ## Last Updated
 
+2026-07-08: Replaced abstract [[ ]] marks with concrete knowledge-graph nodes in banner and demo. Added macOS font fallbacks. Improved demo content to show real knowledge notes instead of product meta-descriptions.
 2026-07-07: Added recording-safe pseudo-terminal and Obsidian note demo direction.
 2026-07-07: Removed the prior purple-crystal direction because it could be confused with vendor iconography.
 2026-07-07: Reworked visual assets to a light Codex-like workbench and removed crystal marks.

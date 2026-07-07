@@ -1,6 +1,6 @@
 ---
 name: cobsidian
-description: Use when an agent needs to organize material into an Obsidian vault or Markdown knowledge base, including conversations, study notes, logs, source-code/framework/skill dissection, project reviews, comparisons, index notes, duplicate checks, wiki links, backlinks, or Chinese requests such as 整理到Obsidian/知识库/写成Markdown/补双链/反链/学习模式/项目模式/复盘模式/对比模式/索引模式/捕获模式/拆解模式.
+description: Use when the user wants to organize, save, or structure knowledge from conversations into an Obsidian vault or Markdown knowledge base. Covers study notes, project analysis, incident reviews, tool comparisons, topic maps, daily capture, and source dissection with duplicate checks, wiki-link suggestions, and dry-run planning. Also triggered by Chinese phrases: 整理到Obsidian, 知识库, 写成笔记, 记笔记, 帮我整理, 总结成笔记, 双链笔记, 知识点整理, 补双链, 学习模式, 项目模式, 复盘模式, 对比模式, 索引模式, 捕获模式, 拆解模式.
 ---
 
 # Cobsidian
@@ -8,6 +8,14 @@ description: Use when an agent needs to organize material into an Obsidian vault
 ## Core Principle
 
 Maintain the vault as a linked knowledge system. Do not just generate a standalone Markdown file.
+
+## Iron Law
+
+```text
+NEVER WRITE TO THE VAULT WITHOUT SEARCHING EXISTING NOTES FIRST.
+```
+
+Dry-run is the default safe path. Skip it only when the user explicitly says to write immediately.
 
 ## Response Language
 
@@ -34,13 +42,13 @@ If the user explicitly selects a mode, use it and do not show the full mode menu
 
 | Mode | English triggers | Chinese triggers | Use for |
 |---|---|---|---|
-| `learning` | learning mode, study note, explain | 学习模式, 知识点整理, 学习笔记 | Concepts, courses, videos, papers, technical explanations. |
-| `project` | project mode, repo analysis, architecture | 项目模式, 项目整理, 源码项目 | Project architecture, implementation notes, repo analysis, operational docs. |
-| `review` | review mode, retrospective, failure review | 复盘模式, 事故复盘, 实验复盘, 失败复盘 | Incidents, experiment results, failures, lessons learned. |
-| `comparison` | comparison mode, compare, evaluate options | 对比模式, 选型, 方案比较 | Tool choices, architecture options, model/database/framework comparisons. |
-| `index` | index mode, map, learning path | 索引模式, 总览, 知识地图, 学习路线 | Topic maps, hub notes, learning paths, navigation pages. |
-| `capture` | capture mode, daily capture, quick note | 捕获模式, 日常记录, 先记下来 | Lightweight daily capture before deeper organization. |
-| `dissection` | dissection mode, teardown, source analysis | 拆解模式, 源码拆解, 框架拆解, skill拆解 | Reverse engineering tools, repos, frameworks, agent systems, prompts, skills, workflows. |
+| `learning` | learning mode, study note, explain, teach me about | 学习模式, 知识点整理, 学习笔记, 帮我学, 这个概念讲一下 | Concepts, courses, videos, papers, technical explanations. |
+| `project` | project mode, repo analysis, architecture, document this repo | 项目模式, 项目整理, 源码项目, 这个仓库帮我分析一下 | Project architecture, implementation notes, repo analysis, operational docs. |
+| `review` | review mode, retrospective, failure review, what went wrong | 复盘模式, 事故复盘, 实验复盘, 失败复盘, 总结教训 | Incidents, experiment results, failures, lessons learned. |
+| `comparison` | comparison mode, compare, evaluate options, which should I choose | 对比模式, 选型, 方案比较, 哪个更好 | Tool choices, architecture options, model/database/framework comparisons. |
+| `index` | index mode, map, learning path, give me an overview | 索引模式, 总览, 知识地图, 学习路线, 帮我画个知识图谱 | Topic maps, hub notes, learning paths, navigation pages. |
+| `capture` | capture mode, daily capture, quick note, just save this | 捕获模式, 日常记录, 先记下来, 记一下, 帮我记笔记 | Lightweight daily capture before deeper organization. |
+| `dissection` | dissection mode, teardown, source analysis, how does X work internally | 拆解模式, 源码拆解, 框架拆解, skill拆解, 这个怎么实现的 | Reverse engineering tools, repos, frameworks, agent systems, prompts, skills, workflows. |
 
 ## Interactive Mode Introduction
 
