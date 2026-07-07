@@ -49,7 +49,7 @@
       .subtitle {
         fill: #334155;
         font-family: "Aptos", "SF Pro", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
-        font-size: 26px;
+        font-size: 20px;
         font-weight: 500;
       }
       .chip-text {
@@ -107,9 +107,9 @@
     <rect x="0" y="-26" width="154" height="34" rx="17" fill="#ffffff" fill-opacity="0.58" stroke="#c4b5fd" stroke-opacity="0.56"/>
     <text x="77" y="-9" class="micro" text-anchor="middle" dominant-baseline="middle">LOCAL FIRST</text>
     <text x="0" y="80" class="title">Cobsidian</text>
-    <text x="4" y="126" class="subtitle">Turn AI conversations into linked Obsidian knowledge, safely.</text>
+    <text x="4" y="120" class="subtitle">Turn AI conversations into linked Obsidian knowledge, safely.</text>
   </g>
-  <g transform="translate(770 92)">
+  <g transform="translate(790 92)">
     <rect x="0" y="0" width="286" height="142" rx="22" fill="#ffffff" fill-opacity="0.62" stroke="#cbd5e1" stroke-opacity="0.78"/>
     <g class="linked-note-mark" transform="translate(16 10)">
       <path d="M68 24 C106 22 130 14 168 14" fill="none" stroke="url(#accent)" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>

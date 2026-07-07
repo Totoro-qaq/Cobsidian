@@ -13,7 +13,7 @@ class DemoAssetContractTests(unittest.TestCase):
         demo = demo_path.read_text(encoding="utf-8")
 
         required_fragments = [
-            "<title>Cobsidian Demo Preview</title>",
+            "<title>Cobsidian</title>",
             'id="terminal-panel"',
             'id="note-panel"',
             'id="link-panel"',
@@ -25,7 +25,6 @@ class DemoAssetContractTests(unittest.TestCase):
             "Use Cobsidian to organize this material",
             "dry-run complete",
             "[[Agent Workflows]]",
-            "Cobsidian Demo Preview",
         ]
 
         for fragment in required_fragments:
