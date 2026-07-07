@@ -2,6 +2,8 @@
 
 Cobsidian is a local agent workflow skill. It does not require an Obsidian plugin or cloud service.
 
+For Codex, Obsidian vault, MCP host, and other-agent integration notes, see [Integrations](docs/integrations.md).
+
 ## Requirements
 
 - Git
@@ -25,19 +27,23 @@ cd Cobsidian
 
 ## Install As A Codex Skill
 
+Install and configure Codex from the official Codex docs first. Then install Cobsidian as a local skill.
+
 Linux or macOS:
 
 ```bash
-mkdir -p ~/.codex/skills
-cp -r skills/cobsidian ~/.codex/skills/cobsidian
+mkdir -p ~/.agents/skills
+cp -r skills/cobsidian ~/.agents/skills/cobsidian
 ```
 
 Windows PowerShell:
 
 ```powershell
-New-Item -ItemType Directory -Force "$env:USERPROFILE\.codex\skills" | Out-Null
-Copy-Item -Recurse -Force .\skills\cobsidian "$env:USERPROFILE\.codex\skills\cobsidian"
+New-Item -ItemType Directory -Force "$env:USERPROFILE\.agents\skills" | Out-Null
+Copy-Item -Recurse -Force .\skills\cobsidian "$env:USERPROFILE\.agents\skills\cobsidian"
 ```
+
+Codex currently documents `$HOME/.agents/skills` for user skills. Some local or older Codex builds may scan `$HOME/.codex/skills`; use the skills directory shown by your Codex surface.
 
 Then start a new Codex session and ask:
 
@@ -89,7 +95,7 @@ Configure your MCP host to launch Cobsidian over local `stdio`:
 }
 ```
 
-See [MCP Server](docs/mcp-server.md).
+See [MCP Server](docs/mcp-server.md) and [Integrations](docs/integrations.md).
 
 ## Optional Config
 
@@ -145,13 +151,13 @@ git pull
 Then reinstall the skill if you copied it into an agent skill directory:
 
 ```bash
-cp -r skills/cobsidian ~/.codex/skills/cobsidian
+cp -r skills/cobsidian ~/.agents/skills/cobsidian
 ```
 
 Windows PowerShell:
 
 ```powershell
-Copy-Item -Recurse -Force .\skills\cobsidian "$env:USERPROFILE\.codex\skills\cobsidian"
+Copy-Item -Recurse -Force .\skills\cobsidian "$env:USERPROFILE\.agents\skills\cobsidian"
 ```
 
 ## Uninstall
@@ -159,11 +165,11 @@ Copy-Item -Recurse -Force .\skills\cobsidian "$env:USERPROFILE\.codex\skills\cob
 Remove the copied skill directory:
 
 ```bash
-rm -rf ~/.codex/skills/cobsidian
+rm -rf ~/.agents/skills/cobsidian
 ```
 
 Windows PowerShell:
 
 ```powershell
-Remove-Item -Recurse -Force "$env:USERPROFILE\.codex\skills\cobsidian"
+Remove-Item -Recurse -Force "$env:USERPROFILE\.agents\skills\cobsidian"
 ```
