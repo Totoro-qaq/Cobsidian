@@ -25,7 +25,7 @@ Example config:
 
 ```yaml
 vault:
-  path: "D:/path/to/obsidian-vault"
+  path: "/absolute/path/to/obsidian-vault"
 ```
 
 Example check:
@@ -61,14 +61,14 @@ Start a new Codex session and ask for Cobsidian explicitly:
 
 ```text
 Use Cobsidian to organize this material into my Obsidian vault.
-Vault: D:/path/to/obsidian-vault
+Vault: /absolute/path/to/obsidian-vault
 Run a dry run first, check for duplicate notes, suggest backlinks, and wait for confirmation before writing.
 ```
 
 If you use a reusable config, include it in the prompt:
 
 ```text
-Use Cobsidian and follow D:/path/to/cobsidian.config.yml.
+Use Cobsidian and follow /absolute/path/to/cobsidian.config.yml.
 ```
 
 ## Use As A Local MCP Server
@@ -88,11 +88,11 @@ Configure your MCP host with an absolute path:
   "mcpServers": {
     "cobsidian": {
       "command": "python",
-      "args": ["D:/python/Cobsidian/skills/cobsidian/mcp_server.py"],
-      "cwd": "D:/python/Cobsidian",
+      "args": ["/absolute/path/to/Cobsidian/skills/cobsidian/mcp_server.py"],
+      "cwd": "/absolute/path/to/Cobsidian",
       "env": {
         "PYTHONUTF8": "1",
-        "COBSIDIAN_CONFIG": "D:/path/to/cobsidian.config.yml"
+        "COBSIDIAN_CONFIG": "/absolute/path/to/cobsidian.config.yml"
       }
     }
   }

@@ -9,19 +9,38 @@ description: Use when an agent needs to organize material into an Obsidian vault
 
 Maintain the vault as a linked knowledge system. Do not just generate a standalone Markdown file.
 
+## Response Language
+
+Match the user's language for mode selection, clarification questions, and completion reports.
+
+- Chinese request -> Chinese mode names.
+- English request -> English mode names.
+- Mixed-language request -> use the dominant user language and include canonical mode IDs in backticks when helpful.
+
+## Vault Resolution
+
+Resolve the target vault in this order:
+
+1. Explicit vault path in the user's request.
+2. `cobsidian.config.yml` with `vault.path`.
+3. MCP host configuration through `COBSIDIAN_CONFIG`.
+4. MCP host configuration through `COBSIDIAN_VAULT`.
+
+Do not guess a private vault path. If no valid vault path is available, ask for one concise input: the vault path or the config path. If a path is present but invalid, report the invalid path and ask for a corrected vault/config path before writing.
+
 ## Mode Selection
 
 If the user explicitly selects a mode, use it and do not show the full mode menu. If no mode is selected, infer the smallest useful mode and state it before writing. If the mode is ambiguous and file edits are involved, introduce the modes briefly and ask one concise question before writing.
 
-| Mode | Chinese triggers | Use for |
-|---|---|---|
-| `learning` | 学习模式, 知识点整理, 学习笔记 | Concepts, courses, videos, papers, technical explanations. |
-| `project` | 项目模式, 项目整理, 源码项目 | Project architecture, implementation notes, repo analysis, operational docs. |
-| `review` | 复盘模式, 事故复盘, 实验复盘, 失败复盘 | Incidents, experiment results, failures, lessons learned. |
-| `comparison` | 对比模式, 选型, 方案比较 | Tool choices, architecture options, model/database/framework comparisons. |
-| `index` | 索引模式, 总览, 知识地图, 学习路线 | Topic maps, hub notes, learning paths, navigation pages. |
-| `capture` | 捕获模式, 日常记录, 先记下来, daily capture | Lightweight daily capture before deeper organization. |
-| `dissection` | 拆解模式, 源码拆解, 框架拆解, skill拆解 | Reverse engineering tools, repos, frameworks, agent systems, prompts, skills, workflows. |
+| Mode | English triggers | Chinese triggers | Use for |
+|---|---|---|---|
+| `learning` | learning mode, study note, explain | 学习模式, 知识点整理, 学习笔记 | Concepts, courses, videos, papers, technical explanations. |
+| `project` | project mode, repo analysis, architecture | 项目模式, 项目整理, 源码项目 | Project architecture, implementation notes, repo analysis, operational docs. |
+| `review` | review mode, retrospective, failure review | 复盘模式, 事故复盘, 实验复盘, 失败复盘 | Incidents, experiment results, failures, lessons learned. |
+| `comparison` | comparison mode, compare, evaluate options | 对比模式, 选型, 方案比较 | Tool choices, architecture options, model/database/framework comparisons. |
+| `index` | index mode, map, learning path | 索引模式, 总览, 知识地图, 学习路线 | Topic maps, hub notes, learning paths, navigation pages. |
+| `capture` | capture mode, daily capture, quick note | 捕获模式, 日常记录, 先记下来 | Lightweight daily capture before deeper organization. |
+| `dissection` | dissection mode, teardown, source analysis | 拆解模式, 源码拆解, 框架拆解, skill拆解 | Reverse engineering tools, repos, frameworks, agent systems, prompts, skills, workflows. |
 
 ## Interactive Mode Introduction
 
@@ -38,19 +57,36 @@ Skip the picker when the user already chose a mode, the mode is obvious, or the 
 Mode: dissection / 拆解, because this is a framework or workflow teardown.
 ```
 
-When the picker is needed, use this compact form:
+When the picker is needed, use the user's language.
+
+English mode picker:
 
 ```text
 Cobsidian can organize this in several modes:
-- learning / 学习: concepts, courses, videos, papers
-- project / 项目: repos, architecture, implementation, operations
-- review / 复盘: failures, incidents, experiments, lessons
-- comparison / 对比: tool/model/database/architecture choices
-- index / 索引: topic maps, learning paths, hub notes
-- capture / 捕获: quick rough notes for later cleanup
-- dissection / 拆解: internals of tools, frameworks, repos, skills, prompts
+- learning: concepts, courses, videos, papers
+- project: repos, architecture, implementation, operations
+- review: failures, incidents, experiments, lessons
+- comparison: tool/model/database/architecture choices
+- index: topic maps, learning paths, hub notes
+- capture: quick rough notes for later cleanup
+- dissection: internals of tools, frameworks, repos, skills, prompts
 
 Choose one mode, or tell me to infer it.
+```
+
+中文模式选择：
+
+```text
+Cobsidian 可以按这些模式整理：
+- 学习模式：概念、课程、视频、论文、技术解释
+- 项目模式：仓库、架构、实现、运维记录
+- 复盘模式：失败、事故、实验结果、经验教训
+- 对比模式：工具、模型、数据库、架构选型
+- 索引模式：主题地图、学习路线、导航页
+- 捕获模式：先快速保存粗糙材料，后续再整理
+- 拆解模式：拆解工具、框架、仓库、skill、提示词系统
+
+选一个模式，或者告诉我由我推断。
 ```
 
 ## Workflow

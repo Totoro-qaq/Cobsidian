@@ -84,11 +84,11 @@ Configure your MCP host to launch Cobsidian over local `stdio`:
   "mcpServers": {
     "cobsidian": {
       "command": "python",
-      "args": ["D:/python/Cobsidian/skills/cobsidian/mcp_server.py"],
-      "cwd": "D:/python/Cobsidian",
+      "args": ["/absolute/path/to/Cobsidian/skills/cobsidian/mcp_server.py"],
+      "cwd": "/absolute/path/to/Cobsidian",
       "env": {
         "PYTHONUTF8": "1",
-        "COBSIDIAN_CONFIG": "D:/path/to/cobsidian.config.yml"
+        "COBSIDIAN_CONFIG": "/absolute/path/to/cobsidian.config.yml"
       }
     }
   }

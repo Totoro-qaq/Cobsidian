@@ -4,6 +4,8 @@
 
 - Add Codex, Obsidian vault, MCP host, and other-agent integration guides.
 - Add trademark and independence notices.
+- Replace local machine paths in setup examples with neutral absolute-path placeholders.
+- Update current status wording from MVP to usable public early release.
 
 ## v0.3.0
 
