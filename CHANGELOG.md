@@ -8,6 +8,7 @@
 - Update current status wording from MVP to usable public early release.
 - Refresh English and Chinese README landing sections with banner, quick start, workflow diagrams, dry-run preview, and generator comparison.
 - Add a local glassmorphism SVG banner for README landing sections.
+- Fix README banner label centering and decorative-line overlap.
 
 ## v0.3.0
 
