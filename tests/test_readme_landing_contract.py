@@ -66,6 +66,8 @@ class ReadmeLandingContractTests(unittest.TestCase):
             'width="1200" height="360" viewBox="0 0 1200 360"',
             "<title>Cobsidian banner</title>",
             "Turn AI conversations into linked Obsidian knowledge, safely.",
+            "neutral-surface",
+            "linked-note-mark",
             "glass-panel",
             "linearGradient",
             "feGaussianBlur",
@@ -78,13 +80,15 @@ class ReadmeLandingContractTests(unittest.TestCase):
         self.assertNotIn('href="http://', banner)
         self.assertNotIn('href="https://', banner)
         self.assertNotIn('xlink:href="http', banner)
+        self.assertNotIn("obsidian-icon", banner.lower())
+        self.assertNotIn("obsidian-crystal", banner.lower())
 
     def test_banner_labels_use_centered_layout(self) -> None:
         banner_path = REPO_ROOT / "docs" / "assets" / "cobsidian-banner.svg"
         banner = banner_path.read_text(encoding="utf-8")
 
         required_fragments = [
-            '<text x="77" y="-9" class="micro" text-anchor="middle" dominant-baseline="middle">AGENT SAFE</text>',
+            '<text x="77" y="-9" class="micro" text-anchor="middle" dominant-baseline="middle">VAULT SAFE</text>',
             '<text x="66" y="19" class="chip-text" text-anchor="middle" dominant-baseline="middle">dry-run first</text>',
             '<text x="212" y="19" class="chip-text" text-anchor="middle" dominant-baseline="middle">wiki links</text>',
             '<text x="354" y="19" class="chip-text" text-anchor="middle" dominant-baseline="middle">MCP ready</text>',
