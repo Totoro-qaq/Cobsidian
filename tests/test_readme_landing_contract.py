@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import xml.etree.ElementTree as ET
 import unittest
 from pathlib import Path
 
@@ -43,6 +44,39 @@ class ReadmeLandingContractTests(unittest.TestCase):
         for fragment in required_fragments:
             with self.subTest(fragment=fragment):
                 self.assertIn(fragment, readme)
+
+    def test_readmes_reference_local_banner_asset(self) -> None:
+        english_readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        chinese_readme = (REPO_ROOT / "docs" / "README.zh-CN.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("docs/assets/cobsidian-banner.svg", english_readme)
+        self.assertIn("assets/cobsidian-banner.svg", chinese_readme)
+        self.assertNotIn("readme-typing-svg", english_readme + chinese_readme)
+        self.assertNotIn("capsule-render", english_readme + chinese_readme)
+
+    def test_banner_svg_is_parseable_and_self_contained(self) -> None:
+        banner_path = REPO_ROOT / "docs" / "assets" / "cobsidian-banner.svg"
+        banner = banner_path.read_text(encoding="utf-8")
+
+        ET.fromstring(banner)
+
+        required_fragments = [
+            "<title>Cobsidian banner</title>",
+            "Turn AI conversations into linked Obsidian knowledge, safely.",
+            "glass-panel",
+            "linearGradient",
+            "feGaussianBlur",
+        ]
+
+        for fragment in required_fragments:
+            with self.subTest(fragment=fragment):
+                self.assertIn(fragment, banner)
+
+        self.assertNotIn('href="http://', banner)
+        self.assertNotIn('href="https://', banner)
+        self.assertNotIn('xlink:href="http', banner)
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@
 - Replace local machine paths in setup examples with neutral absolute-path placeholders.
 - Update current status wording from MVP to usable public early release.
 - Refresh English and Chinese README landing sections with banner, quick start, workflow diagrams, dry-run preview, and generator comparison.
+- Add a local glassmorphism SVG banner for README landing sections.
 
 ## v0.3.0
 

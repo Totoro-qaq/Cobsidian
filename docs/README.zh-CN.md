@@ -6,14 +6,9 @@
 [![codeql](https://github.com/Totoro-qaq/Cobsidian/actions/workflows/codeql.yml/badge.svg)](https://github.com/Totoro-qaq/Cobsidian/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE)
 
-```text
-   ______      _         _     _ _
-  / _____)    | |       (_)   | (_)
- | /      ___ | |__  ___ _  __| |_  __ _ _ __
- | |     / _ \| '_ \/ __| |/ _` | |/ _` | '_ \
- | \____| (_) | |_) \__ \ | (_| | | (_| | | | |
-  \_____)\___/|_.__/|___/_|\__,_|_|\__,_|_| |_|
-```
+<p align="center">
+  <img src="assets/cobsidian-banner.svg" alt="Cobsidian - 安全地把 AI 对话整理成带双链的 Obsidian 知识库。" width="100%" />
+</p>
 
 > 安全地把 AI 对话整理成带双链的 Obsidian 知识库。
 

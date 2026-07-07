@@ -6,14 +6,9 @@ English | [简体中文](docs/README.zh-CN.md)
 [![codeql](https://github.com/Totoro-qaq/Cobsidian/actions/workflows/codeql.yml/badge.svg)](https://github.com/Totoro-qaq/Cobsidian/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-```text
-   ______      _         _     _ _
-  / _____)    | |       (_)   | (_)
- | /      ___ | |__  ___ _  __| |_  __ _ _ __
- | |     / _ \| '_ \/ __| |/ _` | |/ _` | '_ \
- | \____| (_) | |_) \__ \ | (_| | | (_| | | | |
-  \_____)\___/|_.__/|___/_|\__,_|_|\__,_|_| |_|
-```
+<p align="center">
+  <img src="docs/assets/cobsidian-banner.svg" alt="Cobsidian - Turn AI conversations into linked Obsidian knowledge, safely." width="100%" />
+</p>
 
 > Turn AI conversations into linked Obsidian knowledge, safely.
 
