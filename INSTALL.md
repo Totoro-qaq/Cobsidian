@@ -63,6 +63,34 @@ Organize the following material into a linked Markdown note.
 Search existing notes first, avoid duplicates, add useful wiki links, and run validation.
 ```
 
+## Install As An MCP Server
+
+Install the MCP SDK dependency:
+
+```bash
+python -m pip install -r requirements-mcp.txt
+```
+
+Configure your MCP host to launch Cobsidian over local `stdio`:
+
+```json
+{
+  "mcpServers": {
+    "cobsidian": {
+      "command": "python",
+      "args": ["D:/python/Cobsidian/skills/cobsidian/mcp_server.py"],
+      "cwd": "D:/python/Cobsidian",
+      "env": {
+        "PYTHONUTF8": "1",
+        "COBSIDIAN_CONFIG": "D:/path/to/cobsidian.config.yml"
+      }
+    }
+  }
+}
+```
+
+See [MCP Server](docs/mcp-server.md).
+
 ## Optional Config
 
 Copy the example config if you want a reusable project-local convention:

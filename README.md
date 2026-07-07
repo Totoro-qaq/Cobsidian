@@ -35,6 +35,7 @@ input material
 - Detect exact and similar note titles.
 - Keep note structure concise and reusable.
 - Avoid writing private paths, secrets, or raw chat transcripts by default.
+- Expose local MCP tools for read-only vault inspection and dry-run planning.
 
 ## Status
 
@@ -69,6 +70,19 @@ For Hermes, Claude Code, Cursor, and other agents, use the same core workflow:
 3. Ask it to report create/append decisions, duplicate checks, backlink changes, and validation results.
 
 See [Agent Compatibility](docs/agent-compatibility.md).
+
+### MCP Server
+
+Cobsidian also ships a local MCP server for hosts that support the Model Context Protocol.
+
+```bash
+python -m pip install -r requirements-mcp.txt
+python skills/cobsidian/mcp_server.py
+```
+
+Use it as a local `stdio` server and configure `COBSIDIAN_CONFIG` or `COBSIDIAN_VAULT`.
+
+See [MCP Server](docs/mcp-server.md).
 
 ## Agent Usage
 
@@ -214,6 +228,7 @@ python skills/cobsidian/scripts/dry_run.py examples/demo-vault --topic "AI Conve
 Cobsidian/
 ├── skills/cobsidian/
 │   ├── SKILL.md
+│   ├── mcp_server.py
 │   ├── agents/openai.yaml
 │   ├── references/
 │   │   ├── backlink-policy.md
@@ -226,6 +241,7 @@ Cobsidian/
 ├── .github/workflows/
 ├── cobsidian.config.example.yml
 ├── INSTALL.md
+├── requirements-mcp.txt
 ├── CONTRIBUTING.md
 ├── LICENSE
 └── README.md
