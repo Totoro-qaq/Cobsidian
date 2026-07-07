@@ -6,25 +6,109 @@ English | [简体中文](docs/README.zh-CN.md)
 [![codeql](https://github.com/Totoro-qaq/Cobsidian/actions/workflows/codeql.yml/badge.svg)](https://github.com/Totoro-qaq/Cobsidian/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Cobsidian is an agent-agnostic workflow skill for maintaining an Obsidian knowledge base.
+```text
+   ______      _         _     _ _
+  / _____)    | |       (_)   | (_)
+ | /      ___ | |__  ___ _  __| |_  __ _ _ __
+ | |     / _ \| '_ \/ __| |/ _` | |/ _` | '_ \
+ | \____| (_) | |_) \__ \ | (_| | | (_| | | | |
+  \_____)\___/|_.__/|___/_|\__,_|_|\__,_|_| |_|
+```
 
-It helps AI agents turn conversations, study material, logs, documents, and project analysis into durable Markdown notes with duplicate checks, wiki links, backlink suggestions, and basic vault validation.
+> Turn AI conversations into linked Obsidian knowledge, safely.
 
-It is designed for knowledge-base maintenance, not one-off Markdown generation.
+Cobsidian is an agent-agnostic workflow skill for maintaining Obsidian or Markdown knowledge bases. It helps AI agents turn conversations, study material, logs, documents, and project analysis into durable notes with duplicate checks, wiki links, backlink suggestions, and basic vault validation.
+
+[Quick Start](#quick-start) · [MCP Server](docs/mcp-server.md) · [Prompt Examples](examples/prompts.md) · [Agent Compatibility](docs/agent-compatibility.md)
+
+## What Cobsidian Does
+
+- Turns useful AI conversations into reusable Markdown notes.
+- Searches existing notes before writing so agents append or merge instead of creating duplicates.
+- Keeps writes reviewable with dry-run planning, backlink suggestions, and validation output.
+
+## Quick Start
+
+```bash
+git clone https://github.com/Totoro-qaq/Cobsidian.git
+cd Cobsidian
+python skills/cobsidian/scripts/dry_run.py examples/demo-vault --topic "AI Conversations" --text "agent workflow notes" --json
+```
+
+Then point your agent at `skills/cobsidian/SKILL.md` and give it your vault path or `cobsidian.config.yml`.
+
+```text
+Use Cobsidian to organize this material into my Obsidian vault.
+Vault: /absolute/path/to/obsidian-vault
+Run a dry run first, check duplicates, suggest backlinks, and wait for confirmation before writing.
+```
+
+## Before / After
+
+```mermaid
+flowchart LR
+    A["AI chat, logs, project notes"] --> B["Cobsidian dry run"]
+    B --> C["Search existing vault notes"]
+    C --> D{"Create, append, or split?"}
+    D --> E["Clean Markdown note"]
+    E --> F["Wiki links and related notes"]
+    F --> G["Validated Obsidian vault"]
+```
+
+| Before | After |
+|---|---|
+| Useful answers trapped in chat history | Durable notes in your vault |
+| Isolated Markdown files | Linked notes with `[[wiki links]]` |
+| Duplicate notes from repeated prompts | Create/append decisions based on existing notes |
+| Agent writes that are hard to review | Dry-run plan before write actions |
+
+## Dry-run Preview
+
+Dry run is the default safe path: it plans the change, reports duplicate risks and backlinks, and keeps `writes` empty.
+
+```json
+{
+  "dry_run": true,
+  "mode": "learning",
+  "decision": {
+    "action": "append",
+    "target_note": "AI Conversations.md"
+  },
+  "suggested_backlinks": [
+    {
+      "title": "Agent Workflows",
+      "path": "Agent Workflows.md"
+    }
+  ],
+  "writes": []
+}
+```
+
+## Not Just Markdown Generation
+
+| Ordinary Markdown generation | Cobsidian |
+|---|---|
+| Produces a standalone file | Maintains a linked knowledge system |
+| Ignores existing notes | Scans the vault before writing |
+| Often duplicates topics | Prefers append, merge, or split decisions |
+| Adds links opportunistically | Suggests links from actual vault notes |
+| Writes immediately | Supports dry-run review before edits |
+
+## Obsidian Vault Workflow
+
+```mermaid
+flowchart TD
+    U["User material"] --> R["Resolve vault path or config"]
+    R --> S["Scan notes, titles, tags, wiki links"]
+    S --> P["Plan: create, append, split, or ask"]
+    P --> L["Suggest backlinks"]
+    L --> V["Validate note hygiene"]
+    V --> O["Report files, decision, links, validation"]
+```
 
 ## Why Cobsidian
 
-AI conversations often produce useful knowledge, but the output usually stays trapped in chat history or becomes isolated Markdown files. Cobsidian gives an agent a repeatable workflow:
-
-```text
-input material
--> search existing notes
--> decide create vs append vs split
--> write clean Markdown
--> add useful [[wiki links]]
--> suggest backlinks
--> validate basic vault hygiene
-```
+AI conversations often produce useful knowledge, but the output usually stays trapped in chat history or becomes isolated Markdown files. Cobsidian gives agents a repeatable, reviewable workflow for growing a knowledge base instead of dumping another note.
 
 ## Features
 
@@ -111,46 +195,6 @@ Preserve only reusable lessons, check for existing related notes, and add backli
 ```text
 Use Cobsidian to compare these two project attempts and write a comparison note.
 If a related note already exists, append instead of creating a duplicate.
-```
-
-## Before / After
-
-Given existing notes:
-
-```text
-examples/demo-vault/
-├── AI Conversations.md
-├── Agent Workflows.md
-└── Vector Search.md
-```
-
-Run a config-aware dry run:
-
-```bash
-python skills/cobsidian/scripts/dry_run.py examples/demo-vault \
-  --topic "AI Conversations" \
-  --mode learning \
-  --text "AI chats should become linked notes with duplicate checks, backlinks, and agent workflows." \
-  --json
-```
-
-Cobsidian reports an excerpt like this, without writing files:
-
-```json
-{
-  "dry_run": true,
-  "decision": {
-    "action": "append",
-    "target_note": "AI Conversations.md"
-  },
-  "suggested_backlinks": [
-    {
-      "title": "Agent Workflows",
-      "path": "Agent Workflows.md"
-    }
-  ],
-  "writes": []
-}
 ```
 
 ## Modes
