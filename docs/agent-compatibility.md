@@ -56,6 +56,8 @@ core = what Cobsidian tells the agent to do
 
 For MCP hosts, the adapter is `skills/cobsidian/mcp_server.py`. See [MCP Server](mcp-server.md).
 
+For product-specific setup notes, see [Integrations](integrations.md).
+
 ## Suggested Prompts
 
 Generic prompt:

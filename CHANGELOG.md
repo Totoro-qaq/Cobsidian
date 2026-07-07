@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Add Codex, Obsidian vault, MCP host, and other-agent integration guides.
+- Add trademark and independence notices.
+
 ## v0.3.0
 
 - Add local MCP server with read/planning tools, prompts, and safe note resources.

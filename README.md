@@ -48,18 +48,23 @@ It is not an Obsidian plugin, cloud sync service, or vector database.
 ## Install
 
 See [INSTALL.md](INSTALL.md) for full setup, update, and uninstall instructions.
+See [Integrations](docs/integrations.md) for Codex, Obsidian vault, MCP host, and other-agent setup notes.
 
 ### Codex Skill
 
 ```bash
-cp -r skills/cobsidian ~/.codex/skills/cobsidian
+mkdir -p ~/.agents/skills
+cp -r skills/cobsidian ~/.agents/skills/cobsidian
 ```
 
 On Windows PowerShell:
 
 ```powershell
-Copy-Item -Recurse -Force .\skills\cobsidian "$env:USERPROFILE\.codex\skills\cobsidian"
+New-Item -ItemType Directory -Force "$env:USERPROFILE\.agents\skills" | Out-Null
+Copy-Item -Recurse -Force .\skills\cobsidian "$env:USERPROFILE\.agents\skills\cobsidian"
 ```
+
+Codex currently documents `$HOME/.agents/skills` for user skills. Some local or older Codex builds may scan `$HOME/.codex/skills`; use the skills directory shown by your Codex surface.
 
 ### Other Agents
 
@@ -69,7 +74,7 @@ For Hermes, Claude Code, Cursor, and other agents, use the same core workflow:
 2. Allow it to call the helper scripts in `skills/cobsidian/scripts/`.
 3. Ask it to report create/append decisions, duplicate checks, backlink changes, and validation results.
 
-See [Agent Compatibility](docs/agent-compatibility.md).
+See [Agent Compatibility](docs/agent-compatibility.md) and [Integrations](docs/integrations.md).
 
 ### MCP Server
 
@@ -288,6 +293,10 @@ Do not include private vault content, personal paths, API keys, unpublished note
 - Not a vector database.
 - Not an automatic writer that should modify a vault without review.
 - Not a replacement for human editorial judgment.
+
+## Trademark And Affiliation Notice
+
+Cobsidian is an independent open-source project. OpenAI, Codex, Obsidian, Claude, Cursor, Hermes, and other names are trademarks of their respective owners. This project is not affiliated with, endorsed by, or sponsored by those owners.
 
 ## License
 

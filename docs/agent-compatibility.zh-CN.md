@@ -56,6 +56,8 @@ core = Cobsidian 要求 agent 做什么
 
 对于 MCP host，adapter 就是 `skills/cobsidian/mcp_server.py`。详见 [MCP Server](mcp-server.zh-CN.md)。
 
+具体产品接入说明见 [集成说明](integrations.zh-CN.md)。
+
 ## 推荐提示词
 
 通用提示词：
