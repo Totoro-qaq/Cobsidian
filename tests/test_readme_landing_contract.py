@@ -45,14 +45,18 @@ class ReadmeLandingContractTests(unittest.TestCase):
             with self.subTest(fragment=fragment):
                 self.assertIn(fragment, readme)
 
-    def test_readmes_reference_local_banner_asset(self) -> None:
+    def test_readmes_reference_local_landing_assets(self) -> None:
         english_readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
         chinese_readme = (REPO_ROOT / "docs" / "README.zh-CN.md").read_text(
             encoding="utf-8"
         )
 
         self.assertIn("docs/assets/cobsidian-banner.svg", english_readme)
+        self.assertIn("docs/assets/cobsidian-demo.gif", english_readme)
         self.assertIn("assets/cobsidian-banner.svg", chinese_readme)
+        self.assertIn("assets/cobsidian-demo.gif", chinese_readme)
+        self.assertTrue((REPO_ROOT / "docs" / "assets" / "cobsidian-banner.svg").is_file())
+        self.assertTrue((REPO_ROOT / "docs" / "assets" / "cobsidian-demo.gif").is_file())
         self.assertNotIn("readme-typing-svg", english_readme + chinese_readme)
         self.assertNotIn("capsule-render", english_readme + chinese_readme)
 
