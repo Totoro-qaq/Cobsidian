@@ -120,6 +120,27 @@ Cobsidian 可以按这些模式整理：
 - Do not fabricate sources, file names, or completed checks.
 - If the same topic already exists, append or merge instead of creating a near-duplicate.
 
+## Red Flags
+
+Stop and reconsider if you catch yourself thinking:
+
+- "This topic is obviously new, no need to scan." — Scan anyway. The Iron Law has no exceptions.
+- "I will just create a fresh note and add links later." — Check first; there is probably an existing note to append to.
+- "The user said write, so I will skip dry-run." — Only skip dry-run when the user **explicitly** says to skip it. "Write this" does not mean "skip safety checks."
+- "This note is too small to need backlinks." — Even a one-paragraph capture note should link to related notes if they exist.
+- "I already know the vault structure." — Vault state changes between sessions. Always re-scan.
+
+## Common Mistakes
+
+| Mistake | Correction |
+|---|---|
+| Creating a new note when a highly similar one exists | Run `find_duplicates.py` or scan first; prefer append |
+| Dumping raw chat transcript as a note | Extract durable concepts; discard conversational noise |
+| Adding `[[wiki links]]` to notes that do not exist in the vault | Only link to notes confirmed by scan; mention missing targets in the report |
+| Hardcoding absolute paths in note content | Use relative references; never write `/Users/...` or `C:\...` into notes |
+| Skipping the completion report | Always end with files changed, decision, duplicates, backlinks, validation |
+| Writing in a different language than the user's request | Match the user's language; see Response Language rules |
+
 ## Helper Scripts
 
 - `scripts/scan_vault.py`: summarize notes, titles, tags, and wiki links.
