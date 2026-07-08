@@ -16,6 +16,10 @@ Cobsidian is an agent-agnostic workflow skill for maintaining Obsidian or Markdo
 
 [Quick Start](#quick-start) · [MCP Server](docs/mcp-server.md) · [Prompt Examples](examples/prompts.md) · [Agent Compatibility](docs/agent-compatibility.md)
 
+<p align="center">
+  <img src="docs/assets/cobsidian-demo.gif" alt="Cobsidian workflow: prompt → dry-run → linked note" width="100%" />
+</p>
+
 ## What Cobsidian Does
 
 - Turns useful AI conversations into reusable Markdown notes.
@@ -101,10 +105,6 @@ flowchart TD
     V --> O["Report files, decision, links, validation"]
 ```
 
-## Why Cobsidian
-
-AI conversations often produce useful knowledge, but the output usually stays trapped in chat history or becomes isolated Markdown files. Cobsidian gives agents a repeatable, reviewable workflow for growing a knowledge base instead of dumping another note.
-
 ## Features
 
 - Create learning notes, project notes, comparison notes, and index notes.
@@ -115,14 +115,6 @@ AI conversations often produce useful knowledge, but the output usually stays tr
 - Keep note structure concise and reusable.
 - Avoid writing private paths, secrets, or raw chat transcripts by default.
 - Expose local MCP tools for read-only vault inspection and dry-run planning.
-
-## Status
-
-Usable public early release.
-
-The first version ships as a Codex-compatible skill plus small Python utilities, but the workflow is intentionally portable to Hermes, Claude Code, Cursor, and other coding agents that can read project instructions and run local commands.
-
-It is not an Obsidian plugin, cloud sync service, or vector database.
 
 ## Install
 
@@ -226,83 +218,6 @@ python skills/cobsidian/scripts/dry_run.py /path/to/vault --topic "RAG" --text "
 
 Each script also accepts `--config cobsidian.config.yml` when the config contains `vault.path`.
 
-### `scan_vault.py`
-
-Summarizes Markdown notes, titles, tags, and wiki links.
-
-```bash
-python skills/cobsidian/scripts/scan_vault.py examples --json
-```
-
-### `find_duplicates.py`
-
-Finds exact and highly similar note titles.
-
-```bash
-python skills/cobsidian/scripts/find_duplicates.py examples
-```
-
-### `suggest_backlinks.py`
-
-Suggests related notes for a draft or raw text.
-
-```bash
-python skills/cobsidian/scripts/suggest_backlinks.py examples --text "vector search and RAG evaluation"
-```
-
-### `validate_notes.py`
-
-Reports missing wiki-link targets, duplicate titles, and empty notes.
-
-```bash
-python skills/cobsidian/scripts/validate_notes.py examples --strict
-```
-
-### `dry_run.py`
-
-Plans a write without modifying files. It reports create/append decision, duplicate risks, backlink suggestions, validation intent, and an empty `writes` list.
-
-```bash
-python skills/cobsidian/scripts/dry_run.py examples/demo-vault --topic "AI Conversations" --text "agent workflow notes" --json
-```
-
-## Repository Layout
-
-```text
-Cobsidian/
-├── skills/cobsidian/
-│   ├── SKILL.md
-│   ├── mcp_server.py
-│   ├── agents/openai.yaml
-│   ├── references/
-│   │   ├── backlink-policy.md
-│   │   ├── markdown-style.md
-│   │   └── note-types.md
-│   └── scripts/
-├── examples/
-│   └── demo-vault/
-├── docs/
-├── .github/workflows/
-├── cobsidian.config.example.yml
-├── INSTALL.md
-├── requirements-mcp.txt
-├── CONTRIBUTING.md
-├── LICENSE
-└── README.md
-```
-
-## Workflow
-
-When Cobsidian is used by an agent, the expected behavior is:
-
-1. Identify the vault path and target topic.
-2. Search existing notes before writing.
-3. Decide whether to create, append, split, or ask before editing.
-4. Write clean Markdown with stable headings.
-5. Add useful wiki links and related-note references.
-6. Run validation or report why validation was skipped.
-7. Return a short change summary.
-
 ## Optional Config
 
 `cobsidian.config.example.yml` documents optional vault, naming, safety, linking, and validation conventions for agents or adapters. Copy it to `cobsidian.config.yml` if you want a reusable local convention.
@@ -324,14 +239,6 @@ The helper scripts read it with `--config`.
 Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Do not include private vault content, personal paths, API keys, unpublished notes, or screenshots from a private knowledge base.
-
-## What Cobsidian Is Not
-
-- Not an Obsidian plugin.
-- Not a cloud sync service.
-- Not a vector database.
-- Not an automatic writer that should modify a vault without review.
-- Not a replacement for human editorial judgment.
 
 ## Trademark And Affiliation Notice
 
