@@ -21,7 +21,7 @@ read instructions
 | Codex | First-class | Install `skills/cobsidian` as a Codex skill. |
 | MCP hosts | First-class local server | Launch `skills/cobsidian/mcp_server.py` over local `stdio`. |
 | Hermes | Portable workflow | Register or reference `skills/cobsidian/SKILL.md` as a local workflow/skill and allow script execution. |
-| Claude Code | Portable workflow | Reference `skills/cobsidian/SKILL.md` from project instructions or a local skill setup, then run scripts from the terminal. |
+| Claude Code / OpenCode | First-class | Install as a Claude skill or reference from CLAUDE.md. See `agents/claude.md`. |
 | Cursor | Portable workflow | Reference the workflow from Cursor rules or project instructions, then run scripts from the integrated terminal. |
 | Other coding agents | Portable workflow | Provide `SKILL.md` as instructions and expose the Python scripts. |
 
