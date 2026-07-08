@@ -23,7 +23,7 @@
       --border: oklch(0.70 0.035 250 / 0.34);
       --shadow: oklch(0.40 0.04 255 / 0.24);
       --mono: "Cascadia Code", "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
-      --sans: "Aptos", "Segoe UI Variable", "Segoe UI", sans-serif;
+      --sans: "Aptos", "SF Pro", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
       --ease: cubic-bezier(0.16, 1, 0.3, 1);
     }
 
@@ -251,7 +251,7 @@
       display: block;
       margin: 12px 0 0;
       padding: 13px 15px;
-      border-radius: 18px;
+      border-radius: 12px;
       border: 1px solid var(--border);
       background: oklch(0.99 0.006 90 / 0.82);
       color: oklch(0.28 0.030 260);
@@ -290,6 +290,11 @@
       line-height: 1.3;
       background: oklch(1 0 0 / 0.66);
       border: 1px solid oklch(0.70 0.035 250 / 0.25);
+    }
+
+    .note-tab.active {
+      border-left: 3px solid var(--accent-violet);
+      background: oklch(1 0 0 / 0.88);
     }
 
     .note-tab.ghost {
@@ -465,7 +470,7 @@
           <p class="tagline">From AI conversation to linked Obsidian vault — plan first, write safely.</p>
         </div>
       </div>
-      <div class="timer">workflow preview</div>
+      <div class="timer">local · stdio · private</div>
     </header>
 
     <section class="grid" aria-label="Demo panels">
@@ -497,12 +502,12 @@
       <article class="panel" id="note-panel" aria-label="Obsidian note preview">
         <div class="panel-header">
           <div class="panel-title">obsidian note</div>
-          <div class="panel-title">preview only</div>
+          <div class="panel-title">reading view</div>
         </div>
         <div class="note-shell">
           <aside class="sidebar" aria-label="Mock vault sidebar">
             <div class="folder">obsidian-notes</div>
-            <div class="note-tab">RAG.md</div>
+            <div class="note-tab active">RAG.md</div>
             <div class="note-tab ghost">Agent Workflows.md</div>
             <div class="note-tab ghost">Vector Search.md</div>
           </aside>
@@ -518,7 +523,7 @@
             <ul>
               <li class="note-row" style="--delay: 6.7s">Chunk → Embed → 存入 vector DB，建立检索索引。</li>
               <li class="note-row" style="--delay: 7.2s">Query → retrieve top-k → 喂给 LLM 生成最终回答。</li>
-              <li class="note-row" style="--delay: 7.7s">See <span class="wiki">[[Agent Workflows]]</span> and <span class="wiki">[[Vector Search]]</span>.</li>
+              <li class="note-row" style="--delay: 7.7s">Related → <span class="wiki">[[Agent Workflows]]</span> · <span class="wiki">[[Vector Search]]</span></li>
             </ul>
           </section>
         </div>
