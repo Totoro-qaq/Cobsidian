@@ -39,23 +39,18 @@ class McpServerTests(unittest.TestCase):
             tool_names = {tool.name for tool in tools}
             prompt_names = {prompt.name for prompt in prompts}
 
-            self.assertIn("cobsidian_scan_vault", tool_names)
-            self.assertIn("cobsidian_find_duplicates", tool_names)
-            self.assertIn("cobsidian_suggest_backlinks", tool_names)
-            self.assertIn("cobsidian_validate_notes", tool_names)
-            self.assertIn("cobsidian_dry_run", tool_names)
+            self.assertEqual(
+                {
+                    "cobsidian_scan_vault",
+                    "cobsidian_find_duplicates",
+                    "cobsidian_suggest_backlinks",
+                    "cobsidian_validate_notes",
+                    "cobsidian_dry_run",
+                },
+                tool_names,
+            )
             self.assertIn("cobsidian-dry-run", prompt_names)
             self.assertIn("cobsidian-organize-after-confirmation", prompt_names)
-
-            forbidden_write_terms = ("write", "mutate", "create", "update", "delete")
-            self.assertEqual(
-                [],
-                sorted(
-                    tool_name
-                    for tool_name in tool_names
-                    if any(term in tool_name.casefold() for term in forbidden_write_terms)
-                ),
-            )
 
             dry_run_tool = next(
                 tool for tool in tools if tool.name == "cobsidian_dry_run"
