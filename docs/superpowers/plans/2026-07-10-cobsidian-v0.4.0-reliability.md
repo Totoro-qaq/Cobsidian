@@ -754,7 +754,7 @@ Commit: `docs: prepare Cobsidian v0.4.0`
 
 **Files:**
 - Verify all modified files.
-- Update local installation: `C:\Users\62683\.codex\skills\cobsidian`
+- Update local installation: `$CODEX_HOME/skills/cobsidian` or `~/.codex/skills/cobsidian`.
 
 - [ ] **Step 1: Run the full local verification gate**
 
@@ -814,7 +814,7 @@ The PR body must list the five fixes and local verification evidence.
 ```powershell
 $prNumber = gh pr view fix/v0.4.0-reliability --json number --jq .number
 gh pr merge $prNumber --squash --delete-branch
-git -C D:\python\Cobsidian pull --ff-only
+git fetch origin main
 ```
 
 Expected: `main` contains the squash commit and remains clean.
@@ -822,8 +822,8 @@ Expected: `main` contains the squash commit and remains clean.
 - [ ] **Step 6: Tag and publish `v0.4.0`**
 
 ```powershell
-git -C D:\python\Cobsidian tag -a v0.4.0 -m "Cobsidian v0.4.0"
-git -C D:\python\Cobsidian push origin v0.4.0
+git tag -a v0.4.0 origin/main -m "Cobsidian v0.4.0"
+git push origin v0.4.0
 gh release create v0.4.0 --repo Totoro-qaq/Cobsidian --title "Cobsidian v0.4.0" --generate-notes
 ```
 
@@ -834,16 +834,20 @@ Verify with `gh release view v0.4.0 --repo Totoro-qaq/Cobsidian`.
 Move the current install to a temporary backup, install from tag with the official installer, validate, then delete the backup only after success:
 
 ```powershell
-$skillHome = "C:\Users\62683\.codex\skills"
+$codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME ".codex" }
+$skillHome = Join-Path $codexHome "skills"
 $installed = (Join-Path $skillHome "cobsidian")
 $backup = Join-Path $env:TEMP "cobsidian-v0.3.0-backup-$(Get-Date -Format yyyyMMddHHmmss)"
-if ((Resolve-Path $installed).Path -ne "C:\Users\62683\.codex\skills\cobsidian") {
+$expectedInstalled = [IO.Path]::GetFullPath((Join-Path $skillHome "cobsidian"))
+if ((Resolve-Path $installed).Path -ne $expectedInstalled) {
   throw "Unexpected installed skill path: $installed"
 }
 Move-Item -LiteralPath $installed -Destination $backup
-python C:\Users\62683\.codex\skills\.system\skill-installer\scripts\install-skill-from-github.py --repo Totoro-qaq/Cobsidian --path skills/cobsidian --ref v0.4.0
+$installer = Join-Path $skillHome ".system\skill-installer\scripts\install-skill-from-github.py"
+$validator = Join-Path $skillHome ".system\skill-creator\scripts\quick_validate.py"
+python $installer --repo Totoro-qaq/Cobsidian --path skills/cobsidian --ref v0.4.0
 $env:PYTHONUTF8 = "1"
-python C:\Users\62683\.codex\skills\.system\skill-creator\scripts\quick_validate.py (Join-Path $skillHome "cobsidian")
+python $validator (Join-Path $skillHome "cobsidian")
 $resolvedBackup = (Resolve-Path $backup).Path
 $resolvedTemp = (Resolve-Path $env:TEMP).Path
 if (-not $resolvedBackup.StartsWith($resolvedTemp, [StringComparison]::OrdinalIgnoreCase)) {

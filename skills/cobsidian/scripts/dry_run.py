@@ -8,15 +8,8 @@ from difflib import SequenceMatcher
 from pathlib import Path
 
 from cobsidian_config import CobsidianConfig, load_config, resolve_vault_path
+from retrieval import build_search_documents, rank_backlinks
 from scan_vault import NoteInfo, read_text, scan_vault
-from suggest_backlinks import score_note, tokenize
-
-
-@dataclass(frozen=True)
-class BacklinkSuggestion:
-    title: str
-    path: str
-    score: int
 
 
 @dataclass(frozen=True)
@@ -83,22 +76,6 @@ def choose_decision(topic: str, mode: str | None, notes: list[NoteInfo], config:
     }
 
 
-def suggest_backlinks(topic: str, text: str, notes: list[NoteInfo], target_note: str | None, limit: int) -> list[BacklinkSuggestion]:
-    query_tokens = tokenize(f"{topic}\n{text}")
-    if not query_tokens:
-        return []
-
-    suggestions: list[BacklinkSuggestion] = []
-    for note in notes:
-        if target_note and note.path == target_note:
-            continue
-        note_tokens = tokenize(f"{note.title}\n{' '.join(note.tags)}\n{' '.join(note.wikilinks)}")
-        score = score_note(query_tokens, note_tokens)
-        if score > 0:
-            suggestions.append(BacklinkSuggestion(title=note.title, path=note.path, score=score))
-    return sorted(suggestions, key=lambda item: item.score, reverse=True)[:limit]
-
-
 def build_payload(
     vault_path: Path,
     config: CobsidianConfig,
@@ -109,12 +86,16 @@ def build_payload(
 ) -> dict[str, object]:
     decision = choose_decision(topic, mode, notes, config)
     risks = find_duplicate_risks(topic, notes, config.similar_title_threshold)
-    backlinks = suggest_backlinks(
-        topic=topic,
-        text=text,
-        notes=notes,
-        target_note=decision["target_note"] if decision["action"] == "append" else None,
+    excluded_paths = (
+        {decision["target_note"]}
+        if decision["action"] == "append"
+        else set()
+    )
+    backlinks = rank_backlinks(
+        f"{topic}\n{text}",
+        build_search_documents(vault_path, notes),
         limit=config.max_suggested_backlinks,
+        excluded_paths=excluded_paths,
     )
     return {
         "dry_run": True,

@@ -18,8 +18,8 @@ if str(SCRIPTS_DIR) not in sys.path:
 from cobsidian_config import CobsidianConfig, load_config, resolve_vault_path  # noqa: E402
 from dry_run import build_payload as build_dry_run_payload  # noqa: E402
 from dry_run import find_duplicate_risks  # noqa: E402
+from retrieval import build_search_documents, rank_backlinks  # noqa: E402
 from scan_vault import NoteInfo, read_text, scan_vault  # noqa: E402
-from suggest_backlinks import score_note, tokenize  # noqa: E402
 from validate_notes import extract_wikilinks  # noqa: E402
 
 
@@ -121,21 +121,19 @@ def tool_cobsidian_suggest_backlinks(
     vault_path, loaded_config = resolve_vault_from_inputs(vault=vault, config=config)
     compared_file = ensure_relative_path_inside_vault(vault_path, note_path) if note_path else None
     source_text = read_text(compared_file) if compared_file else str(text)
-    query_tokens = tokenize(source_text)
     max_results = limit if limit is not None else loaded_config.max_suggested_backlinks
 
-    suggestions: list[dict[str, Any]] = []
-    for note in scan_vault(vault_path):
-        if note_path and note.path == note_path:
-            continue
-        note_text = read_text(vault_path / note.path)
-        score = score_note(query_tokens, tokenize(f"{note.title}\n{note_text}"))
-        if score > 0:
-            suggestions.append({"title": note.title, "path": note.path, "score": score})
+    notes = scan_vault(vault_path)
+    suggestions = rank_backlinks(
+        source_text,
+        build_search_documents(vault_path, notes),
+        limit=max_results,
+        excluded_paths={note_path} if note_path else set(),
+    )
 
     return {
         "vault": str(vault_path),
-        "suggestions": sorted(suggestions, key=lambda item: item["score"], reverse=True)[:max_results],
+        "suggestions": [asdict(suggestion) for suggestion in suggestions],
     }
 
 

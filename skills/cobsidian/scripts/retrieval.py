@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 from collections import Counter
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Iterable, Protocol
 
 
 LATIN_TOKEN_RE = re.compile(r"[A-Za-z0-9_+\-.#]{2,}")
@@ -35,6 +37,13 @@ class RankedBacklink:
     score: int
 
 
+class NoteLike(Protocol):
+    path: str
+    title: str
+    tags: list[str]
+    wikilinks: list[str]
+
+
 def cjk_ngrams(run: str) -> list[str]:
     grams: list[str] = []
     for size in (2, 3):
@@ -62,14 +71,43 @@ def score_tokens(query_tokens: Counter[str], document_tokens: Counter[str]) -> i
     )
 
 
+def read_utf8(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        return path.read_text(encoding="utf-8", errors="replace")
+
+
+def build_search_documents(
+    vault_path: Path,
+    notes: Iterable[NoteLike],
+) -> list[SearchDocument]:
+    documents: list[SearchDocument] = []
+    for note in notes:
+        body = read_utf8(vault_path / note.path)
+        metadata = " ".join([*note.tags, *note.wikilinks])
+        documents.append(
+            SearchDocument(
+                title=note.title,
+                path=note.path,
+                text=f"{metadata}\n{body}",
+            )
+        )
+    return documents
+
+
 def rank_backlinks(
     query: str,
     documents: list[SearchDocument],
     limit: int,
+    excluded_paths: set[str] | None = None,
 ) -> list[RankedBacklink]:
     query_tokens = tokenize(query)
+    excluded = excluded_paths or set()
     ranked: list[RankedBacklink] = []
     for document in documents:
+        if document.path in excluded:
+            continue
         document_tokens = tokenize(f"{document.title}\n{document.text}")
         score = score_tokens(query_tokens, document_tokens)
         if score > 0:
