@@ -220,9 +220,11 @@ Each script also accepts `--config cobsidian.config.yml` when the config contain
 
 ## Optional Config
 
-`cobsidian.config.example.yml` documents optional vault, naming, safety, linking, and validation conventions for agents or adapters. Copy it to `cobsidian.config.yml` if you want a reusable local convention.
+`cobsidian.config.example.yml` is the supported `v0.4.0` config surface. It covers the vault path, default mode, mode directories, backlink limit, duplicate threshold and append preference, plus validation behavior. Copy it to `cobsidian.config.yml` for reusable local settings.
 
 The helper scripts read it with `--config`.
+
+Naming templates, redaction, and write-policy customization are not enforced by the config yet; they remain roadmap items.
 
 ## Roadmap
 

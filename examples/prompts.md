@@ -129,7 +129,7 @@ Run duplicate detection, summarize exact or similar titles, and recommend merge/
 Use Cobsidian and follow cobsidian.config.yml.
 
 Organize the following material into the configured vault.
-Respect naming, directory, safety, linking, and validation rules from the config.
+Respect the configured mode directories, duplicate threshold, backlink limit, and validation behavior.
 ```
 
 ## Config-Aware Dry Run

@@ -222,9 +222,11 @@ python skills/cobsidian/scripts/dry_run.py /path/to/vault --topic "RAG" --text "
 
 ## 可选配置
 
-`cobsidian.config.example.yml` 提供 vault、命名、安全、链接和校验规则的示例约定。需要固定个人规则时，可以复制为 `cobsidian.config.yml`。
+`cobsidian.config.example.yml` 是 `v0.4.0` 实际支持的配置面，包含 vault 路径、默认模式、模式目录、反链数量、重复阈值与追加偏好，以及校验行为。需要复用本地设置时，可以复制为 `cobsidian.config.yml`。
 
 辅助脚本可以通过 `--config` 读取这个文件。
+
+命名模板、脱敏和写入策略尚未由配置强制执行，仍属于路线图内容。
 
 ## 路线图
 
