@@ -64,13 +64,19 @@ The server registers read/planning tools only:
 
 | Tool | Purpose |
 |---|---|
-| `cobsidian_scan_vault` | Scan Markdown notes, titles, tags, and wiki links. |
-| `cobsidian_find_duplicates` | Report exact and similar note titles. |
+| `cobsidian_scan_vault` | Scan Markdown notes with bounded `offset` / `limit` pagination. |
+| `cobsidian_find_duplicates` | Report exact and similar note titles with bounded comparisons. |
 | `cobsidian_suggest_backlinks` | Suggest related notes for text or a target note. |
 | `cobsidian_validate_notes` | Report missing wiki links, duplicate titles, and empty notes. |
 | `cobsidian_dry_run` | Plan create/append behavior without writing files. |
 
 There is intentionally no write tool yet. Write workflows should go through dry-run first and require user confirmation in the host.
+
+## Large Vault Limits
+
+- `cobsidian_scan_vault` defaults to `offset=0` and `limit=100`; the maximum page size is `500`. Responses include `total_note_count` and page metadata.
+- `cobsidian_find_duplicates` always finds all exact normalized-title duplicates. Similar-title work defaults to at most `100000` comparisons and returns `comparisons` plus `truncated` metadata.
+- Backlink ranking reads title, tags, wiki links, and note body text. Chinese text uses deterministic CJK bigrams and trigrams without an external tokenizer.
 
 ## Resources
 

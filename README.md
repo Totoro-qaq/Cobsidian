@@ -109,12 +109,13 @@ flowchart TD
 
 - Create learning notes, project notes, comparison notes, and index notes.
 - Check existing notes before writing to reduce duplicates.
-- Suggest `[[wiki links]]` and related-note sections.
+- Suggest `[[wiki links]]` from note titles, metadata, and body text.
+- Match Chinese related phrases with deterministic CJK bigrams and trigrams.
 - Validate missing wiki-link targets.
 - Detect exact and similar note titles.
 - Keep note structure concise and reusable.
 - Avoid writing private paths, secrets, or raw chat transcripts by default.
-- Expose local MCP tools for read-only vault inspection and dry-run planning.
+- Expose paginated local MCP tools for read-only vault inspection and dry-run planning.
 
 ## Install
 
@@ -228,7 +229,7 @@ Naming templates, redaction, and write-policy customization are not enforced by 
 
 ## Roadmap
 
-- Better duplicate detection with configurable thresholds.
+- Semantic duplicate detection beyond title similarity.
 - Frontmatter support for vaults that use YAML metadata.
 - Optional note templates.
 - Configurable naming rules.

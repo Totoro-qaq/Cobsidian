@@ -75,6 +75,8 @@ Use Cobsidian and follow /absolute/path/to/cobsidian.config.yml.
 
 Cobsidian also ships a local MCP server. It currently exposes read and planning tools only; it does not expose a write tool.
 
+Vault scans are paginated (`limit=100` by default, `500` maximum), and similar-title comparisons report when their work cap is reached. Backlink suggestions use the same body-aware multilingual ranker as the CLI and dry-run path.
+
 Install the MCP dependency:
 
 ```bash

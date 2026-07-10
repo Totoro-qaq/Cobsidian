@@ -109,12 +109,13 @@ flowchart TD
 
 - 创建学习笔记、项目笔记、对比笔记、索引笔记。
 - 写入前检查已有笔记，减少重复。
-- 建议 `[[双链]]` 和 Related notes 区块。
+- 根据笔记标题、元数据和正文建议 `[[双链]]` 与 Related notes 区块。
+- 使用确定性的中文 bigram/trigram 匹配相关短语。
 - 校验缺失的 wiki-link 目标。
 - 检测完全重复或高度相似的笔记标题。
 - 保持笔记结构简洁、可复用。
 - 默认避免写入私人路径、密钥和原始聊天流水。
-- 提供本地 MCP tools，用于只读检查和 dry-run 规划。
+- 提供带分页的本地 MCP tools，用于只读检查和 dry-run 规划。
 
 ## 安装
 
@@ -230,7 +231,7 @@ python skills/cobsidian/scripts/dry_run.py /path/to/vault --topic "RAG" --text "
 
 ## 路线图
 
-- 更好的重复检测和可配置阈值。
+- 超越标题相似度的语义重复检测。
 - 支持使用 YAML frontmatter 的 vault。
 - 可选笔记模板。
 - 可配置命名规则。

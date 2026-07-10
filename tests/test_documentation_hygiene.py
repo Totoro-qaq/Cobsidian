@@ -48,6 +48,14 @@ class DocumentationHygieneTests(unittest.TestCase):
 
         self.assertEqual([], violations)
 
+    def test_public_adapter_has_no_owner_specific_workflow_rules(self) -> None:
+        adapter = (
+            REPO_ROOT / "skills" / "cobsidian" / "agents" / "claude.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertNotIn("做后端就用superpowers", adapter)
+        self.assertNotIn("做知识整理就用cobsidian skill", adapter)
+
 
 if __name__ == "__main__":
     unittest.main()

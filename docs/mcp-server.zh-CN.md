@@ -64,13 +64,19 @@ python skills/cobsidian/mcp_server.py
 
 | Tool | 作用 |
 |---|---|
-| `cobsidian_scan_vault` | 扫描 Markdown 笔记、标题、标签和双链。 |
-| `cobsidian_find_duplicates` | 报告完全重复和相似标题。 |
+| `cobsidian_scan_vault` | 使用有界的 `offset` / `limit` 分页扫描 Markdown 笔记。 |
+| `cobsidian_find_duplicates` | 在有界比较次数内报告完全重复和相似标题。 |
 | `cobsidian_suggest_backlinks` | 根据文本或目标笔记建议相关笔记。 |
 | `cobsidian_validate_notes` | 报告缺失双链目标、重复标题和空笔记。 |
 | `cobsidian_dry_run` | 只规划新建/追加行为，不写文件。 |
 
 现在故意不提供写入 tool。写入流程应该先 dry-run，再由用户在 host 里确认。
+
+## 大型 Vault 边界
+
+- `cobsidian_scan_vault` 默认 `offset=0`、`limit=100`，单页最大 `500`；响应包含 `total_note_count` 和分页元数据。
+- `cobsidian_find_duplicates` 始终完整发现归一化标题完全相同的笔记；相似标题默认最多比较 `100000` 次，并返回 `comparisons` 与 `truncated`。
+- 反链排名会读取标题、标签、已有双链和正文；中文采用确定性的 CJK bigram/trigram，不依赖外部分词器。
 
 ## Resources
 
