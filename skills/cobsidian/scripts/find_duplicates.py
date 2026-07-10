@@ -1,42 +1,11 @@
 from __future__ import annotations
 
 import argparse
-import re
-from collections import defaultdict
-from difflib import SequenceMatcher
 from pathlib import Path
 
 from cobsidian_config import load_config, resolve_vault_path
-
-
-def iter_markdown_files(vault_path: Path) -> list[Path]:
-    ignored_dirs = {".obsidian", ".git", "__pycache__", ".trash"}
-    return sorted(
-        path
-        for path in vault_path.rglob("*.md")
-        if path.is_file() and not any(part in ignored_dirs for part in path.parts)
-    )
-
-
-def read_text(path: Path) -> str:
-    try:
-        return path.read_text(encoding="utf-8")
-    except UnicodeDecodeError:
-        return path.read_text(encoding="utf-8", errors="replace")
-
-
-def extract_title(path: Path, text: str) -> str:
-    for line in text.splitlines():
-        if line.startswith("# "):
-            title = line[2:].strip()
-            if title:
-                return title
-    return path.stem
-
-
-def normalize_title(title: str) -> str:
-    lowered = title.casefold()
-    return re.sub(r"[^a-z0-9\u4e00-\u9fff]+", "", lowered)
+from duplicates import DEFAULT_MAX_COMPARISONS, find_title_duplicates
+from scan_vault import scan_vault
 
 
 def main() -> int:
@@ -44,6 +13,12 @@ def main() -> int:
     parser.add_argument("vault", nargs="?", type=Path)
     parser.add_argument("--config", type=Path, help="Path to cobsidian.config.yml.")
     parser.add_argument("--threshold", type=float, default=None, help="Similarity threshold from 0 to 1.")
+    parser.add_argument(
+        "--max-comparisons",
+        type=int,
+        default=DEFAULT_MAX_COMPARISONS,
+        help="Maximum similar-title comparisons before reporting truncation.",
+    )
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -52,37 +27,38 @@ def main() -> int:
     if not vault_path.exists() or not vault_path.is_dir():
         raise SystemExit(f"Vault path does not exist or is not a directory: {vault_path}")
 
-    notes: list[tuple[str, str, str]] = []
-    for path in iter_markdown_files(vault_path):
-        title = extract_title(path, read_text(path))
-        notes.append((path.relative_to(vault_path).as_posix(), title, normalize_title(title)))
-
-    exact: dict[str, list[tuple[str, str]]] = defaultdict(list)
-    for relative_path, title, normalized in notes:
-        if normalized:
-            exact[normalized].append((relative_path, title))
+    report = find_title_duplicates(
+        scan_vault(vault_path),
+        threshold=threshold,
+        max_comparisons=args.max_comparisons,
+    )
 
     found = False
     print("Exact duplicate titles:")
-    for matches in exact.values():
-        if len(matches) > 1:
-            found = True
-            print("-")
-            for relative_path, title in matches:
-                print(f"  {title} :: {relative_path}")
+    for group in report.exact_duplicates:
+        found = True
+        print("-")
+        for note in group:
+            print(f"  {note.title} :: {note.path}")
 
     print("\nSimilar titles:")
-    for index, left in enumerate(notes):
-        for right in notes[index + 1 :]:
-            if not left[2] or not right[2] or left[2] == right[2]:
-                continue
-            score = SequenceMatcher(None, left[2], right[2]).ratio()
-            if score >= threshold:
-                found = True
-                print(f"- {score:.2f}: {left[1]} :: {left[0]} <-> {right[1]} :: {right[0]}")
+    for match in report.similar_titles:
+        found = True
+        print(
+            f"- {match.score:.2f}: "
+            f"{match.left.title} :: {match.left.path} <-> "
+            f"{match.right.title} :: {match.right.path}"
+        )
+
+    if report.truncated:
+        print(
+            "\nSimilar-title search truncated after "
+            f"{report.comparisons} comparisons."
+        )
 
     if not found:
-        print("No duplicate or highly similar titles found.")
+        suffix = " within the comparison limit" if report.truncated else ""
+        print(f"No duplicate or highly similar titles found{suffix}.")
     return 0
 
 

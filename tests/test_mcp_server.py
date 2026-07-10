@@ -9,6 +9,7 @@ from skills.cobsidian.mcp_server import (
     create_mcp_server,
     ensure_relative_path_inside_vault,
     tool_cobsidian_dry_run,
+    tool_cobsidian_find_duplicates,
     tool_cobsidian_scan_vault,
 )
 
@@ -79,6 +80,57 @@ class McpServerTests(unittest.TestCase):
 
             with self.assertRaises(ValueError):
                 ensure_relative_path_inside_vault(vault, "../outside.md")
+
+    def test_scan_tool_paginates_notes(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+            for index in range(4):
+                (vault / f"Note {index}.md").write_text(
+                    f"# Note {index}\n",
+                    encoding="utf-8",
+                )
+
+            payload = tool_cobsidian_scan_vault(
+                vault=str(vault),
+                offset=1,
+                limit=2,
+            )
+
+            self.assertEqual(4, payload["total_note_count"])
+            self.assertEqual(
+                {"offset": 1, "limit": 2, "returned": 2},
+                payload["page"],
+            )
+            self.assertEqual(2, len(payload["notes"]))
+
+    def test_scan_tool_rejects_invalid_page_values(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+            invalid_values = [
+                {"offset": -1, "limit": 1},
+                {"offset": 0, "limit": 0},
+                {"offset": 0, "limit": 501},
+            ]
+
+            for values in invalid_values:
+                with self.subTest(values=values):
+                    with self.assertRaises(ValueError):
+                        tool_cobsidian_scan_vault(vault=str(vault), **values)
+
+    def test_duplicate_tool_reports_comparison_truncation(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+            for title in ("Agent Workflow", "Agent Workflows", "Agent Work"):
+                (vault / f"{title}.md").write_text(f"# {title}\n", encoding="utf-8")
+
+            payload = tool_cobsidian_find_duplicates(
+                vault=str(vault),
+                threshold=0.5,
+                max_comparisons=1,
+            )
+
+            self.assertEqual(1, payload["comparisons"])
+            self.assertTrue(payload["truncated"])
 
 
 if __name__ == "__main__":

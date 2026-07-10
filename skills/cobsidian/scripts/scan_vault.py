@@ -7,7 +7,10 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable
 
-from cobsidian_config import CobsidianConfig, load_config, resolve_vault_path
+try:
+    from cobsidian_config import CobsidianConfig, load_config, resolve_vault_path
+except ModuleNotFoundError:
+    from .cobsidian_config import CobsidianConfig, load_config, resolve_vault_path
 
 
 WIKILINK_RE = re.compile(r"\[\[([^\]]+)\]\]")
