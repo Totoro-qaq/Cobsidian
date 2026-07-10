@@ -105,7 +105,20 @@ def build_payload(
     if not normalized_topic:
         raise ValueError("Provide a non-empty topic.")
 
-    decision = choose_decision(normalized_topic, mode, notes, config)
+    capability = validated_capability(capability_level)
+    if capability.scan:
+        decision = choose_decision(normalized_topic, mode, notes, config)
+    else:
+        decision = {
+            "action": "blocked",
+            "target_note": "",
+            "reason": "Scan capability is unavailable for chat-only.",
+        }
+    resolved_display_policy = (
+        config.knowledge_read_policy
+        if knowledge_read_policy is None
+        else knowledge_read_policy
+    )
     knowledge_read = build_knowledge_read(
         mode=mode,
         mode_explicit=mode_explicit,
@@ -113,26 +126,29 @@ def build_payload(
         depth=depth,
         granularity=granularity,
         evidence=evidence,
-        display_policy=knowledge_read_policy or config.knowledge_read_policy,
+        display_policy=resolved_display_policy,
         decision_action=decision["action"],
     )
-    capability = validated_capability(capability_level)
-    risks = find_duplicate_risks(
-        normalized_topic,
-        notes,
-        config.similar_title_threshold,
-    )
-    excluded_paths = (
-        {decision["target_note"]}
-        if decision["action"] == "append"
-        else set()
-    )
-    backlinks = rank_backlinks(
-        build_query(topic=normalized_topic, text=text),
-        build_search_documents(vault_path, notes),
-        limit=config.max_suggested_backlinks,
-        excluded_paths=excluded_paths,
-    )
+    if capability.scan:
+        risks = find_duplicate_risks(
+            normalized_topic,
+            notes,
+            config.similar_title_threshold,
+        )
+        excluded_paths = (
+            {decision["target_note"]}
+            if decision["action"] == "append"
+            else set()
+        )
+        backlinks = rank_backlinks(
+            build_query(topic=normalized_topic, text=text),
+            build_search_documents(vault_path, notes),
+            limit=config.max_suggested_backlinks,
+            excluded_paths=excluded_paths,
+        )
+    else:
+        risks = []
+        backlinks = []
     preflight = build_preflight(
         capability_level=capability_level,
         vault_resolved=capability.scan,
@@ -217,7 +233,8 @@ def main() -> int:
         if args.mode_explicit is not None
         else args.mode is not None
     )
-    notes = scan_vault(vault_path)
+    capability = validated_capability(args.capability_level)
+    notes = scan_vault(vault_path) if capability.scan else []
     try:
         payload = build_payload(
             vault_path=vault_path,

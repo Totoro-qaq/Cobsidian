@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import io
 import json
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 import re
 import subprocess
 import sys
+from unittest.mock import patch
 
 from skills.cobsidian.mcp_server import tool_cobsidian_suggest_backlinks
+from skills.cobsidian.scripts import dry_run as dry_run_module
 from skills.cobsidian.scripts.cobsidian_config import CobsidianConfig
 from skills.cobsidian.scripts.dry_run import build_payload
 from skills.cobsidian.scripts.retrieval import (
@@ -160,19 +164,50 @@ class RetrievalEntrypointTests(unittest.TestCase):
     def test_chat_only_does_not_claim_scan_dependent_checks(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             vault = Path(temp_dir)
-
-            payload = build_payload(
-                vault_path=vault,
-                config=CobsidianConfig(config_path=None, raw={}),
-                topic="Portable Draft",
-                mode="capture",
-                text="draft material",
-                notes=scan_vault(vault),
-                mode_explicit=True,
-                capability_level="chat-only",
+            (vault / "Portable Draft.md").write_text(
+                "# Portable Draft\n\nRelated material.\n",
+                encoding="utf-8",
             )
 
+            with (
+                patch.object(
+                    dry_run_module,
+                    "choose_decision",
+                    wraps=dry_run_module.choose_decision,
+                ) as choose_decision,
+                patch.object(
+                    dry_run_module,
+                    "find_duplicate_risks",
+                    wraps=dry_run_module.find_duplicate_risks,
+                ) as find_duplicate_risks,
+                patch.object(
+                    dry_run_module,
+                    "rank_backlinks",
+                    wraps=dry_run_module.rank_backlinks,
+                ) as rank_backlinks,
+            ):
+                payload = build_payload(
+                    vault_path=vault,
+                    config=CobsidianConfig(config_path=None, raw={}),
+                    topic="Portable Draft",
+                    mode="capture",
+                    text="draft material",
+                    notes=scan_vault(vault),
+                    mode_explicit=True,
+                    capability_level="chat-only",
+                )
+
             preflight = payload["preflight"]
+            self.assertEqual(
+                {
+                    "action": "blocked",
+                    "target_note": "",
+                    "reason": "Scan capability is unavailable for chat-only.",
+                },
+                payload["decision"],
+            )
+            self.assertEqual([], payload["duplicate_risks"])
+            self.assertEqual([], payload["suggested_backlinks"])
             self.assertFalse(preflight["vault_resolved"])
             self.assertFalse(preflight["existing_notes_scanned"])
             self.assertFalse(preflight["duplicate_check_completed"])
@@ -181,6 +216,39 @@ class RetrievalEntrypointTests(unittest.TestCase):
             self.assertIn("scan_capability_unavailable", preflight["blocked_reasons"])
             self.assertIn("write_capability_unavailable", preflight["blocked_reasons"])
             self.assertEqual([], payload["writes"])
+            choose_decision.assert_not_called()
+            find_duplicate_risks.assert_not_called()
+            rank_backlinks.assert_not_called()
+
+    def test_chat_only_cli_does_not_scan_vault(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+            output = io.StringIO()
+            argv = [
+                str(SCRIPTS_DIR / "dry_run.py"),
+                str(vault),
+                "--topic",
+                "Portable Draft",
+                "--mode",
+                "capture",
+                "--capability-level",
+                "chat-only",
+                "--json",
+            ]
+
+            with (
+                patch.object(sys, "argv", argv),
+                patch.object(dry_run_module, "scan_vault", return_value=[]) as scan,
+                redirect_stdout(output),
+            ):
+                exit_code = dry_run_module.main()
+
+            payload = json.loads(output.getvalue())
+            self.assertEqual(0, exit_code)
+            scan.assert_not_called()
+            self.assertEqual("blocked", payload["decision"]["action"])
+            self.assertEqual([], payload["duplicate_risks"])
+            self.assertEqual([], payload["suggested_backlinks"])
 
     def test_invalid_capability_is_rejected_by_domain_validation(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -195,6 +263,21 @@ class RetrievalEntrypointTests(unittest.TestCase):
                     text="semantic retrieval",
                     notes=scan_vault(vault),
                     capability_level="browser-only",
+                )
+
+    def test_empty_programmatic_knowledge_read_policy_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+
+            with self.assertRaisesRegex(ValueError, "display_policy"):
+                build_payload(
+                    vault_path=vault,
+                    config=CobsidianConfig(config_path=None, raw={}),
+                    topic="Retrieval Pipeline",
+                    mode="learning",
+                    text="semantic retrieval",
+                    notes=scan_vault(vault),
+                    knowledge_read_policy="",
                 )
 
     def test_dry_run_mcp_and_shared_ranker_return_same_order(self) -> None:
