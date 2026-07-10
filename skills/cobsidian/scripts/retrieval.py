@@ -9,9 +9,9 @@ from typing import Iterable, Iterator, Protocol
 
 LATIN_TOKEN_RE = re.compile(
     r"(?<![A-Za-z0-9_])(?:"
-    r"[A-Za-z][A-Za-z0-9_]*(?:\+\+|#)"
+    r"[A-Za-z][A-Za-z0-9_]*(?:\+\+|#)[A-Za-z0-9_]*"
     r"|[A-Za-z0-9_]+(?:[.-][A-Za-z0-9_]+)*"
-    r"|\.[A-Za-z0-9_]+"
+    r"|(?<!\.)\.[A-Za-z0-9_]+"
     r")(?![A-Za-z0-9_])"
 )
 CJK_RUN_RE = re.compile(r"[\u4e00-\u9fff]{2,}")

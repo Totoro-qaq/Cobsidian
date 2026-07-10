@@ -48,12 +48,10 @@ def find_title_duplicates(
         raise ValueError("max_comparisons must be non-negative.")
 
     exact_by_title: dict[str, list[NoteInfoLike]] = defaultdict(list)
-    normalized_notes: list[tuple[NoteInfoLike, str]] = []
     for note in notes:
         normalized = normalize_title(note.title)
         if normalized:
             exact_by_title[normalized].append(note)
-            normalized_notes.append((note, normalized))
 
     exact_duplicates = [
         sorted(group, key=lambda note: note.path.casefold())
@@ -62,16 +60,26 @@ def find_title_duplicates(
     ]
     exact_duplicates.sort(key=lambda group: group[0].path.casefold())
 
+    normalized_notes = [
+        (
+            min(group, key=lambda note: note.path.casefold()),
+            normalized_title,
+        )
+        for normalized_title, group in exact_by_title.items()
+    ]
+    normalized_notes.sort(
+        key=lambda item: (item[1], item[0].path.casefold())
+    )
+
     similar_titles: list[SimilarTitle] = []
     comparisons = 0
     truncated = False
     for index, (left, left_title) in enumerate(normalized_notes):
-        for right, right_title in normalized_notes[index + 1 :]:
-            if left_title == right_title:
-                continue
+        for right_index in range(index + 1, len(normalized_notes)):
             if comparisons >= max_comparisons:
                 truncated = True
                 break
+            right, right_title = normalized_notes[right_index]
             comparisons += 1
             score = SequenceMatcher(None, left_title, right_title).ratio()
             if score >= threshold:

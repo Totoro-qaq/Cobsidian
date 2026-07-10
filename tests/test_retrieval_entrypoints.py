@@ -127,6 +127,35 @@ class RetrievalEntrypointTests(unittest.TestCase):
             )
             self.assertEqual(expected_paths, cli_paths)
 
+    def test_cli_uses_topic_when_file_body_is_empty(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+            (vault / "Gamma.md").write_text(
+                "# Gamma\n\nTopic signal.\n",
+                encoding="utf-8",
+            )
+            empty_draft = vault / "Empty Draft.md"
+            empty_draft.write_text("", encoding="utf-8")
+
+            cli = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS_DIR / "suggest_backlinks.py"),
+                    str(vault),
+                    "--topic",
+                    "Gamma",
+                    "--file",
+                    str(empty_draft),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+
+            self.assertIn("path=Gamma.md", cli.stdout)
+            self.assertNotIn("No usable tokens", cli.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

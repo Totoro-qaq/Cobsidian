@@ -38,6 +38,23 @@ class DuplicateTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "max_comparisons"):
             find_title_duplicates([], threshold=0.8, max_comparisons=-1)
 
+    def test_similar_search_compares_unique_normalized_titles(self) -> None:
+        notes = [
+            NoteInfo(f"duplicate-{index}.md", "RAG", [], [], 1)
+            for index in range(1000)
+        ]
+        notes.append(NoteInfo("pipeline.md", "RAG Pipeline", [], [], 1))
+
+        report = find_title_duplicates(
+            notes,
+            threshold=0.4,
+            max_comparisons=10,
+        )
+
+        self.assertEqual(1, report.comparisons)
+        self.assertFalse(report.truncated)
+        self.assertEqual(1, len(report.similar_titles))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -75,7 +75,7 @@ There is intentionally no write tool yet. Write workflows should go through dry-
 ## Large Vault Limits
 
 - `cobsidian_scan_vault` defaults to `offset=0` and `limit=100`; the maximum page size is `500`. Responses include `total_note_count` and page metadata.
-- `cobsidian_find_duplicates` always finds all exact normalized-title duplicates. Similar-title work defaults to at most `100000` comparisons and returns `comparisons` plus `truncated` metadata.
+- `cobsidian_find_duplicates` always finds all exact normalized-title duplicates. Similar-title work compares unique normalized titles, defaults to at most `100000` comparisons, and returns `comparisons` plus `truncated` metadata.
 - Backlink ranking reads title, tags, wiki links, and note body text. Chinese text uses deterministic CJK bigrams and trigrams without an external tokenizer.
 - Backlink result limits must be between `1` and `100`; the configured default is `8`.
 

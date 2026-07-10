@@ -61,6 +61,13 @@ class RetrievalTests(unittest.TestCase):
             with self.subTest(expected=expected):
                 self.assertIn(expected, tokens)
 
+    def test_embedded_punctuation_does_not_create_hidden_file_tokens(self) -> None:
+        self.assertEqual(tokenize("foo bar"), tokenize("foo...bar"))
+        self.assertNotIn(".bar", tokenize("foo...bar"))
+
+    def test_versioned_cpp_token_is_preserved(self) -> None:
+        self.assertIn("c++17", tokenize("C++17"))
+
     def test_backlink_limit_must_be_bounded(self) -> None:
         for invalid_limit in (-1, 0, MAX_BACKLINK_LIMIT + 1):
             with self.subTest(invalid_limit=invalid_limit):

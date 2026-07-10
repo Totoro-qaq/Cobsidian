@@ -6,13 +6,13 @@
 
 - Validate Agent Skill YAML frontmatter in tests and CI.
 - Use one body-aware backlink ranker across CLI, dry-run, and MCP.
-- Use the same optional topic-plus-text query contract across all backlink entry points.
+- Use the same optional topic-plus-text query contract across all backlink entry points, including topic-only CLI queries.
 - Add deterministic CJK bigram/trigram matching for Chinese notes.
-- Normalize prose punctuation while preserving technical tokens such as `C++`, `C#`, `node.js`, and `.venv`.
+- Normalize prose punctuation while preserving technical tokens such as `C++17`, `C#`, `node.js`, and `.venv`.
 - Stream note bodies during backlink ranking and retain at most the configured result limit.
 - Validate backlink limits from `1` to `100`.
 - Publish only configuration fields that scripts and MCP tools enforce.
-- Paginate MCP vault scans and report bounded similar-title comparison work.
+- Paginate MCP vault scans and bound similar-title work to unique normalized titles.
 - Preserve the complete static vault-summary resource and add a bounded vault-page resource.
 - Keep exact duplicate-title detection complete when fuzzy work is truncated.
 - Remove owner-specific workflow rules from the public Claude/OpenCode adapter.

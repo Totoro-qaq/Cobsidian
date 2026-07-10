@@ -75,7 +75,7 @@ python skills/cobsidian/mcp_server.py
 ## 大型 Vault 边界
 
 - `cobsidian_scan_vault` 默认 `offset=0`、`limit=100`，单页最大 `500`；响应包含 `total_note_count` 和分页元数据。
-- `cobsidian_find_duplicates` 始终完整发现归一化标题完全相同的笔记；相似标题默认最多比较 `100000` 次，并返回 `comparisons` 与 `truncated`。
+- `cobsidian_find_duplicates` 始终完整发现归一化标题完全相同的笔记；相似标题只比较唯一归一化标题，默认最多比较 `100000` 次，并返回 `comparisons` 与 `truncated`。
 - 反链排名会读取标题、标签、已有双链和正文；中文采用确定性的 CJK bigram/trigram，不依赖外部分词器。
 - 反链结果数量必须在 `1` 到 `100` 之间，配置默认值为 `8`。
 
