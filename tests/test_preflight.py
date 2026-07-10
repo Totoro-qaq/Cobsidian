@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import inspect
+import operator
 import unittest
 from dataclasses import FrozenInstanceError, fields
+from types import MappingProxyType
 
 from skills.cobsidian.scripts.preflight import (
     CAPABILITY_FLAGS,
@@ -11,19 +13,43 @@ from skills.cobsidian.scripts.preflight import (
 )
 
 
+def build_completed_preflight(capability_level: str) -> Preflight:
+    return build_preflight(
+        capability_level=capability_level,
+        vault_resolved=True,
+        existing_notes_scanned=True,
+        duplicate_check_completed=True,
+        backlink_check_completed=True,
+        mode_selected=True,
+    )
+
+
 class PreflightTests(unittest.TestCase):
     def test_capability_flags_match_the_host_contract(self) -> None:
-        self.assertEqual(
-            {
-                "full-local": {"scan": True, "write": True},
-                "filesystem-only": {"scan": True, "write": True},
-                "mcp-readonly": {"scan": True, "write": False},
-                "chat-only": {"scan": False, "write": False},
-            },
-            CAPABILITY_FLAGS,
-        )
+        expected = {
+            "full-local": (True, True),
+            "filesystem-only": (True, True),
+            "mcp-readonly": (True, False),
+            "chat-only": (False, False),
+        }
 
-    def test_build_preflight_signature_uses_safe_defaults(self) -> None:
+        self.assertEqual(tuple(expected), tuple(CAPABILITY_FLAGS))
+        for capability_level, (scan, write) in expected.items():
+            with self.subTest(capability_level=capability_level):
+                capability = CAPABILITY_FLAGS[capability_level]
+                self.assertIs(scan, capability.scan)
+                self.assertIs(write, capability.write)
+
+    def test_capability_flags_are_immutable_at_both_levels(self) -> None:
+        self.assertIsInstance(CAPABILITY_FLAGS, MappingProxyType)
+        full_local = CAPABILITY_FLAGS["full-local"]
+
+        with self.assertRaises(TypeError):
+            operator.setitem(CAPABILITY_FLAGS, "full-local", full_local)
+        with self.assertRaises(FrozenInstanceError):
+            setattr(full_local, "scan", False)
+
+    def test_build_preflight_signature_is_fail_closed(self) -> None:
         parameters = inspect.signature(build_preflight).parameters
 
         self.assertIs(inspect.Parameter.empty, parameters["capability_level"].default)
@@ -35,46 +61,18 @@ class PreflightTests(unittest.TestCase):
             "mode_selected",
         ):
             with self.subTest(name=name):
-                self.assertIs(True, parameters[name].default)
+                self.assertIs(False, parameters[name].default)
         self.assertEqual("dry-run", parameters["write_policy"].default)
 
-    def test_local_capabilities_are_ready_after_all_checks(self) -> None:
-        for capability in ("full-local", "filesystem-only"):
-            with self.subTest(capability=capability):
-                result = build_preflight(capability_level=capability)
+    def test_defaults_report_uncompleted_evidence_and_are_not_ready(self) -> None:
+        result = build_preflight(capability_level="full-local")
 
-                self.assertTrue(result.ready)
-                self.assertEqual((), result.blocked_reasons)
-                self.assertEqual([], result.to_payload()["blocked_reasons"])
-
-    def test_read_only_and_chat_hosts_are_not_write_ready(self) -> None:
-        mcp = build_preflight(capability_level="mcp-readonly")
-        chat = build_preflight(capability_level="chat-only")
-
-        self.assertFalse(mcp.ready)
-        self.assertEqual(
-            ("write_capability_unavailable",),
-            mcp.blocked_reasons,
-        )
-        self.assertFalse(chat.ready)
-        self.assertEqual(
-            (
-                "scan_capability_unavailable",
-                "write_capability_unavailable",
-            ),
-            chat.blocked_reasons,
-        )
-
-    def test_missing_checks_and_mode_are_reported_deterministically(self) -> None:
-        result = build_preflight(
-            capability_level="filesystem-only",
-            vault_resolved=False,
-            existing_notes_scanned=False,
-            duplicate_check_completed=False,
-            backlink_check_completed=False,
-            mode_selected=False,
-        )
-
+        self.assertFalse(result.vault_resolved)
+        self.assertFalse(result.existing_notes_scanned)
+        self.assertFalse(result.duplicate_check_completed)
+        self.assertFalse(result.backlink_check_completed)
+        self.assertFalse(result.mode_selected)
+        self.assertFalse(result.ready)
         self.assertEqual(
             (
                 "vault_unresolved",
@@ -86,15 +84,30 @@ class PreflightTests(unittest.TestCase):
             result.blocked_reasons,
         )
 
-    def test_all_block_reasons_follow_the_contract_order(self) -> None:
-        result = build_preflight(
-            capability_level="chat-only",
-            vault_resolved=False,
-            existing_notes_scanned=False,
-            duplicate_check_completed=False,
-            backlink_check_completed=False,
-            mode_selected=False,
+    def test_local_capabilities_require_explicit_completed_checks(self) -> None:
+        for capability_level in ("full-local", "filesystem-only"):
+            with self.subTest(capability_level=capability_level):
+                result = build_completed_preflight(capability_level)
+
+                self.assertTrue(result.ready)
+                self.assertEqual((), result.blocked_reasons)
+                self.assertEqual([], result.to_payload()["blocked_reasons"])
+
+    def test_read_only_and_chat_hosts_are_not_write_ready(self) -> None:
+        mcp = build_completed_preflight("mcp-readonly")
+        chat = build_preflight(capability_level="chat-only")
+
+        self.assertFalse(mcp.ready)
+        self.assertEqual(
+            ("write_capability_unavailable",),
+            mcp.blocked_reasons,
         )
+        self.assertFalse(chat.ready)
+        self.assertIn("scan_capability_unavailable", chat.blocked_reasons)
+        self.assertIn("write_capability_unavailable", chat.blocked_reasons)
+
+    def test_all_block_reasons_follow_the_contract_order(self) -> None:
+        result = build_preflight(capability_level="chat-only")
 
         self.assertEqual(
             (
@@ -111,12 +124,9 @@ class PreflightTests(unittest.TestCase):
 
     def test_ready_exactly_matches_absence_of_blocked_reasons(self) -> None:
         results = (
-            build_preflight(capability_level="full-local"),
-            build_preflight(
-                capability_level="filesystem-only",
-                vault_resolved=False,
-            ),
-            build_preflight(capability_level="mcp-readonly"),
+            build_completed_preflight("full-local"),
+            build_preflight(capability_level="filesystem-only"),
+            build_completed_preflight("mcp-readonly"),
             build_preflight(capability_level="chat-only"),
         )
 
@@ -128,8 +138,96 @@ class PreflightTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "capability_level"):
             build_preflight(capability_level="browser-only")
 
-    def test_preflight_is_frozen_with_the_contract_fields(self) -> None:
-        preflight = build_preflight(capability_level="mcp-readonly")
+    def test_invalid_write_policy_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "write_policy"):
+            build_preflight(
+                capability_level="full-local",
+                write_policy="write-now",
+            )
+        with self.assertRaisesRegex(ValueError, "write_policy"):
+            Preflight(
+                vault_resolved=False,
+                existing_notes_scanned=False,
+                duplicate_check_completed=False,
+                backlink_check_completed=False,
+                mode_selected=False,
+                capability_level="full-local",
+                write_policy="write-now",
+            )
+
+    def test_scanless_capability_cannot_claim_scan_dependent_checks(self) -> None:
+        for completed_check in (
+            "existing_notes_scanned",
+            "duplicate_check_completed",
+            "backlink_check_completed",
+        ):
+            values = {
+                "existing_notes_scanned": False,
+                "duplicate_check_completed": False,
+                "backlink_check_completed": False,
+                completed_check: True,
+            }
+            with self.subTest(completed_check=completed_check):
+                with self.assertRaisesRegex(ValueError, "scan capability"):
+                    build_preflight(
+                        capability_level="chat-only",
+                        **values,
+                    )
+
+    def test_duplicate_and_backlink_checks_require_an_existing_note_scan(self) -> None:
+        for completed_check in (
+            "duplicate_check_completed",
+            "backlink_check_completed",
+        ):
+            values = {
+                "duplicate_check_completed": False,
+                "backlink_check_completed": False,
+                completed_check: True,
+            }
+            with self.subTest(completed_check=completed_check):
+                with self.assertRaisesRegex(ValueError, "existing_notes_scanned"):
+                    build_preflight(
+                        capability_level="full-local",
+                        existing_notes_scanned=False,
+                        **values,
+                    )
+
+    def test_direct_construction_enforces_evidence_dependencies(self) -> None:
+        with self.assertRaisesRegex(ValueError, "existing_notes_scanned"):
+            Preflight(
+                vault_resolved=True,
+                existing_notes_scanned=False,
+                duplicate_check_completed=True,
+                backlink_check_completed=False,
+                mode_selected=True,
+                capability_level="full-local",
+                write_policy="dry-run",
+            )
+
+    def test_direct_constructor_derives_and_cannot_forge_readiness(self) -> None:
+        constructor_values = {
+            "vault_resolved": True,
+            "existing_notes_scanned": True,
+            "duplicate_check_completed": True,
+            "backlink_check_completed": True,
+            "mode_selected": True,
+            "capability_level": "full-local",
+            "write_policy": "dry-run",
+        }
+        preflight = Preflight(**constructor_values)
+
+        self.assertTrue(preflight.ready)
+        self.assertEqual((), preflight.blocked_reasons)
+        with self.assertRaises(TypeError):
+            Preflight(
+                **constructor_values,
+                ready=True,
+                blocked_reasons=(),
+            )
+
+    def test_preflight_is_frozen_with_derived_contract_fields(self) -> None:
+        preflight = build_completed_preflight("mcp-readonly")
+        contract_fields = fields(Preflight)
 
         self.assertEqual(
             (
@@ -143,14 +241,17 @@ class PreflightTests(unittest.TestCase):
                 "ready",
                 "blocked_reasons",
             ),
-            tuple(field.name for field in fields(Preflight)),
+            tuple(field.name for field in contract_fields),
         )
+        field_by_name = {field.name: field for field in contract_fields}
+        self.assertFalse(field_by_name["ready"].init)
+        self.assertFalse(field_by_name["blocked_reasons"].init)
         self.assertIsInstance(preflight.blocked_reasons, tuple)
         with self.assertRaises(FrozenInstanceError):
             setattr(preflight, "ready", True)
 
     def test_payload_uses_a_defensive_blocked_reasons_list(self) -> None:
-        preflight = build_preflight(capability_level="mcp-readonly")
+        preflight = build_completed_preflight("mcp-readonly")
         payload = preflight.to_payload()
 
         self.assertEqual(
