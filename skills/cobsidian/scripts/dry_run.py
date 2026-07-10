@@ -135,7 +135,7 @@ def build_payload(
     )
     preflight = build_preflight(
         capability_level=capability_level,
-        vault_resolved=True,
+        vault_resolved=capability.scan,
         existing_notes_scanned=capability.scan,
         duplicate_check_completed=capability.scan,
         backlink_check_completed=capability.scan,

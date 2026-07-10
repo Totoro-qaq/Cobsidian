@@ -173,7 +173,7 @@ class RetrievalEntrypointTests(unittest.TestCase):
             )
 
             preflight = payload["preflight"]
-            self.assertTrue(preflight["vault_resolved"])
+            self.assertFalse(preflight["vault_resolved"])
             self.assertFalse(preflight["existing_notes_scanned"])
             self.assertFalse(preflight["duplicate_check_completed"])
             self.assertFalse(preflight["backlink_check_completed"])
