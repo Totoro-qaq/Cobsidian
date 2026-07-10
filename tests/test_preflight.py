@@ -27,18 +27,19 @@ def build_completed_preflight(capability_level: str) -> Preflight:
 class PreflightTests(unittest.TestCase):
     def test_capability_flags_match_the_host_contract(self) -> None:
         expected = {
-            "full-local": (True, True),
-            "filesystem-only": (True, True),
-            "mcp-readonly": (True, False),
-            "chat-only": (False, False),
+            "full-local": (True, True, True),
+            "filesystem-only": (True, True, True),
+            "mcp-readonly": (True, False, True),
+            "chat-only": (False, False, False),
         }
 
         self.assertEqual(tuple(expected), tuple(CAPABILITY_FLAGS))
-        for capability_level, (scan, write) in expected.items():
+        for capability_level, (scan, write, validation) in expected.items():
             with self.subTest(capability_level=capability_level):
                 capability = CAPABILITY_FLAGS[capability_level]
                 self.assertIs(scan, capability.scan)
                 self.assertIs(write, capability.write)
+                self.assertIs(validation, capability.validation)
 
     def test_capability_flags_are_immutable_at_both_levels(self) -> None:
         self.assertIsInstance(CAPABILITY_FLAGS, MappingProxyType)
@@ -62,6 +63,7 @@ class PreflightTests(unittest.TestCase):
         ):
             with self.subTest(name=name):
                 self.assertIs(False, parameters[name].default)
+        self.assertIsNone(parameters["validation_available"].default)
         self.assertEqual("dry-run", parameters["write_policy"].default)
 
     def test_defaults_report_uncompleted_evidence_and_are_not_ready(self) -> None:
@@ -72,6 +74,7 @@ class PreflightTests(unittest.TestCase):
         self.assertFalse(result.duplicate_check_completed)
         self.assertFalse(result.backlink_check_completed)
         self.assertFalse(result.mode_selected)
+        self.assertTrue(result.validation_available)
         self.assertFalse(result.ready)
         self.assertEqual(
             (
@@ -90,6 +93,7 @@ class PreflightTests(unittest.TestCase):
                 result = build_completed_preflight(capability_level)
 
                 self.assertTrue(result.ready)
+                self.assertTrue(result.validation_available)
                 self.assertEqual((), result.blocked_reasons)
                 self.assertEqual([], result.to_payload()["blocked_reasons"])
 
@@ -98,6 +102,7 @@ class PreflightTests(unittest.TestCase):
         chat = build_preflight(capability_level="chat-only")
 
         self.assertFalse(mcp.ready)
+        self.assertTrue(mcp.validation_available)
         self.assertEqual(
             ("write_capability_unavailable",),
             mcp.blocked_reasons,
@@ -105,6 +110,48 @@ class PreflightTests(unittest.TestCase):
         self.assertFalse(chat.ready)
         self.assertIn("scan_capability_unavailable", chat.blocked_reasons)
         self.assertIn("write_capability_unavailable", chat.blocked_reasons)
+        self.assertFalse(chat.validation_available)
+        self.assertIn(
+            "validation_capability_unavailable",
+            chat.blocked_reasons,
+        )
+
+    def test_validation_unavailable_blocks_write_capable_host(self) -> None:
+        result = build_preflight(
+            capability_level="filesystem-only",
+            vault_resolved=True,
+            existing_notes_scanned=True,
+            duplicate_check_completed=True,
+            backlink_check_completed=True,
+            mode_selected=True,
+            validation_available=False,
+        )
+
+        self.assertFalse(result.ready)
+        self.assertFalse(result.validation_available)
+        self.assertEqual(
+            ("validation_capability_unavailable",),
+            result.blocked_reasons,
+        )
+        self.assertNotIn("write_capability_unavailable", result.blocked_reasons)
+
+    def test_validation_override_requires_bool_and_scan_capability(self) -> None:
+        for invalid_value in (1, "true", [], object()):
+            with self.subTest(invalid_value=invalid_value):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "validation_available must be a bool",
+                ):
+                    build_preflight(
+                        capability_level="filesystem-only",
+                        validation_available=invalid_value,
+                    )
+
+        with self.assertRaisesRegex(ValueError, "validation capability"):
+            build_preflight(
+                capability_level="chat-only",
+                validation_available=True,
+            )
 
     def test_all_block_reasons_follow_the_contract_order(self) -> None:
         result = build_preflight(capability_level="chat-only")
@@ -118,6 +165,7 @@ class PreflightTests(unittest.TestCase):
                 "backlink_check_incomplete",
                 "mode_unresolved",
                 "write_capability_unavailable",
+                "validation_capability_unavailable",
             ),
             result.blocked_reasons,
         )
@@ -151,6 +199,7 @@ class PreflightTests(unittest.TestCase):
                 duplicate_check_completed=False,
                 backlink_check_completed=False,
                 mode_selected=False,
+                validation_available=True,
                 capability_level="full-local",
                 write_policy="write-now",
             )
@@ -205,6 +254,7 @@ class PreflightTests(unittest.TestCase):
                         Preflight(
                             capability_level="full-local",
                             write_policy="dry-run",
+                            validation_available=True,
                             **evidence,
                         )
 
@@ -226,6 +276,7 @@ class PreflightTests(unittest.TestCase):
             Preflight(
                 capability_level="full-local",
                 write_policy="dry-run",
+                validation_available=True,
                 **evidence,
             )
 
@@ -274,6 +325,7 @@ class PreflightTests(unittest.TestCase):
                 duplicate_check_completed=True,
                 backlink_check_completed=False,
                 mode_selected=True,
+                validation_available=True,
                 capability_level="full-local",
                 write_policy="dry-run",
             )
@@ -285,6 +337,7 @@ class PreflightTests(unittest.TestCase):
             "duplicate_check_completed": True,
             "backlink_check_completed": True,
             "mode_selected": True,
+            "validation_available": True,
             "capability_level": "full-local",
             "write_policy": "dry-run",
         }
@@ -310,6 +363,7 @@ class PreflightTests(unittest.TestCase):
                 "duplicate_check_completed",
                 "backlink_check_completed",
                 "mode_selected",
+                "validation_available",
                 "capability_level",
                 "write_policy",
                 "ready",
@@ -335,6 +389,7 @@ class PreflightTests(unittest.TestCase):
                 "duplicate_check_completed": True,
                 "backlink_check_completed": True,
                 "mode_selected": True,
+                "validation_available": True,
                 "capability_level": "mcp-readonly",
                 "write_policy": "dry-run",
                 "ready": False,

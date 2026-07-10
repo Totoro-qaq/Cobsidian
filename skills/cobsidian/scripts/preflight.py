@@ -9,23 +9,25 @@ from types import MappingProxyType
 class Capability:
     scan: bool
     write: bool
+    validation: bool
 
 
 CAPABILITY_FLAGS: Mapping[str, Capability] = MappingProxyType(
     {
-        "full-local": Capability(scan=True, write=True),
-        "filesystem-only": Capability(scan=True, write=True),
-        "mcp-readonly": Capability(scan=True, write=False),
-        "chat-only": Capability(scan=False, write=False),
+        "full-local": Capability(scan=True, write=True, validation=True),
+        "filesystem-only": Capability(scan=True, write=True, validation=True),
+        "mcp-readonly": Capability(scan=True, write=False, validation=True),
+        "chat-only": Capability(scan=False, write=False, validation=False),
     }
 )
 CAPABILITY_LEVELS = tuple(CAPABILITY_FLAGS)
-_EVIDENCE_FIELDS = (
+_BOOLEAN_FIELDS = (
     "vault_resolved",
     "existing_notes_scanned",
     "duplicate_check_completed",
     "backlink_check_completed",
     "mode_selected",
+    "validation_available",
 )
 
 
@@ -48,6 +50,7 @@ class Preflight:
     duplicate_check_completed: bool
     backlink_check_completed: bool
     mode_selected: bool
+    validation_available: bool
     capability_level: str
     write_policy: str
     ready: bool = field(init=False)
@@ -56,14 +59,14 @@ class Preflight:
     def __post_init__(self) -> None:
         capability = validated_capability(self.capability_level)
         validate_write_policy(self.write_policy)
-        self._validate_evidence_types()
+        self._validate_boolean_types()
         self._validate_evidence_dependencies(capability)
         blocked_reasons = self._derive_blocked_reasons(capability)
         object.__setattr__(self, "blocked_reasons", blocked_reasons)
         object.__setattr__(self, "ready", not blocked_reasons)
 
-    def _validate_evidence_types(self) -> None:
-        for field_name in _EVIDENCE_FIELDS:
+    def _validate_boolean_types(self) -> None:
+        for field_name in _BOOLEAN_FIELDS:
             if not isinstance(getattr(self, field_name), bool):
                 raise ValueError(f"{field_name} must be a bool.")
 
@@ -77,6 +80,11 @@ class Preflight:
             raise ValueError(
                 f"capability_level {self.capability_level!r} has no scan capability "
                 "and cannot claim scan-dependent checks."
+            )
+        if self.validation_available and not capability.scan:
+            raise ValueError(
+                f"capability_level {self.capability_level!r} has no scan capability "
+                "and cannot claim vault validation capability."
             )
         if self.existing_notes_scanned and not self.vault_resolved:
             raise ValueError(
@@ -109,6 +117,8 @@ class Preflight:
             blocked_reasons.append("mode_unresolved")
         if not capability.write:
             blocked_reasons.append("write_capability_unavailable")
+        if not self.validation_available:
+            blocked_reasons.append("validation_capability_unavailable")
         return tuple(blocked_reasons)
 
     def to_payload(self) -> dict[str, object]:
@@ -118,6 +128,7 @@ class Preflight:
             "duplicate_check_completed": self.duplicate_check_completed,
             "backlink_check_completed": self.backlink_check_completed,
             "mode_selected": self.mode_selected,
+            "validation_available": self.validation_available,
             "capability_level": self.capability_level,
             "write_policy": self.write_policy,
             "ready": self.ready,
@@ -132,14 +143,22 @@ def build_preflight(
     duplicate_check_completed: bool = False,
     backlink_check_completed: bool = False,
     mode_selected: bool = False,
+    validation_available: bool | None = None,
     write_policy: str = "dry-run",
 ) -> Preflight:
+    capability = validated_capability(capability_level)
+    resolved_validation_available = (
+        capability.validation
+        if validation_available is None
+        else validation_available
+    )
     return Preflight(
         vault_resolved=vault_resolved,
         existing_notes_scanned=existing_notes_scanned,
         duplicate_check_completed=duplicate_check_completed,
         backlink_check_completed=backlink_check_completed,
         mode_selected=mode_selected,
+        validation_available=resolved_validation_available,
         capability_level=capability_level,
         write_policy=write_policy,
     )

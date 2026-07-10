@@ -267,6 +267,7 @@ def tool_cobsidian_dry_run(
     evidence: Evidence = "conversation",
     source_read_completed: StrictBool = False,
     verification_completed: StrictBool = False,
+    validation_available: StrictBool | None = None,
     knowledge_read_policy: DisplayPolicy | None = None,
     capability_level: CapabilityLevel = "mcp-readonly",
 ) -> dict[str, Any]:
@@ -291,6 +292,7 @@ def tool_cobsidian_dry_run(
         evidence=evidence,
         source_read_completed=source_read_completed,
         verification_completed=verification_completed,
+        validation_available=validation_available,
         capability_level=capability_level,
         knowledge_read_policy=knowledge_read_policy,
     )
@@ -302,7 +304,8 @@ def create_mcp_server() -> FastMCP:
         instructions=(
             "Cobsidian is a read-only MCP server for local Obsidian/Markdown vault planning. "
             "Dry-run returns knowledge_read, preflight read-only readiness, and writes=[]. "
-            "capability_level describes active host readiness; it never grants this MCP "
+            "capability_level describes the active host's scan/write transport while "
+            "validation_available reports validation independently; neither grants this MCP "
             "server write access."
         ),
     )
@@ -363,8 +366,9 @@ def create_mcp_server() -> FastMCP:
             f"Topic: {topic}\n\n"
             f"Material:\n{material}\n\n"
             "Return the target note, create/append decision, duplicate risks, backlink suggestions, "
-            "knowledge_read, preflight with read-only readiness and blocked reasons, validation "
-            "intent, and writes=[]. capability_level describes active host readiness only."
+            "knowledge_read, preflight with read-only readiness, validation_available, blocked "
+            "reasons, validation intent, and writes=[]. capability_level describes scan/write "
+            "transport only."
         )
 
     @server.prompt(name="cobsidian-organize-after-confirmation")

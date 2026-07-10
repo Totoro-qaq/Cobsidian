@@ -76,9 +76,9 @@ There is intentionally no write tool yet. Write workflows should go through dry-
 
 `cobsidian_dry_run` is a zero-write MCP tool. It returns the existing planning payload plus `knowledge_read` and `preflight`; `writes` is always `[]`. The MCP server remains read-only regardless of the supplied `capability_level`. That parameter describes the active host for preflight and never grants the server write access.
 
-The historical capability name `mcp-readonly` is retained for compatibility. It is the transport-neutral effective read-only level for any host that can scan and dry-run but lacks a complete approved write and validation loop, including local read-only operation without MCP. It does not imply that MCP is the active transport.
+The historical capability name `mcp-readonly` is retained for compatibility. It is the transport-neutral effective read-only level for any host that can scan and dry-run but has no approved write path, including local read-only operation without MCP. It does not imply that MCP is the active transport.
 
-`ready: true` means the described host completed all required checks and has an approved write path available after confirmation. It does not mean a write occurred. With the default `mcp-readonly`, preflight returns `ready=false` and `write_capability_unavailable` after successful read checks.
+Capability level records effective scan/write transport. Validation is modeled independently by strict Boolean `validation_available`, defaulting from the level unless explicitly overridden. Keep `full-local` or `filesystem-only` when write exists but validation does not; set `validation_available=false`, which adds `validation_capability_unavailable` and keeps `ready=false`. With default `mcp-readonly`, validation is available and preflight is blocked only by `write_capability_unavailable`. `chat-only` defaults validation to unavailable.
 
 ### CLI/MCP Parameter Parity
 
@@ -94,6 +94,7 @@ CLI/MCP parameter parity comes from the shared dry-run implementation, which val
 | `evidence` | `--evidence` | `conversation`, `source-grounded`, or `verified`. |
 | `source_read_completed` | `--source-read-completed` | Strict Boolean host-completed fact confirming the relevant source read actually finished. |
 | `verification_completed` | `--verification-completed` | Strict Boolean host-completed fact confirming the additional verification actually finished. |
+| `validation_available` | `--validation-available` / `--no-validation-available` | Optional strict Boolean override; omitted/`null` derives from the capability default. |
 | `knowledge_read_policy` | `--knowledge-read` | `auto`, `always`, or `off`. |
 | `capability_level` | `--capability-level` | `full-local`, `filesystem-only`, `mcp-readonly`, or `chat-only`. |
 
@@ -112,6 +113,8 @@ The server and shared dry-run fail closed:
 - Under `auto`, an unresolved mode returns expanded Knowledge Read with `ready=false` and `mode_unresolved`; `off` hides only the conversational presentation, and no policy silently selects a mode.
 - A host without scan capability gets a `blocked` decision and cannot claim scan-derived checks.
 - A read-only host reports `write_capability_unavailable`; it never upgrades itself to a write path.
+- Validation unavailable reports `validation_capability_unavailable` after any write-capability reason and blocks readiness independently of the transport level.
+- A scanless `chat-only` host cannot override `validation_available` to true.
 - Note resources reject absolute paths and `..` traversal outside the resolved vault.
 
 ## Large Vault Limits

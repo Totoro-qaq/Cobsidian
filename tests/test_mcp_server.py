@@ -67,6 +67,7 @@ class McpServerTests(unittest.TestCase):
                     "evidence",
                     "source_read_completed",
                     "verification_completed",
+                    "validation_available",
                     "knowledge_read_policy",
                     "capability_level",
                 }.issubset(dry_run_properties)
@@ -74,6 +75,13 @@ class McpServerTests(unittest.TestCase):
             self.assertEqual(
                 "mcp-readonly",
                 dry_run_properties["capability_level"]["default"],
+            )
+            self.assertEqual(
+                {"boolean", "null"},
+                {
+                    schema["type"]
+                    for schema in dry_run_properties["validation_available"]["anyOf"]
+                },
             )
 
         asyncio.run(run())
@@ -142,6 +150,7 @@ class McpServerTests(unittest.TestCase):
                 "preflight",
                 "writes=[]",
                 "active host",
+                "validation_available",
             ):
                 with self.subTest(surface="instructions", expected=expected):
                     self.assertIn(expected, instructions)
@@ -156,6 +165,7 @@ class McpServerTests(unittest.TestCase):
                 "preflight",
                 "read-only readiness",
                 "writes=[]",
+                "validation_available",
             ):
                 with self.subTest(surface="dry-run prompt", expected=expected):
                     self.assertIn(expected, dry_run_text)
@@ -307,10 +317,35 @@ interaction:
                 "mcp-readonly",
                 payload["preflight"]["capability_level"],
             )
+            self.assertTrue(payload["preflight"]["validation_available"])
             self.assertFalse(payload["preflight"]["ready"])
             self.assertEqual(
                 ["write_capability_unavailable"],
                 payload["preflight"]["blocked_reasons"],
+            )
+            self.assertEqual([], payload["writes"])
+
+    def test_validation_unavailable_blocks_write_capable_mcp_request(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            payload = tool_cobsidian_dry_run(
+                vault=temp_dir,
+                topic="Validation Gap",
+                text="",
+                mode="learning",
+                capability_level="filesystem-only",
+                validation_available=False,
+            )
+
+            preflight = payload["preflight"]
+            self.assertFalse(preflight["validation_available"])
+            self.assertFalse(preflight["ready"])
+            self.assertEqual(
+                ["validation_capability_unavailable"],
+                preflight["blocked_reasons"],
+            )
+            self.assertNotIn(
+                "write_capability_unavailable",
+                preflight["blocked_reasons"],
             )
             self.assertEqual([], payload["writes"])
 
@@ -389,6 +424,25 @@ interaction:
                                     "text": "",
                                     "mode": "learning",
                                     "mode_explicit": invalid_value,
+                                },
+                            )
+
+        asyncio.run(run())
+
+    def test_fastmcp_rejects_non_boolean_validation_available(self) -> None:
+        async def run() -> None:
+            for invalid_value in (1, "true"):
+                with self.subTest(value=invalid_value):
+                    with tempfile.TemporaryDirectory() as temp_dir:
+                        with self.assertRaises(ToolError):
+                            await create_mcp_server().call_tool(
+                                "cobsidian_dry_run",
+                                {
+                                    "vault": temp_dir,
+                                    "topic": "Strict Validation Bool",
+                                    "text": "",
+                                    "mode": "learning",
+                                    "validation_available": invalid_value,
                                 },
                             )
 
@@ -487,6 +541,11 @@ interaction:
             self.assertFalse(payload["preflight"]["existing_notes_scanned"])
             self.assertFalse(payload["preflight"]["duplicate_check_completed"])
             self.assertFalse(payload["preflight"]["backlink_check_completed"])
+            self.assertFalse(payload["preflight"]["validation_available"])
+            self.assertIn(
+                "validation_capability_unavailable",
+                payload["preflight"]["blocked_reasons"],
+            )
             self.assertEqual([], payload["writes"])
 
     def test_scan_capable_dry_run_scans_before_building_payload(self) -> None:

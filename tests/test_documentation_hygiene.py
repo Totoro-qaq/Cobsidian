@@ -111,6 +111,9 @@ class DocumentationHygieneTests(unittest.TestCase):
                 self.assertIn("write_capability_unavailable", text)
                 self.assertIn("read-only", text)
                 self.assertIn("transport-neutral effective read-only", text)
+                self.assertIn("validation_available", text)
+                self.assertIn("validation_capability_unavailable", text)
+                self.assertIn("independently", text)
 
     def test_integration_docs_explain_adaptive_fallbacks(self) -> None:
         for relative_path in ("docs/integrations.md", "docs/integrations.zh-CN.md"):
@@ -124,6 +127,8 @@ class DocumentationHygieneTests(unittest.TestCase):
                 self.assertIn("chat-only", text)
                 self.assertIn("zero-write MCP", text)
                 self.assertIn("transport-neutral effective read-only", text)
+                self.assertIn("validation_available", text)
+                self.assertIn("independently", text)
 
     def test_mcp_docs_lock_parity_and_fail_closed_boundaries(self) -> None:
         parity_parameters = (
@@ -135,6 +140,7 @@ class DocumentationHygieneTests(unittest.TestCase):
             "evidence",
             "source_read_completed",
             "verification_completed",
+            "validation_available",
             "knowledge_read_policy",
             "capability_level",
         )
@@ -150,9 +156,11 @@ class DocumentationHygieneTests(unittest.TestCase):
                 self.assertIn("fail closed", text)
                 self.assertIn("mode_unresolved", text)
                 self.assertIn("write_capability_unavailable", text)
+                self.assertIn("validation_capability_unavailable", text)
                 self.assertIn("transport-neutral effective read-only", text)
                 self.assertIn("host-completed", text)
                 self.assertIn("granularity=append", text)
+                self.assertIn("independently", text)
 
     def test_modes_docs_define_evidence_provenance(self) -> None:
         for relative_path in ("docs/modes.md", "docs/modes.zh-CN.md"):

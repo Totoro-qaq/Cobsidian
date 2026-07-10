@@ -67,7 +67,7 @@ Detect the host's actual tools before loading only the matching host reference. 
 - [Hermes](references/hosts/hermes.md)
 - [Generic MCP host](references/hosts/mcp.md)
 
-Map observed tools to `full-local`, `filesystem-only`, `mcp-readonly`, or `chat-only`. The historical `mcp-readonly` name means the transport-neutral effective read-only level, including local read-only operation without MCP. Use [preflight](references/preflight.md) for readiness and degradation. Never load multiple host references speculatively.
+Map observed scan/write transport to `full-local`, `filesystem-only`, `mcp-readonly`, or `chat-only`. The historical `mcp-readonly` name means the transport-neutral effective read-only level, including local read-only operation without MCP. Report validation capability independently through `validation_available`; a write-capable host with no validation keeps its `full-local` or `filesystem-only` level and becomes not ready. Use [preflight](references/preflight.md) for readiness and degradation. Never load multiple host references speculatively.
 
 ## Knowledge Read
 
@@ -81,7 +81,7 @@ Mode defaults apply before duplicate resolution. A requested `granularity=append
 
 ## Common Workflow
 
-1. Detect host tools, map the capability level, and load one host reference.
+1. Detect host tools, map the scan/write capability level, report validation capability independently, and load one host reference.
 2. Resolve the vault and target topic.
 3. Scan existing notes and complete duplicate and backlink checks.
 4. Select or infer one mode and load one mode reference.
@@ -111,6 +111,7 @@ Stop and reconsider when any of these thoughts appear:
 - "This product usually has filesystem access." Detect actual tools and permissions first.
 - "`off` means Knowledge Read need not be computed." It hides presentation only.
 - "The host cannot perform the action, but the report can describe it as done." Report the blocked reason and degradation path instead.
+- "Write exists, so missing validation means `mcp-readonly`." Keep the write transport level, set `validation_available=false`, and block readiness.
 
 ## Helper Scripts
 

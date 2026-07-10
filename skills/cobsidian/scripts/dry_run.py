@@ -100,6 +100,7 @@ def build_payload(
     evidence: str = "conversation",
     source_read_completed: bool = False,
     verification_completed: bool = False,
+    validation_available: bool | None = None,
     capability_level: str = "filesystem-only",
     knowledge_read_policy: str | None = None,
 ) -> dict[str, object]:
@@ -166,6 +167,7 @@ def build_payload(
         duplicate_check_completed=can_scan,
         backlink_check_completed=can_scan,
         mode_selected=knowledge_read.mode is not None,
+        validation_available=validation_available,
     )
     return {
         "dry_run": True,
@@ -216,6 +218,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--verification-completed",
         action="store_true",
         help="Confirm that the host completed an additional verification.",
+    )
+    parser.add_argument(
+        "--validation-available",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Override whether the host can validate vault changes.",
     )
     parser.add_argument(
         "--capability-level",
@@ -270,6 +278,7 @@ def main() -> int:
             evidence=args.evidence,
             source_read_completed=args.source_read_completed,
             verification_completed=args.verification_completed,
+            validation_available=args.validation_available,
             capability_level=args.capability_level,
             knowledge_read_policy=args.knowledge_read_policy,
         )

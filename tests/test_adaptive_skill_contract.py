@@ -44,6 +44,7 @@ BLOCKED_REASONS = (
     "backlink_check_incomplete",
     "mode_unresolved",
     "write_capability_unavailable",
+    "validation_capability_unavailable",
 )
 
 
@@ -176,8 +177,8 @@ class AdaptiveSkillContractTests(unittest.TestCase):
                     self.assertIn(f"`{capability_level}`", text)
                 self.assertIn("../preflight.md", text)
 
-    def test_full_local_mapping_requires_all_four_execution_paths(self) -> None:
-        required_paths = ("mcp", "scan", "dry-run", "approved write", "validation")
+    def test_full_local_mapping_requires_mcp_scan_dry_run_and_write(self) -> None:
+        required_paths = ("mcp", "scan", "dry-run", "approved write")
         for host in HOST_NAMES:
             with self.subTest(host=host):
                 text = self.read_reference(
@@ -193,8 +194,8 @@ class AdaptiveSkillContractTests(unittest.TestCase):
                 for required_path in required_paths:
                     self.assertIn(required_path, full_local_lines[0])
 
-    def test_write_capable_mappings_require_the_complete_write_loop(self) -> None:
-        required_paths = ("scan", "dry-run", "approved write", "validation")
+    def test_write_capable_mappings_require_scan_dry_run_and_write(self) -> None:
+        required_paths = ("scan", "dry-run", "approved write")
         for host in HOST_NAMES:
             text = self.read_reference(
                 REFERENCES_PATH / "hosts" / f"{host}.md"
@@ -229,9 +230,14 @@ class AdaptiveSkillContractTests(unittest.TestCase):
                 for fragment in (
                     "scan",
                     "dry-run",
-                    "approved write and validation loop",
+                    "no approved write",
                 ):
                     self.assertIn(fragment, read_only_lines[0])
+                self.assertIn("validation_available=false", text)
+                self.assertIn(
+                    "keep `full-local` or `filesystem-only`",
+                    text,
+                )
 
     def test_chat_only_mapping_requires_no_scan_path(self) -> None:
         for host in HOST_NAMES:
@@ -267,6 +273,8 @@ class AdaptiveSkillContractTests(unittest.TestCase):
 
         for reason in BLOCKED_REASONS:
             self.assertIn(f"`{reason}`", text)
+        self.assertIn("`validation_available`", text)
+        self.assertIn("independently", text)
         self.assertIn("approved write", text)
         self.assertIn("does not mean that a write already happened", text)
         self.assertIn("Never claim", text)
@@ -302,6 +310,8 @@ class AdaptiveSkillContractTests(unittest.TestCase):
         self.assertIn("`verification_completed=true`", text)
         self.assertIn("host-completed facts", text)
         self.assertIn("granularity=append", text)
+        self.assertIn("`validation_available`", text)
+        self.assertIn("validation capability independently", text)
 
 
 if __name__ == "__main__":

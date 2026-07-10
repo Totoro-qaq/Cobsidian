@@ -426,6 +426,35 @@ interaction:
             self.assertNotEqual(0, result.returncode)
             self.assertIn("source_read_completed", result.stderr)
 
+    def test_cli_can_report_validation_capability_unavailable(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS_DIR / "dry_run.py"),
+                    temp_dir,
+                    "--topic",
+                    "Validation Gap",
+                    "--mode",
+                    "learning",
+                    "--no-validation-available",
+                    "--json",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+
+            payload = json.loads(result.stdout)
+            self.assertFalse(payload["preflight"]["validation_available"])
+            self.assertFalse(payload["preflight"]["ready"])
+            self.assertEqual(
+                ["validation_capability_unavailable"],
+                payload["preflight"]["blocked_reasons"],
+            )
+            self.assertEqual([], payload["writes"])
+
     def test_cli_accepts_repeatable_recommended_modes_for_unresolved_mode(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             vault_path = Path(temp_dir)

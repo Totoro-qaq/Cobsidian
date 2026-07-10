@@ -88,6 +88,7 @@ class RetrievalEntrypointTests(unittest.TestCase):
                 payload["knowledge_read"],
             )
             self.assertEqual("filesystem-only", payload["preflight"]["capability_level"])
+            self.assertTrue(payload["preflight"]["validation_available"])
             self.assertTrue(payload["preflight"]["ready"])
             self.assertEqual([], payload["preflight"]["blocked_reasons"])
             self.assertEqual([], payload["writes"])
@@ -107,6 +108,35 @@ class RetrievalEntrypointTests(unittest.TestCase):
                     mode_explicit=True,
                     evidence="source-grounded",
                 )
+
+    def test_validation_unavailable_blocks_write_capable_dry_run(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+
+            payload = build_payload(
+                vault_path=vault,
+                config=CobsidianConfig(config_path=None, raw={}),
+                topic="Validation Gap",
+                mode="learning",
+                text="",
+                notes=scan_vault(vault),
+                mode_explicit=True,
+                capability_level="filesystem-only",
+                validation_available=False,
+            )
+
+            preflight = payload["preflight"]
+            self.assertFalse(preflight["validation_available"])
+            self.assertFalse(preflight["ready"])
+            self.assertIn(
+                "validation_capability_unavailable",
+                preflight["blocked_reasons"],
+            )
+            self.assertNotIn(
+                "write_capability_unavailable",
+                preflight["blocked_reasons"],
+            )
+            self.assertEqual([], payload["writes"])
 
     def test_append_decision_forces_append_granularity(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -187,6 +217,7 @@ class RetrievalEntrypointTests(unittest.TestCase):
             self.assertTrue(payload["preflight"]["existing_notes_scanned"])
             self.assertTrue(payload["preflight"]["duplicate_check_completed"])
             self.assertTrue(payload["preflight"]["backlink_check_completed"])
+            self.assertTrue(payload["preflight"]["validation_available"])
             self.assertFalse(payload["preflight"]["ready"])
             self.assertEqual(
                 ["write_capability_unavailable"],
@@ -243,6 +274,10 @@ class RetrievalEntrypointTests(unittest.TestCase):
             self.assertFalse(preflight["ready"])
             self.assertIn("scan_capability_unavailable", preflight["blocked_reasons"])
             self.assertIn("write_capability_unavailable", preflight["blocked_reasons"])
+            self.assertIn(
+                "validation_capability_unavailable",
+                preflight["blocked_reasons"],
+            )
             self.assertEqual([], payload["writes"])
             choose_decision.assert_not_called()
             find_duplicate_risks.assert_not_called()
