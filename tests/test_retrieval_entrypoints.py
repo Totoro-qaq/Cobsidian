@@ -24,6 +24,179 @@ SCRIPTS_DIR = REPO_ROOT / "skills" / "cobsidian" / "scripts"
 
 
 class RetrievalEntrypointTests(unittest.TestCase):
+    def test_six_argument_build_payload_call_remains_compatible(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+            config = CobsidianConfig(config_path=None, raw={})
+
+            payload = build_payload(
+                vault,
+                config,
+                "Retrieval Pipeline",
+                "learning",
+                "semantic retrieval",
+                scan_vault(vault),
+            )
+
+            self.assertTrue(
+                {
+                    "dry_run",
+                    "vault",
+                    "config",
+                    "mode",
+                    "topic",
+                    "decision",
+                    "duplicate_risks",
+                    "suggested_backlinks",
+                    "validation",
+                    "writes",
+                }.issubset(payload)
+            )
+            self.assertIn("knowledge_read", payload)
+            self.assertIn("preflight", payload)
+            self.assertEqual([], payload["writes"])
+
+    def test_explicit_learning_builds_compact_ready_local_context(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+
+            payload = build_payload(
+                vault_path=vault,
+                config=CobsidianConfig(config_path=None, raw={}),
+                topic="Retrieval Pipeline",
+                mode="learning",
+                text="semantic retrieval",
+                notes=scan_vault(vault),
+                mode_explicit=True,
+            )
+
+            self.assertEqual(
+                {
+                    "mode": "learning",
+                    "mode_explicit": True,
+                    "recommended_modes": [],
+                    "depth": "standard",
+                    "granularity": "single-note",
+                    "evidence": "conversation",
+                    "display_policy": "auto",
+                    "display_style": "compact",
+                },
+                payload["knowledge_read"],
+            )
+            self.assertEqual("filesystem-only", payload["preflight"]["capability_level"])
+            self.assertTrue(payload["preflight"]["ready"])
+            self.assertEqual([], payload["preflight"]["blocked_reasons"])
+            self.assertEqual([], payload["writes"])
+
+    def test_append_decision_forces_append_granularity(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+            (vault / "RAG.md").write_text("# RAG\n", encoding="utf-8")
+
+            payload = build_payload(
+                vault_path=vault,
+                config=CobsidianConfig(config_path=None, raw={}),
+                topic="RAG",
+                mode="learning",
+                text="retrieval augmented generation",
+                notes=scan_vault(vault),
+                mode_explicit=True,
+                granularity="multi-note",
+            )
+
+            self.assertEqual("append", payload["decision"]["action"])
+            self.assertEqual("append", payload["knowledge_read"]["granularity"])
+
+    def test_unresolved_mode_recommends_two_modes_and_blocks_readiness(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+
+            payload = build_payload(
+                vault_path=vault,
+                config=CobsidianConfig(config_path=None, raw={}),
+                topic="Adaptive Notes",
+                mode=None,
+                text="organize this material",
+                notes=scan_vault(vault),
+                recommended_modes=["learning", "dissection"],
+            )
+
+            self.assertIsNone(payload["knowledge_read"]["mode"])
+            self.assertEqual(
+                ["learning", "dissection"],
+                payload["knowledge_read"]["recommended_modes"],
+            )
+            self.assertEqual("expanded", payload["knowledge_read"]["display_style"])
+            self.assertFalse(payload["preflight"]["mode_selected"])
+            self.assertFalse(payload["preflight"]["ready"])
+            self.assertEqual(["mode_unresolved"], payload["preflight"]["blocked_reasons"])
+            self.assertEqual([], payload["writes"])
+
+    def test_mcp_readonly_reports_completed_scans_without_write_readiness(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+
+            payload = build_payload(
+                vault_path=vault,
+                config=CobsidianConfig(config_path=None, raw={}),
+                topic="Retrieval Pipeline",
+                mode="learning",
+                text="semantic retrieval",
+                notes=scan_vault(vault),
+                mode_explicit=True,
+                capability_level="mcp-readonly",
+            )
+
+            self.assertTrue(payload["preflight"]["vault_resolved"])
+            self.assertTrue(payload["preflight"]["existing_notes_scanned"])
+            self.assertTrue(payload["preflight"]["duplicate_check_completed"])
+            self.assertTrue(payload["preflight"]["backlink_check_completed"])
+            self.assertFalse(payload["preflight"]["ready"])
+            self.assertEqual(
+                ["write_capability_unavailable"],
+                payload["preflight"]["blocked_reasons"],
+            )
+
+    def test_chat_only_does_not_claim_scan_dependent_checks(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+
+            payload = build_payload(
+                vault_path=vault,
+                config=CobsidianConfig(config_path=None, raw={}),
+                topic="Portable Draft",
+                mode="capture",
+                text="draft material",
+                notes=scan_vault(vault),
+                mode_explicit=True,
+                capability_level="chat-only",
+            )
+
+            preflight = payload["preflight"]
+            self.assertTrue(preflight["vault_resolved"])
+            self.assertFalse(preflight["existing_notes_scanned"])
+            self.assertFalse(preflight["duplicate_check_completed"])
+            self.assertFalse(preflight["backlink_check_completed"])
+            self.assertFalse(preflight["ready"])
+            self.assertIn("scan_capability_unavailable", preflight["blocked_reasons"])
+            self.assertIn("write_capability_unavailable", preflight["blocked_reasons"])
+            self.assertEqual([], payload["writes"])
+
+    def test_invalid_capability_is_rejected_by_domain_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+
+            with self.assertRaisesRegex(ValueError, "capability_level"):
+                build_payload(
+                    vault_path=vault,
+                    config=CobsidianConfig(config_path=None, raw={}),
+                    topic="Retrieval Pipeline",
+                    mode="learning",
+                    text="semantic retrieval",
+                    notes=scan_vault(vault),
+                    capability_level="browser-only",
+                )
+
     def test_dry_run_mcp_and_shared_ranker_return_same_order(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             vault = Path(temp_dir)

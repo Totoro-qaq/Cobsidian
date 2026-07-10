@@ -257,6 +257,174 @@ validation:
             self.assertEqual(payload["writes"], [])
             self.assertTrue(payload["validation"]["would_run"])
 
+    def test_config_off_hides_complete_knowledge_read(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            vault_path = workspace / "vault"
+            vault_path.mkdir()
+            config_path = workspace / "cobsidian.config.yml"
+            config_path.write_text(
+                """
+vault:
+  path: "vault"
+defaults:
+  mode: "learning"
+interaction:
+  knowledge_read: "off"
+""".strip(),
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS_DIR / "dry_run.py"),
+                    "--config",
+                    str(config_path),
+                    "--topic",
+                    "RAG",
+                    "--json",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+
+            knowledge_read = json.loads(result.stdout)["knowledge_read"]
+            self.assertEqual(
+                {
+                    "mode",
+                    "mode_explicit",
+                    "recommended_modes",
+                    "depth",
+                    "granularity",
+                    "evidence",
+                    "display_policy",
+                    "display_style",
+                },
+                set(knowledge_read),
+            )
+            self.assertEqual("learning", knowledge_read["mode"])
+            self.assertFalse(knowledge_read["mode_explicit"])
+            self.assertEqual("off", knowledge_read["display_policy"])
+            self.assertEqual("hidden", knowledge_read["display_style"])
+
+    def test_cli_defaults_to_filesystem_only_and_direct_mode_is_explicit(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault_path = Path(temp_dir)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS_DIR / "dry_run.py"),
+                    str(vault_path),
+                    "--topic",
+                    "RAG",
+                    "--mode",
+                    "learning",
+                    "--json",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+
+            payload = json.loads(result.stdout)
+            self.assertTrue(payload["knowledge_read"]["mode_explicit"])
+            self.assertEqual("compact", payload["knowledge_read"]["display_style"])
+            self.assertEqual("filesystem-only", payload["preflight"]["capability_level"])
+            self.assertTrue(payload["preflight"]["ready"])
+            self.assertEqual([], payload["writes"])
+
+    def test_cli_accepts_enum_options_and_boolean_override(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault_path = Path(temp_dir)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS_DIR / "dry_run.py"),
+                    str(vault_path),
+                    "--topic",
+                    "RAG",
+                    "--mode",
+                    "learning",
+                    "--no-mode-explicit",
+                    "--depth",
+                    "deep",
+                    "--granularity",
+                    "multi-note",
+                    "--evidence",
+                    "source-grounded",
+                    "--capability-level",
+                    "mcp-readonly",
+                    "--knowledge-read",
+                    "always",
+                    "--json",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+
+            payload = json.loads(result.stdout)
+            self.assertEqual(
+                {
+                    "mode": "learning",
+                    "mode_explicit": False,
+                    "recommended_modes": [],
+                    "depth": "deep",
+                    "granularity": "multi-note",
+                    "evidence": "source-grounded",
+                    "display_policy": "always",
+                    "display_style": "expanded",
+                },
+                payload["knowledge_read"],
+            )
+            self.assertEqual("mcp-readonly", payload["preflight"]["capability_level"])
+            self.assertFalse(payload["preflight"]["ready"])
+            self.assertEqual(
+                ["write_capability_unavailable"],
+                payload["preflight"]["blocked_reasons"],
+            )
+
+    def test_cli_accepts_repeatable_recommended_modes_for_unresolved_mode(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault_path = Path(temp_dir)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS_DIR / "dry_run.py"),
+                    str(vault_path),
+                    "--topic",
+                    "Adaptive Notes",
+                    "--recommended-mode",
+                    "learning",
+                    "--recommended-mode",
+                    "dissection",
+                    "--json",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+
+            payload = json.loads(result.stdout)
+            self.assertEqual(
+                ["learning", "dissection"],
+                payload["knowledge_read"]["recommended_modes"],
+            )
+            self.assertEqual("expanded", payload["knowledge_read"]["display_style"])
+            self.assertEqual(
+                ["mode_unresolved"],
+                payload["preflight"]["blocked_reasons"],
+            )
+
     def test_dry_run_uses_note_body_for_backlinks(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             vault_path = Path(temp_dir)

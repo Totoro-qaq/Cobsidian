@@ -8,6 +8,15 @@ from difflib import SequenceMatcher
 from pathlib import Path
 
 from cobsidian_config import CobsidianConfig, load_config, resolve_vault_path
+from knowledge_read import (
+    DEPTHS,
+    DISPLAY_POLICIES,
+    EVIDENCE_LEVELS,
+    GRANULARITIES,
+    MODES,
+    build_knowledge_read,
+)
+from preflight import CAPABILITY_LEVELS, build_preflight, validated_capability
 from retrieval import build_query, build_search_documents, rank_backlinks
 from scan_vault import NoteInfo, read_text, scan_vault
 
@@ -83,12 +92,31 @@ def build_payload(
     mode: str | None,
     text: str,
     notes: list[NoteInfo],
+    *,
+    mode_explicit: bool = False,
+    recommended_modes: list[str] | None = None,
+    depth: str | None = None,
+    granularity: str | None = None,
+    evidence: str = "conversation",
+    capability_level: str = "filesystem-only",
+    knowledge_read_policy: str | None = None,
 ) -> dict[str, object]:
     normalized_topic = topic.strip()
     if not normalized_topic:
         raise ValueError("Provide a non-empty topic.")
 
     decision = choose_decision(normalized_topic, mode, notes, config)
+    knowledge_read = build_knowledge_read(
+        mode=mode,
+        mode_explicit=mode_explicit,
+        recommended_modes=recommended_modes,
+        depth=depth,
+        granularity=granularity,
+        evidence=evidence,
+        display_policy=knowledge_read_policy or config.knowledge_read_policy,
+        decision_action=decision["action"],
+    )
+    capability = validated_capability(capability_level)
     risks = find_duplicate_risks(
         normalized_topic,
         notes,
@@ -105,6 +133,14 @@ def build_payload(
         limit=config.max_suggested_backlinks,
         excluded_paths=excluded_paths,
     )
+    preflight = build_preflight(
+        capability_level=capability_level,
+        vault_resolved=True,
+        existing_notes_scanned=capability.scan,
+        duplicate_check_completed=capability.scan,
+        backlink_check_completed=capability.scan,
+        mode_selected=knowledge_read.mode is not None,
+    )
     return {
         "dry_run": True,
         "vault": str(vault_path),
@@ -118,6 +154,8 @@ def build_payload(
             "would_run": config.validation_run_after_write,
             "strict": config.validation_strict,
         },
+        "knowledge_read": knowledge_read.to_payload(),
+        "preflight": preflight.to_payload(),
         "writes": [],
     }
 
@@ -127,7 +165,33 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("vault", nargs="?", type=Path)
     parser.add_argument("--config", type=Path, help="Path to cobsidian.config.yml.")
     parser.add_argument("--topic", required=True, help="Target note topic or title.")
-    parser.add_argument("--mode", help="Override mode from config.")
+    parser.add_argument("--mode", choices=MODES, help="Override mode from config.")
+    parser.add_argument(
+        "--mode-explicit",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Mark mode selection as explicit or inferred.",
+    )
+    parser.add_argument(
+        "--recommended-mode",
+        action="append",
+        choices=MODES,
+        help="Recommend a mode when the primary mode is unresolved; repeat at most twice.",
+    )
+    parser.add_argument("--depth", choices=DEPTHS)
+    parser.add_argument("--granularity", choices=GRANULARITIES)
+    parser.add_argument("--evidence", choices=EVIDENCE_LEVELS, default="conversation")
+    parser.add_argument(
+        "--capability-level",
+        choices=CAPABILITY_LEVELS,
+        default="filesystem-only",
+    )
+    parser.add_argument(
+        "--knowledge-read",
+        dest="knowledge_read_policy",
+        choices=DISPLAY_POLICIES,
+        help="Override the configured Knowledge Read display policy for this request.",
+    )
     parser.add_argument("--file", type=Path, help="Source text file.")
     parser.add_argument("--text", help="Source text.")
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON.")
@@ -147,7 +211,12 @@ def main() -> int:
         if args.file
         else str(args.text or "")
     )
-    mode = args.mode or config.mode
+    mode = args.mode if args.mode is not None else config.mode
+    mode_explicit = (
+        args.mode_explicit
+        if args.mode_explicit is not None
+        else args.mode is not None
+    )
     notes = scan_vault(vault_path)
     try:
         payload = build_payload(
@@ -157,6 +226,13 @@ def main() -> int:
             mode=mode,
             text=source_text,
             notes=notes,
+            mode_explicit=mode_explicit,
+            recommended_modes=args.recommended_mode,
+            depth=args.depth,
+            granularity=args.granularity,
+            evidence=args.evidence,
+            capability_level=args.capability_level,
+            knowledge_read_policy=args.knowledge_read_policy,
         )
     except ValueError as error:
         raise SystemExit(str(error)) from error
