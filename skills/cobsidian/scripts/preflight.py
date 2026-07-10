@@ -20,6 +20,13 @@ CAPABILITY_FLAGS: Mapping[str, Capability] = MappingProxyType(
     }
 )
 CAPABILITY_LEVELS = tuple(CAPABILITY_FLAGS)
+_EVIDENCE_FIELDS = (
+    "vault_resolved",
+    "existing_notes_scanned",
+    "duplicate_check_completed",
+    "backlink_check_completed",
+    "mode_selected",
+)
 
 
 def validated_capability(capability_level: str) -> Capability:
@@ -49,10 +56,16 @@ class Preflight:
     def __post_init__(self) -> None:
         capability = validated_capability(self.capability_level)
         validate_write_policy(self.write_policy)
+        self._validate_evidence_types()
         self._validate_evidence_dependencies(capability)
         blocked_reasons = self._derive_blocked_reasons(capability)
         object.__setattr__(self, "blocked_reasons", blocked_reasons)
         object.__setattr__(self, "ready", not blocked_reasons)
+
+    def _validate_evidence_types(self) -> None:
+        for field_name in _EVIDENCE_FIELDS:
+            if not isinstance(getattr(self, field_name), bool):
+                raise ValueError(f"{field_name} must be a bool.")
 
     def _validate_evidence_dependencies(self, capability: Capability) -> None:
         scan_dependent_checks = (
@@ -64,6 +77,10 @@ class Preflight:
             raise ValueError(
                 f"capability_level {self.capability_level!r} has no scan capability "
                 "and cannot claim scan-dependent checks."
+            )
+        if self.existing_notes_scanned and not self.vault_resolved:
+            raise ValueError(
+                "existing_notes_scanned=True requires vault_resolved=True."
             )
         if not self.existing_notes_scanned and (
             self.duplicate_check_completed or self.backlink_check_completed

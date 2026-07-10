@@ -155,6 +155,80 @@ class PreflightTests(unittest.TestCase):
                 write_policy="write-now",
             )
 
+    def test_evidence_fields_require_actual_bool_values(self) -> None:
+        evidence_fields = (
+            "vault_resolved",
+            "existing_notes_scanned",
+            "duplicate_check_completed",
+            "backlink_check_completed",
+            "mode_selected",
+        )
+        invalid_values = (
+            "true",
+            "",
+            1,
+            0,
+            None,
+            [],
+            [1],
+            object(),
+        )
+        valid_evidence: dict[str, object] = {
+            field_name: True for field_name in evidence_fields
+        }
+
+        for field_name in evidence_fields:
+            for invalid_value in invalid_values:
+                evidence = {**valid_evidence, field_name: invalid_value}
+                with self.subTest(
+                    constructor="builder",
+                    field_name=field_name,
+                    invalid_value=invalid_value,
+                ):
+                    with self.assertRaisesRegex(
+                        ValueError,
+                        f"{field_name} must be a bool",
+                    ):
+                        build_preflight(
+                            capability_level="full-local",
+                            **evidence,
+                        )
+                with self.subTest(
+                    constructor="direct",
+                    field_name=field_name,
+                    invalid_value=invalid_value,
+                ):
+                    with self.assertRaisesRegex(
+                        ValueError,
+                        f"{field_name} must be a bool",
+                    ):
+                        Preflight(
+                            capability_level="full-local",
+                            write_policy="dry-run",
+                            **evidence,
+                        )
+
+    def test_existing_note_scan_requires_a_resolved_vault(self) -> None:
+        evidence = {
+            "vault_resolved": False,
+            "existing_notes_scanned": True,
+            "duplicate_check_completed": False,
+            "backlink_check_completed": False,
+            "mode_selected": False,
+        }
+
+        with self.assertRaisesRegex(ValueError, "vault_resolved"):
+            build_preflight(
+                capability_level="full-local",
+                **evidence,
+            )
+        with self.assertRaisesRegex(ValueError, "vault_resolved"):
+            Preflight(
+                capability_level="full-local",
+                write_policy="dry-run",
+                **evidence,
+            )
+
     def test_scanless_capability_cannot_claim_scan_dependent_checks(self) -> None:
         for completed_check in (
             "existing_notes_scanned",
