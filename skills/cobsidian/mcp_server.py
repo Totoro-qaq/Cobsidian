@@ -21,6 +21,7 @@ from duplicates import (  # noqa: E402
 )
 from dry_run import build_payload as build_dry_run_payload  # noqa: E402
 from dry_run import find_duplicate_risks  # noqa: E402
+from preflight import validated_capability  # noqa: E402
 from retrieval import build_query, build_search_documents, rank_backlinks  # noqa: E402
 from scan_vault import NoteInfo, read_text, scan_vault  # noqa: E402
 from validate_notes import extract_wikilinks  # noqa: E402
@@ -227,16 +228,36 @@ def tool_cobsidian_dry_run(
     vault: str | None = None,
     config: str | None = None,
     mode: str | None = None,
+    *,
+    mode_explicit: bool | None = None,
+    recommended_modes: list[str] | None = None,
+    depth: str | None = None,
+    granularity: str | None = None,
+    evidence: str = "conversation",
+    knowledge_read_policy: str | None = None,
+    capability_level: str = "mcp-readonly",
 ) -> dict[str, Any]:
     vault_path, loaded_config = resolve_vault_from_inputs(vault=vault, config=config)
-    notes = scan_vault(vault_path)
+    resolved_mode = loaded_config.mode if mode is None else mode
+    resolved_mode_explicit = (
+        mode is not None if mode_explicit is None else mode_explicit
+    )
+    capability = validated_capability(capability_level)
+    notes = scan_vault(vault_path) if capability.scan else []
     return build_dry_run_payload(
         vault_path=vault_path,
         config=loaded_config,
         topic=topic,
-        mode=mode or loaded_config.mode,
+        mode=resolved_mode,
         text=text,
         notes=notes,
+        mode_explicit=resolved_mode_explicit,
+        recommended_modes=recommended_modes,
+        depth=depth,
+        granularity=granularity,
+        evidence=evidence,
+        capability_level=capability_level,
+        knowledge_read_policy=knowledge_read_policy,
     )
 
 
@@ -244,8 +265,10 @@ def create_mcp_server() -> FastMCP:
     server = FastMCP(
         SERVER_NAME,
         instructions=(
-            "Cobsidian exposes local Obsidian/Markdown vault planning tools. "
-            "Use dry-run before write workflows; this server does not provide a write tool."
+            "Cobsidian is a read-only MCP server for local Obsidian/Markdown vault planning. "
+            "Dry-run returns knowledge_read, preflight read-only readiness, and writes=[]. "
+            "capability_level describes active host readiness; it never grants this MCP "
+            "server write access."
         ),
     )
 
@@ -300,23 +323,26 @@ def create_mcp_server() -> FastMCP:
     @server.prompt(name="cobsidian-dry-run")
     def dry_run_prompt(vault: str, topic: str, material: str) -> str:
         return (
-            "Use Cobsidian dry-run first. "
+            "Use Cobsidian dry-run first; this MCP server is read-only. "
             f"Vault: {vault}\n"
             f"Topic: {topic}\n\n"
             f"Material:\n{material}\n\n"
             "Return the target note, create/append decision, duplicate risks, backlink suggestions, "
-            "validation intent, and writes as an empty list."
+            "knowledge_read, preflight with read-only readiness and blocked reasons, validation "
+            "intent, and writes=[]. capability_level describes active host readiness only."
         )
 
     @server.prompt(name="cobsidian-organize-after-confirmation")
     def organize_after_confirmation_prompt(vault: str, topic: str, material: str) -> str:
         return (
-            "Use Cobsidian to organize this material after the user confirms the dry-run plan. "
+            "Use the confirmed Cobsidian dry-run plan through an active host with separately "
+            "approved filesystem write capability. This MCP server remains read-only and cannot "
+            "perform the write. "
             f"Vault: {vault}\n"
             f"Topic: {topic}\n\n"
             f"Material:\n{material}\n\n"
-            "Search existing notes first, avoid duplicates, add useful wiki links, run validation, "
-            "and report files changed."
+            "The active host must search existing notes first, avoid duplicates, add useful wiki "
+            "links, validate external changes, and report the files it actually changed."
         )
 
     return server
