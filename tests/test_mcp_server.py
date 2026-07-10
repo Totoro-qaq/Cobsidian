@@ -8,6 +8,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from mcp.server.fastmcp.exceptions import ToolError
+
 from skills.cobsidian.mcp_server import (
     build_dry_run_payload,
     create_mcp_server,
@@ -126,6 +128,58 @@ class McpServerTests(unittest.TestCase):
             self.assertEqual(payload["vault"], str(vault.resolve()))
             self.assertEqual(payload["note_count"], 1)
             self.assertEqual(payload["notes"][0]["title"], "Agent Workflows")
+
+    def test_dry_run_missing_vault_inputs_raise_value_error(self) -> None:
+        with self.assertRaisesRegex(
+            ValueError,
+            "Provide a vault path or --config with vault.path.",
+        ) as raised:
+            tool_cobsidian_dry_run(
+                topic="RAG",
+                text="Retrieval augmented generation.",
+            )
+
+        self.assertIsInstance(raised.exception.__cause__, SystemExit)
+
+    def test_dry_run_missing_config_path_raises_value_error(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            missing_config = Path(temp_dir) / "missing.yml"
+
+            with self.assertRaisesRegex(
+                ValueError,
+                "Config file does not exist:",
+            ) as raised:
+                tool_cobsidian_dry_run(
+                    vault=temp_dir,
+                    config=str(missing_config),
+                    topic="RAG",
+                    text="Retrieval augmented generation.",
+                )
+
+        self.assertIsInstance(raised.exception.__cause__, SystemExit)
+
+    def test_fastmcp_dispatch_contains_missing_vault_error(self) -> None:
+        async def run() -> None:
+            with self.assertRaises(ToolError) as raised:
+                await create_mcp_server().call_tool(
+                    "cobsidian_dry_run",
+                    {
+                        "topic": "RAG",
+                        "text": "Retrieval augmented generation.",
+                    },
+                )
+
+            self.assertIn(
+                "Provide a vault path or --config with vault.path.",
+                str(raised.exception),
+            )
+            self.assertIsInstance(raised.exception.__cause__, ValueError)
+            self.assertIsInstance(
+                raised.exception.__cause__.__cause__,
+                SystemExit,
+            )
+
+        asyncio.run(run())
 
     def test_dry_run_tool_does_not_write_files(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -36,9 +36,16 @@ def resolve_optional_path(path: str | None) -> Path | None:
     return Path(path).expanduser().resolve() if path else None
 
 
-def resolve_vault_from_inputs(vault: str | None = None, config: str | None = None) -> tuple[Path, CobsidianConfig]:
-    loaded_config = load_config(resolve_optional_path(config))
-    vault_path = resolve_vault_path(resolve_optional_path(vault), loaded_config)
+def resolve_vault_from_inputs(
+    vault: str | None = None,
+    config: str | None = None,
+) -> tuple[Path, CobsidianConfig]:
+    try:
+        loaded_config = load_config(resolve_optional_path(config))
+        vault_path = resolve_vault_path(resolve_optional_path(vault), loaded_config)
+    except SystemExit as error:
+        message = str(error).strip() or "Unable to resolve the vault or config path."
+        raise ValueError(message) from error
     if not vault_path.exists() or not vault_path.is_dir():
         raise ValueError(f"Vault path does not exist or is not a directory: {vault_path}")
     return vault_path, loaded_config
