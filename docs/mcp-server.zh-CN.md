@@ -66,7 +66,7 @@ python skills/cobsidian/mcp_server.py
 |---|---|
 | `cobsidian_scan_vault` | 使用有界的 `offset` / `limit` 分页扫描 Markdown 笔记。 |
 | `cobsidian_find_duplicates` | 在有界比较次数内报告完全重复和相似标题。 |
-| `cobsidian_suggest_backlinks` | 根据文本或目标笔记建议相关笔记。 |
+| `cobsidian_suggest_backlinks` | 根据主题、文本或目标笔记建议相关笔记。 |
 | `cobsidian_validate_notes` | 报告缺失双链目标、重复标题和空笔记。 |
 | `cobsidian_dry_run` | 只规划新建/追加行为，不写文件。 |
 

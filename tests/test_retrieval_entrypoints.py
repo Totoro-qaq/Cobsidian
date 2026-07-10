@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -155,6 +156,63 @@ class RetrievalEntrypointTests(unittest.TestCase):
 
             self.assertIn("path=Gamma.md", cli.stdout)
             self.assertNotIn("No usable tokens", cli.stdout)
+
+    def test_topic_only_query_is_shared_by_all_entrypoints(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+            (vault / "Gamma Concepts.md").write_text(
+                "# Gamma Concepts\n\nTopic signal.\n",
+                encoding="utf-8",
+            )
+            topic = "Gamma Workflow"
+
+            backlink_cli = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS_DIR / "suggest_backlinks.py"),
+                    str(vault),
+                    "--topic",
+                    topic,
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+            dry_run_cli = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS_DIR / "dry_run.py"),
+                    str(vault),
+                    "--topic",
+                    topic,
+                    "--mode",
+                    "learning",
+                    "--json",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+            mcp = tool_cobsidian_suggest_backlinks(
+                vault=str(vault),
+                topic=topic,
+            )
+
+            cli_paths = re.findall(
+                r"path=(.+)$",
+                backlink_cli.stdout,
+                flags=re.MULTILINE,
+            )
+            dry_run_paths = [
+                item["path"]
+                for item in json.loads(dry_run_cli.stdout)["suggested_backlinks"]
+            ]
+            mcp_paths = [item["path"] for item in mcp["suggestions"]]
+            self.assertEqual(["Gamma Concepts.md"], cli_paths)
+            self.assertEqual(cli_paths, dry_run_paths)
+            self.assertEqual(cli_paths, mcp_paths)
 
 
 if __name__ == "__main__":

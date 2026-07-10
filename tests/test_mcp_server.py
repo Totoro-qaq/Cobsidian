@@ -193,6 +193,11 @@ class McpServerTests(unittest.TestCase):
                             limit=invalid_limit,
                         )
 
+    def test_backlink_tool_requires_at_least_one_query_source(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with self.assertRaisesRegex(ValueError, "topic, text, or note_path"):
+                tool_cobsidian_suggest_backlinks(vault=temp_dir)
+
 
 if __name__ == "__main__":
     unittest.main()

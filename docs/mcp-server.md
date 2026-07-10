@@ -66,7 +66,7 @@ The server registers read/planning tools only:
 |---|---|
 | `cobsidian_scan_vault` | Scan Markdown notes with bounded `offset` / `limit` pagination. |
 | `cobsidian_find_duplicates` | Report exact and similar note titles with bounded comparisons. |
-| `cobsidian_suggest_backlinks` | Suggest related notes for text or a target note. |
+| `cobsidian_suggest_backlinks` | Suggest related notes for a topic, text, or target note. |
 | `cobsidian_validate_notes` | Report missing wiki links, duplicate titles, and empty notes. |
 | `cobsidian_dry_run` | Plan create/append behavior without writing files. |
 

@@ -168,12 +168,12 @@ def tool_cobsidian_suggest_backlinks(
     note_path: str | None = None,
     limit: int | None = None,
 ) -> dict[str, Any]:
-    if not text and not note_path:
-        raise ValueError("Provide text or note_path.")
+    if not topic and not text and not note_path:
+        raise ValueError("Provide topic, text, or note_path.")
 
     vault_path, loaded_config = resolve_vault_from_inputs(vault=vault, config=config)
     compared_file = ensure_relative_path_inside_vault(vault_path, note_path) if note_path else None
-    source_text = read_text(compared_file) if compared_file else str(text)
+    source_text = read_text(compared_file) if compared_file else str(text or "")
     max_results = limit if limit is not None else loaded_config.max_suggested_backlinks
 
     notes = scan_vault(vault_path)

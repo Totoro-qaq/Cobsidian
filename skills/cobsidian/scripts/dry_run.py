@@ -128,15 +128,17 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = build_parser().parse_args()
-    if not args.file and not args.text:
-        raise SystemExit("Provide --file or --text.")
 
     config = load_config(args.config)
     vault_path = resolve_vault_path(args.vault, config)
     if not vault_path.exists() or not vault_path.is_dir():
         raise SystemExit(f"Vault path does not exist or is not a directory: {vault_path}")
 
-    source_text = read_text(args.file.expanduser().resolve()) if args.file else str(args.text)
+    source_text = (
+        read_text(args.file.expanduser().resolve())
+        if args.file
+        else str(args.text or "")
+    )
     mode = args.mode or config.mode
     notes = scan_vault(vault_path)
     payload = build_payload(vault_path=vault_path, config=config, topic=args.topic, mode=mode, text=source_text, notes=notes)
