@@ -32,7 +32,7 @@ Cobsidian is an agent-agnostic workflow skill for maintaining Obsidian or Markdo
 ```bash
 git clone https://github.com/Totoro-qaq/Cobsidian.git
 cd Cobsidian
-python skills/cobsidian/scripts/dry_run.py examples/demo-vault --topic "AI Conversations" --text "agent workflow notes" --json
+python skills/cobsidian/scripts/dry_run.py examples/demo-vault --topic "AI Conversations" --mode learning --text "agent workflow notes" --json
 ```
 
 Then point your agent at `skills/cobsidian/SKILL.md` and give it your vault path or `cobsidian.config.yml`.
@@ -49,17 +49,18 @@ Run a dry run first, check duplicates, suggest backlinks, and wait for confirmat
 flowchart LR
     A["AI chat, logs, project notes"] --> B["Cobsidian dry run"]
     B --> C["Search existing vault notes"]
-    C --> D{"Create, append, or split?"}
-    D --> E["Clean Markdown note"]
-    E --> F["Wiki links and related notes"]
-    F --> G["Validated Obsidian vault"]
+    C --> D{"Machine action<br/>create | append | blocked"}
+    D --> E["Note plan<br/>single-note | multi-note | report-only<br/>split = multi-note"]
+    E --> F["Clean Markdown note"]
+    F --> G["Wiki links and related notes"]
+    G --> H["Validated Obsidian vault"]
 ```
 
 | Before | After |
 |---|---|
 | Useful answers trapped in chat history | Durable notes in your vault |
 | Isolated Markdown files | Linked notes with `[[wiki links]]` |
-| Duplicate notes from repeated prompts | Create/append decisions based on existing notes |
+| Duplicate notes from repeated prompts | Machine action and note plan reported separately |
 | Agent writes that are hard to review | Dry-run plan before write actions |
 
 ## Dry-run Preview
@@ -134,7 +135,7 @@ The dry-run machine action is only `create | append | blocked`. A split is a sep
 |---|---|
 | Produces a standalone file | Maintains a linked knowledge system |
 | Ignores existing notes | Scans the vault before writing |
-| Often duplicates topics | Prefers append, merge, or split decisions |
+| Often duplicates topics | Separates create/append/blocked action from note shape |
 | Adds links opportunistically | Suggests links from actual vault notes |
 | Writes immediately | Supports dry-run review before edits |
 
@@ -144,7 +145,8 @@ The dry-run machine action is only `create | append | blocked`. A split is a sep
 flowchart TD
     U["User material"] --> R["Resolve vault path or config"]
     R --> S["Scan notes, titles, tags, wiki links"]
-    S --> P["Plan: create, append, split, or ask"]
+    S --> A{"Machine action<br/>create | append | blocked"}
+    A --> P["Note plan<br/>single-note | multi-note | report-only<br/>split = multi-note"]
     P --> L["Suggest backlinks"]
     L --> V["Validate note hygiene"]
     V --> O["Report files, decision, links, validation"]

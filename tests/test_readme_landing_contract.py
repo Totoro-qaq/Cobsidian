@@ -1,13 +1,28 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import re
+import shlex
+import shutil
+import subprocess
+import sys
+import tempfile
 import xml.etree.ElementTree as ET
 import unittest
 from pathlib import Path
 
+from skills.cobsidian.scripts.knowledge_read import (
+    DEPTHS,
+    DISPLAY_POLICIES,
+    EVIDENCE_LEVELS,
+    GRANULARITIES,
+    MODES,
+)
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+DEMO_VAULT = REPO_ROOT / "examples" / "demo-vault"
 KNOWLEDGE_READ_FIELDS = {
     "mode",
     "mode_explicit",
@@ -18,20 +33,6 @@ KNOWLEDGE_READ_FIELDS = {
     "display_policy",
     "display_style",
 }
-SUPPORTED_MODES = {
-    "learning",
-    "project",
-    "review",
-    "comparison",
-    "index",
-    "capture",
-    "dissection",
-}
-SUPPORTED_DEPTHS = {"capture", "standard", "deep"}
-SUPPORTED_GRANULARITIES = {"append", "single-note", "multi-note"}
-SUPPORTED_EVIDENCE = {"conversation", "source-grounded", "verified"}
-SUPPORTED_DISPLAY_POLICIES = {"auto", "always", "off"}
-SUPPORTED_DISPLAY_STYLES = {"compact", "expanded", "hidden"}
 
 
 def extract_json_example(readme: str, heading: str) -> dict[str, object]:
@@ -45,6 +46,34 @@ def extract_json_example(readme: str, heading: str) -> dict[str, object]:
     return payload
 
 
+def extract_quick_start_args(readme: str, heading: str) -> list[str]:
+    pattern = rf"{re.escape(heading)}.*?```bash\s+(.*?)\s+```"
+    match = re.search(pattern, readme, flags=re.DOTALL)
+    if match is None:
+        raise AssertionError(f"Missing bash block after {heading!r}.")
+    commands = [line.strip() for line in match.group(1).splitlines()]
+    python_commands = [line for line in commands if line.startswith("python ")]
+    if len(python_commands) != 1:
+        raise AssertionError(
+            f"Expected one Python command after {heading!r}, got {python_commands!r}."
+        )
+    return shlex.split(python_commands[0])
+
+
+def extract_mermaid_blocks(readme: str) -> list[str]:
+    return re.findall(r"```mermaid\s+(.*?)\s+```", readme, flags=re.DOTALL)
+
+
+def directory_digest(directory: Path) -> str:
+    digest = hashlib.sha256()
+    for path in sorted(path for path in directory.rglob("*") if path.is_file()):
+        digest.update(path.relative_to(directory).as_posix().encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
 class ReadmeLandingContractTests(unittest.TestCase):
     def assert_valid_knowledge_read(
         self,
@@ -52,16 +81,15 @@ class ReadmeLandingContractTests(unittest.TestCase):
         expected_style: str,
     ) -> None:
         self.assertEqual(KNOWLEDGE_READ_FIELDS, set(payload))
-        self.assertIn(payload["mode"], SUPPORTED_MODES | {None})
+        self.assertIn(payload["mode"], (*MODES, None))
         self.assertIsInstance(payload["mode_explicit"], bool)
         self.assertIsInstance(payload["recommended_modes"], list)
         self.assertLessEqual(len(payload["recommended_modes"]), 2)
-        self.assertTrue(set(payload["recommended_modes"]) <= SUPPORTED_MODES)
-        self.assertIn(payload["depth"], SUPPORTED_DEPTHS)
-        self.assertIn(payload["granularity"], SUPPORTED_GRANULARITIES)
-        self.assertIn(payload["evidence"], SUPPORTED_EVIDENCE)
-        self.assertIn(payload["display_policy"], SUPPORTED_DISPLAY_POLICIES)
-        self.assertIn(payload["display_style"], SUPPORTED_DISPLAY_STYLES)
+        self.assertTrue(all(mode in MODES for mode in payload["recommended_modes"]))
+        self.assertIn(payload["depth"], DEPTHS)
+        self.assertIn(payload["granularity"], GRANULARITIES)
+        self.assertIn(payload["evidence"], EVIDENCE_LEVELS)
+        self.assertIn(payload["display_policy"], DISPLAY_POLICIES)
         self.assertEqual(expected_style, payload["display_style"])
 
     def test_english_readme_has_product_landing_sections(self) -> None:
@@ -156,6 +184,90 @@ class ReadmeLandingContractTests(unittest.TestCase):
             with self.subTest(language=language, style="expanded"):
                 expanded = extract_json_example(readme, "### Expanded Knowledge Read")
                 self.assert_valid_knowledge_read(expanded, "expanded")
+
+    def test_readme_quick_starts_execute_as_ready_learning_dry_runs(self) -> None:
+        readmes = {
+            "english": (
+                (REPO_ROOT / "README.md").read_text(encoding="utf-8"),
+                "## Quick Start",
+            ),
+            "chinese": (
+                (REPO_ROOT / "docs" / "README.zh-CN.md").read_text(
+                    encoding="utf-8"
+                ),
+                "## 快速开始",
+            ),
+        }
+
+        for language, (readme, heading) in readmes.items():
+            with self.subTest(language=language):
+                args = extract_quick_start_args(readme, heading)
+                self.assertEqual("python", args[0])
+                self.assertEqual(
+                    "skills/cobsidian/scripts/dry_run.py",
+                    args[1],
+                )
+
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    vault = Path(temp_dir) / "demo-vault"
+                    shutil.copytree(DEMO_VAULT, vault)
+                    command_args = args[1:]
+                    vault_index = command_args.index("examples/demo-vault")
+                    command_args[vault_index] = str(vault)
+                    before = directory_digest(vault)
+
+                    result = subprocess.run(
+                        [sys.executable, *command_args],
+                        cwd=REPO_ROOT,
+                        check=True,
+                        capture_output=True,
+                        text=True,
+                        encoding="utf-8",
+                    )
+                    payload = json.loads(result.stdout)
+
+                    self.assertEqual(before, directory_digest(vault))
+                    self.assertEqual("learning", payload["mode"])
+                    self.assertEqual("learning", payload["knowledge_read"]["mode"])
+                    self.assertIs(True, payload["knowledge_read"]["mode_explicit"])
+                    self.assertEqual(
+                        "compact",
+                        payload["knowledge_read"]["display_style"],
+                    )
+                    self.assertIs(True, payload["preflight"]["ready"])
+                    self.assertEqual([], payload["preflight"]["blocked_reasons"])
+                    self.assertEqual([], payload["writes"])
+
+    def test_readme_mermaid_diagrams_separate_action_from_note_plan(self) -> None:
+        readmes = {
+            "english": (REPO_ROOT / "README.md").read_text(encoding="utf-8"),
+            "chinese": (REPO_ROOT / "docs" / "README.zh-CN.md").read_text(
+                encoding="utf-8"
+            ),
+        }
+        conflated_phrases = (
+            "Create, append, or split?",
+            "Plan: create, append, split, or ask",
+            "新建、追加、拆分？",
+            "规划：新建、追加、拆分或询问",
+            "先判断新建、追加还是拆分",
+        )
+
+        for language, readme in readmes.items():
+            blocks = extract_mermaid_blocks(readme)
+            with self.subTest(language=language, check="diagram-count"):
+                self.assertEqual(2, len(blocks))
+            for index, block in enumerate(blocks):
+                with self.subTest(language=language, diagram=index):
+                    self.assertIn("create | append | blocked", block)
+                    self.assertIn(
+                        "single-note | multi-note | report-only",
+                        block,
+                    )
+                    self.assertIn("split = multi-note", block)
+            for phrase in conflated_phrases:
+                with self.subTest(language=language, phrase=phrase):
+                    self.assertNotIn(phrase, readme)
 
     def test_banner_svg_is_parseable_and_self_contained(self) -> None:
         banner_path = REPO_ROOT / "docs" / "assets" / "cobsidian-banner.svg"
