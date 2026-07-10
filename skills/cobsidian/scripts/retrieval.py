@@ -4,11 +4,18 @@ import re
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Protocol
+from typing import Iterable, Iterator, Protocol
 
 
-LATIN_TOKEN_RE = re.compile(r"[A-Za-z0-9_+\-.#]{2,}")
+LATIN_TOKEN_RE = re.compile(
+    r"(?<![A-Za-z0-9_])(?:"
+    r"[A-Za-z][A-Za-z0-9_]*(?:\+\+|#)"
+    r"|[A-Za-z0-9_]+(?:[.-][A-Za-z0-9_]+)*"
+    r"|\.[A-Za-z0-9_]+"
+    r")(?![A-Za-z0-9_])"
+)
 CJK_RUN_RE = re.compile(r"[\u4e00-\u9fff]{2,}")
+MAX_BACKLINK_LIMIT = 100
 STOPWORDS = {
     "the",
     "and",
@@ -42,6 +49,11 @@ class NoteLike(Protocol):
     title: str
     tags: list[str]
     wikilinks: list[str]
+
+
+def build_query(topic: str | None, text: str) -> str:
+    parts = [part.strip() for part in (topic, text) if part and part.strip()]
+    return "\n".join(parts)
 
 
 def cjk_ngrams(run: str) -> list[str]:
@@ -81,27 +93,25 @@ def read_utf8(path: Path) -> str:
 def build_search_documents(
     vault_path: Path,
     notes: Iterable[NoteLike],
-) -> list[SearchDocument]:
-    documents: list[SearchDocument] = []
+) -> Iterator[SearchDocument]:
     for note in notes:
         body = read_utf8(vault_path / note.path)
         metadata = " ".join([*note.tags, *note.wikilinks])
-        documents.append(
-            SearchDocument(
-                title=note.title,
-                path=note.path,
-                text=f"{metadata}\n{body}",
-            )
+        yield SearchDocument(
+            title=note.title,
+            path=note.path,
+            text=f"{metadata}\n{body}",
         )
-    return documents
 
 
 def rank_backlinks(
     query: str,
-    documents: list[SearchDocument],
+    documents: Iterable[SearchDocument],
     limit: int,
     excluded_paths: set[str] | None = None,
 ) -> list[RankedBacklink]:
+    if not 1 <= limit <= MAX_BACKLINK_LIMIT:
+        raise ValueError(f"limit must be between 1 and {MAX_BACKLINK_LIMIT}.")
     query_tokens = tokenize(query)
     excluded = excluded_paths or set()
     ranked: list[RankedBacklink] = []
@@ -118,7 +128,7 @@ def rank_backlinks(
                     score=score,
                 )
             )
-    return sorted(
-        ranked,
-        key=lambda item: (-item.score, item.path.casefold()),
-    )[:limit]
+            ranked.sort(key=lambda item: (-item.score, item.path.casefold()))
+            if len(ranked) > limit:
+                ranked.pop()
+    return ranked

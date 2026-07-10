@@ -4,7 +4,7 @@ import argparse
 from pathlib import Path
 
 from cobsidian_config import load_config, resolve_vault_path
-from retrieval import build_search_documents, rank_backlinks, read_utf8
+from retrieval import build_query, build_search_documents, rank_backlinks, read_utf8
 from scan_vault import scan_vault
 
 
@@ -12,6 +12,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Suggest related Obsidian notes for a draft or note.")
     parser.add_argument("vault", nargs="?", type=Path)
     parser.add_argument("--config", type=Path, help="Path to cobsidian.config.yml.")
+    parser.add_argument("--topic", help="Optional topic/title signal for ranking.")
     parser.add_argument("--file", type=Path, help="Draft or note file to compare against the vault.")
     parser.add_argument("--text", type=str, help="Raw text to compare against the vault.")
     parser.add_argument("--limit", type=int, default=None)
@@ -40,7 +41,7 @@ def main() -> int:
             pass
 
     suggestions = rank_backlinks(
-        query_text,
+        build_query(topic=args.topic, text=query_text),
         build_search_documents(vault_path, scan_vault(vault_path)),
         limit=limit,
         excluded_paths=excluded_paths,

@@ -8,7 +8,7 @@ from difflib import SequenceMatcher
 from pathlib import Path
 
 from cobsidian_config import CobsidianConfig, load_config, resolve_vault_path
-from retrieval import build_search_documents, rank_backlinks
+from retrieval import build_query, build_search_documents, rank_backlinks
 from scan_vault import NoteInfo, read_text, scan_vault
 
 
@@ -92,7 +92,7 @@ def build_payload(
         else set()
     )
     backlinks = rank_backlinks(
-        f"{topic}\n{text}",
+        build_query(topic=topic, text=text),
         build_search_documents(vault_path, notes),
         limit=config.max_suggested_backlinks,
         excluded_paths=excluded_paths,

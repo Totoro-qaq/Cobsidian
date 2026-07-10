@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import asyncio
+import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from skills.cobsidian.mcp_server import (
     create_mcp_server,
@@ -11,6 +14,7 @@ from skills.cobsidian.mcp_server import (
     tool_cobsidian_dry_run,
     tool_cobsidian_find_duplicates,
     tool_cobsidian_scan_vault,
+    tool_cobsidian_suggest_backlinks,
 )
 
 
@@ -131,6 +135,63 @@ class McpServerTests(unittest.TestCase):
 
             self.assertEqual(1, payload["comparisons"])
             self.assertTrue(payload["truncated"])
+
+    def test_static_vault_summary_preserves_complete_resource_contract(self) -> None:
+        async def run() -> None:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                vault = Path(temp_dir)
+                for index in range(101):
+                    (vault / f"Note {index:03d}.md").write_text(
+                        f"# Note {index:03d}\n",
+                        encoding="utf-8",
+                    )
+                with patch.dict(os.environ, {"COBSIDIAN_VAULT": str(vault)}):
+                    contents = await create_mcp_server().read_resource(
+                        "cobsidian://vault-summary"
+                    )
+
+                payload = json.loads(contents[0].content)
+                self.assertEqual(101, payload["total_note_count"])
+                self.assertEqual(101, len(payload["notes"]))
+
+        asyncio.run(run())
+
+    def test_vault_page_resource_supports_bounded_followup_pages(self) -> None:
+        async def run() -> None:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                vault = Path(temp_dir)
+                for index in range(101):
+                    (vault / f"Note {index:03d}.md").write_text(
+                        f"# Note {index:03d}\n",
+                        encoding="utf-8",
+                    )
+                with patch.dict(os.environ, {"COBSIDIAN_VAULT": str(vault)}):
+                    contents = await create_mcp_server().read_resource(
+                        "cobsidian://vault-page/100/10"
+                    )
+
+                payload = json.loads(contents[0].content)
+                self.assertEqual(
+                    {"offset": 100, "limit": 10, "returned": 1},
+                    payload["page"],
+                )
+                self.assertEqual("Note 100.md", payload["notes"][0]["path"])
+
+        asyncio.run(run())
+
+    def test_backlink_tool_rejects_invalid_limits(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+            (vault / "RAG.md").write_text("# RAG\n", encoding="utf-8")
+
+            for invalid_limit in (-1, 0, 101):
+                with self.subTest(invalid_limit=invalid_limit):
+                    with self.assertRaisesRegex(ValueError, "limit"):
+                        tool_cobsidian_suggest_backlinks(
+                            vault=str(vault),
+                            text="RAG",
+                            limit=invalid_limit,
+                        )
 
 
 if __name__ == "__main__":

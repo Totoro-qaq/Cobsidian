@@ -1,8 +1,18 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
+from unittest.mock import patch
 
-from skills.cobsidian.scripts.retrieval import SearchDocument, rank_backlinks, tokenize
+from skills.cobsidian.scripts import retrieval
+from skills.cobsidian.scripts.retrieval import (
+    MAX_BACKLINK_LIMIT,
+    SearchDocument,
+    build_search_documents,
+    rank_backlinks,
+    tokenize,
+)
+from skills.cobsidian.scripts.scan_vault import NoteInfo
 
 
 class RetrievalTests(unittest.TestCase):
@@ -39,6 +49,41 @@ class RetrievalTests(unittest.TestCase):
         ranked = rank_backlinks("shared", documents, limit=5)
 
         self.assertEqual(["a-note.md", "z-note.md"], [item.path for item in ranked])
+
+    def test_prose_punctuation_does_not_change_tokens(self) -> None:
+        self.assertEqual(tokenize("SQLite"), tokenize("SQLite."))
+        self.assertNotIn("##", tokenize("## Markdown heading"))
+
+    def test_common_technical_tokens_are_preserved(self) -> None:
+        tokens = tokenize("C++ C# node.js .venv pg-vector Qwen2.5")
+
+        for expected in ("c++", "c#", "node.js", ".venv", "pg-vector", "qwen2.5"):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, tokens)
+
+    def test_backlink_limit_must_be_bounded(self) -> None:
+        for invalid_limit in (-1, 0, MAX_BACKLINK_LIMIT + 1):
+            with self.subTest(invalid_limit=invalid_limit):
+                with self.assertRaisesRegex(ValueError, "limit"):
+                    rank_backlinks("query", [], limit=invalid_limit)
+
+    def test_search_documents_read_bodies_lazily(self) -> None:
+        notes = [
+            NoteInfo("one.md", "One", [], [], 1),
+            NoteInfo("two.md", "Two", [], [], 1),
+        ]
+
+        with patch.object(
+            retrieval,
+            "read_utf8",
+            side_effect=["first body", "second body"],
+        ) as read_utf8:
+            documents = build_search_documents(Path("vault"), notes)
+            self.assertEqual(0, read_utf8.call_count)
+
+            iterator = iter(documents)
+            self.assertEqual("one.md", next(iterator).path)
+            self.assertEqual(1, read_utf8.call_count)
 
 
 if __name__ == "__main__":

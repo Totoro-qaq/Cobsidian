@@ -21,7 +21,7 @@ from duplicates import (  # noqa: E402
 )
 from dry_run import build_payload as build_dry_run_payload  # noqa: E402
 from dry_run import find_duplicate_risks  # noqa: E402
-from retrieval import build_search_documents, rank_backlinks  # noqa: E402
+from retrieval import build_query, build_search_documents, rank_backlinks  # noqa: E402
 from scan_vault import NoteInfo, read_text, scan_vault  # noqa: E402
 from validate_notes import extract_wikilinks  # noqa: E402
 
@@ -92,6 +92,22 @@ def notes_to_payload(
     return payload
 
 
+def complete_notes_payload(
+    vault_path: Path,
+    notes: list[NoteInfo],
+    config: CobsidianConfig,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "vault": str(vault_path),
+        "note_count": len(notes),
+        "total_note_count": len(notes),
+        "notes": [asdict(note) for note in notes],
+    }
+    if config.config_path:
+        payload["config"] = config.public_summary()
+    return payload
+
+
 def tool_cobsidian_scan_vault(
     vault: str | None = None,
     config: str | None = None,
@@ -147,6 +163,7 @@ def tool_cobsidian_find_duplicates(
 def tool_cobsidian_suggest_backlinks(
     vault: str | None = None,
     config: str | None = None,
+    topic: str | None = None,
     text: str | None = None,
     note_path: str | None = None,
     limit: int | None = None,
@@ -161,7 +178,7 @@ def tool_cobsidian_suggest_backlinks(
 
     notes = scan_vault(vault_path)
     suggestions = rank_backlinks(
-        source_text,
+        build_query(topic=topic, text=source_text),
         build_search_documents(vault_path, notes),
         limit=max_results,
         excluded_paths={note_path} if note_path else set(),
@@ -251,7 +268,28 @@ def create_mcp_server() -> FastMCP:
             vault=os.environ.get("COBSIDIAN_VAULT"),
             config=os.environ.get("COBSIDIAN_CONFIG"),
         )
-        return notes_to_payload(vault_path, scan_vault(vault_path), loaded_config)
+        return complete_notes_payload(
+            vault_path,
+            scan_vault(vault_path),
+            loaded_config,
+        )
+
+    @server.resource(
+        "cobsidian://vault-page/{offset}/{limit}",
+        mime_type="application/json",
+    )
+    def read_vault_page_resource(offset: int, limit: int) -> dict[str, Any]:
+        vault_path, loaded_config = resolve_vault_from_inputs(
+            vault=os.environ.get("COBSIDIAN_VAULT"),
+            config=os.environ.get("COBSIDIAN_CONFIG"),
+        )
+        return notes_to_payload(
+            vault_path,
+            scan_vault(vault_path),
+            loaded_config,
+            offset=offset,
+            limit=limit,
+        )
 
     @server.resource("cobsidian://note/{note_path}", mime_type="text/markdown")
     def read_note_resource(note_path: str) -> str:
