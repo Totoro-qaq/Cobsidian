@@ -42,15 +42,15 @@ Do not guess a private vault path. If no valid vault path is available, ask for 
 
 ## Mode Routing
 
-| Canonical mode | Use for | Load |
-|---|---|---|
-| `learning` / 学习 | Concepts, courses, papers, videos, explanations | [learning](references/modes/learning.md) |
-| `project` / 项目 | The user's repository, architecture, implementation, operations | [project](references/modes/project.md) |
-| `review` / 复盘 | Incidents, failures, experiments, lessons, corrective actions | [review](references/modes/review.md) |
-| `comparison` / 对比 | Requirements-based evaluation and decisions | [comparison](references/modes/comparison.md) |
-| `index` / 索引 | Topic maps, learning paths, hub notes | [index](references/modes/index.md) |
-| `capture` / 捕获 | Low-friction temporary capture | [capture](references/modes/capture.md) |
-| `dissection` / 拆解 | Internals of tools, repos, frameworks, prompts, workflows | [dissection](references/modes/dissection.md) |
+| Canonical mode | Representative cues | Use for | Load |
+|---|---|---|---|
+| `learning` / 学习 | teach me about / 这个概念讲一下 | Concepts and explanations | [learning](references/modes/learning.md) |
+| `project` / 项目 | document this repo / 这个仓库帮我分析一下 | Project implementation and operations | [project](references/modes/project.md) |
+| `review` / 复盘 | what went wrong / 失败复盘 | Evidence, causes, and corrective actions | [review](references/modes/review.md) |
+| `comparison` / 对比 | which should I choose / 哪个更好 | Requirements-based decisions | [comparison](references/modes/comparison.md) |
+| `index` / 索引 | learning path / 学习路线 | Maps, paths, and hub notes | [index](references/modes/index.md) |
+| `capture` / 捕获 | just save this / 先记下来 | Low-friction temporary capture | [capture](references/modes/capture.md) |
+| `dissection` / 拆解 | how does X work internally / 这个怎么实现的 | Internal mechanics and reusable patterns | [dissection](references/modes/dissection.md) |
 
 - Explicit mode -> load only its mode reference.
 - Clear inferred mode -> state it and load only its mode reference.
@@ -85,17 +85,18 @@ Mode defaults apply before duplicate resolution; an append decision changes gran
 2. Resolve the vault and target topic.
 3. Scan existing notes and complete duplicate and backlink checks.
 4. Select or infer one mode and load one mode reference.
-5. Compute Knowledge Read and decide create, append, split, or report-only.
-6. Produce dry-run output and evaluate preflight.
+5. Compute Knowledge Read and the mode-level note plan: `single-note | multi-note | report-only`; split means `multi-note`.
+6. Produce dry-run output with `decision.action`: `create | append | blocked`, then evaluate preflight.
 7. Request or consume approval; write only through an available approved path.
 8. Validate actual changes and report only completed actions.
 
 ## Write Rules
 
 - Preserve the vault's existing naming and organization style.
+- Use vault-relative paths in note content; never embed user-specific absolute paths.
 - Prefer append or merge over creating a near-duplicate.
 - Prefer durable concepts over chat transcript summaries.
-- Keep private paths, tokens, account names, and raw logs out of generic notes unless explicitly requested for local operational records.
+- Local operational records still use minimum necessary disclosure; redact credentials, tokens, private identifiers, and unnecessary raw log content.
 - Add `[[wiki links]]` only to notes confirmed to exist; report missing targets instead of creating broken links.
 - Do not fabricate sources, filenames, scans, writes, or validation results.
 - Use stable headings and keep each note responsible for one maintainable knowledge boundary.
@@ -130,7 +131,8 @@ Read [note types](references/note-types.md) for shared note-shape guidance, [bac
 End with:
 
 - files created or modified, or an explicit no-write result
-- create, append, split, or report-only decision
+- dry-run `decision.action`: `create | append | blocked`
+- mode-level note plan: `single-note | multi-note | report-only`; report split as `multi-note`, not a machine action
 - selected mode, depth, granularity, and evidence level
 - capability level, preflight readiness, and every blocked reason
 - duplicate checks and backlink decisions

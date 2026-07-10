@@ -6,7 +6,7 @@ Inspect the actual available tools before choosing a capability level. Query the
 
 ## Capability Mapping
 
-- Use `full-local` only when MCP reads and approved filesystem writes are both actually available.
+- Use `full-local` only when MCP-backed scan and dry-run plus approved write and validation paths are all actually available through detected tools.
 - Use `filesystem-only` when local read, shell, edit, and validation operations are available without MCP.
 - Use `mcp-readonly` when the Cobsidian MCP surface can scan or dry-run but cannot write.
 - Use `chat-only` when no active tool can read and scan the requested vault.

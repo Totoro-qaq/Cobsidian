@@ -10,6 +10,7 @@ from skills.cobsidian.scripts.knowledge_read import MODE_DEFAULTS
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SKILL_PATH = REPO_ROOT / "skills" / "cobsidian" / "SKILL.md"
 REFERENCES_PATH = REPO_ROOT / "skills" / "cobsidian" / "references"
+NOTE_TYPES_PATH = REFERENCES_PATH / "note-types.md"
 MODE_NAMES = tuple(MODE_DEFAULTS)
 HOST_NAMES = ("codex", "claude-code", "cursor", "hermes", "mcp")
 MODE_HEADINGS = (
@@ -118,6 +119,30 @@ class AdaptiveSkillContractTests(unittest.TestCase):
                 for fragment in fragments:
                     self.assertIn(fragment, text)
 
+    def test_review_and_project_note_types_match_the_mode_boundary(self) -> None:
+        note_type_sections = h2_sections(
+            NOTE_TYPES_PATH.read_text(encoding="utf-8")
+        )
+        review_mode = self.read_reference(
+            REFERENCES_PATH / "modes" / "review.md"
+        )
+        self.assertIn("Review Note", note_type_sections)
+        review_note = note_type_sections["Review Note"]
+        project_note = note_type_sections["Project Note"]
+
+        for subject in ("incidents", "failures", "experiments"):
+            with self.subTest(subject=subject):
+                self.assertIn(subject, review_mode)
+                self.assertIn(subject, review_note)
+                self.assertNotIn(subject, project_note)
+        for section in ("Evidence", "Root Causes", "Corrective Actions"):
+            with self.subTest(section=section):
+                self.assertIn(section, review_mode)
+                self.assertIn(f"- {section}", review_note)
+        for project_scope in ("specific project", "implementation", "operations"):
+            with self.subTest(project_scope=project_scope):
+                self.assertIn(project_scope, project_note)
+
     def test_mode_references_do_not_repeat_the_common_iron_law(self) -> None:
         forbidden = (
             "Iron Law",
@@ -142,6 +167,22 @@ class AdaptiveSkillContractTests(unittest.TestCase):
                 for capability_level in CAPABILITY_LEVELS:
                     self.assertIn(f"`{capability_level}`", text)
                 self.assertIn("../preflight.md", text)
+
+    def test_full_local_mapping_requires_all_four_execution_paths(self) -> None:
+        required_paths = ("mcp", "scan", "dry-run", "approved write", "validation")
+        for host in HOST_NAMES:
+            with self.subTest(host=host):
+                text = self.read_reference(
+                    REFERENCES_PATH / "hosts" / f"{host}.md"
+                )
+                full_local_lines = [
+                    line.casefold()
+                    for line in text.splitlines()
+                    if "use `full-local`" in line.casefold()
+                ]
+                self.assertEqual(1, len(full_local_lines))
+                for required_path in required_paths:
+                    self.assertIn(required_path, full_local_lines[0])
 
     def test_host_references_have_no_user_specific_absolute_paths(self) -> None:
         absolute_path_patterns = (

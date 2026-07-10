@@ -6,7 +6,7 @@ Inspect the actual available tools and resources advertised by the connected ser
 
 ## Capability Mapping
 
-- Use `full-local` only when MCP reads plus a separately approved filesystem write and validation path are both actually available.
+- Use `full-local` only when scan, dry-run, approved write, and validation paths are all actually available through advertised MCP and companion filesystem tools.
 - Use `filesystem-only` when local read, shell, edit, and validation tools exist but Cobsidian MCP is unavailable.
 - Use `mcp-readonly` by default when Cobsidian MCP can scan, retrieve, or dry-run without a write path.
 - Use `chat-only` when no advertised resource or tool can reach the target vault.
