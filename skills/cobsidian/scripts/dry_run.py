@@ -106,13 +106,19 @@ def build_payload(
         raise ValueError("Provide a non-empty topic.")
 
     capability = validated_capability(capability_level)
-    if capability.scan:
+    vault_resolved = vault_path.exists() and vault_path.is_dir()
+    can_scan = capability.scan and vault_resolved
+    if can_scan:
         decision = choose_decision(normalized_topic, mode, notes, config)
     else:
         decision = {
             "action": "blocked",
             "target_note": "",
-            "reason": "Scan capability is unavailable for chat-only.",
+            "reason": (
+                "Scan capability is unavailable."
+                if vault_resolved
+                else "Vault path is unavailable."
+            ),
         }
     resolved_display_policy = (
         config.knowledge_read_policy
@@ -129,7 +135,7 @@ def build_payload(
         display_policy=resolved_display_policy,
         decision_action=decision["action"],
     )
-    if capability.scan:
+    if can_scan:
         risks = find_duplicate_risks(
             normalized_topic,
             notes,
@@ -151,10 +157,10 @@ def build_payload(
         backlinks = []
     preflight = build_preflight(
         capability_level=capability_level,
-        vault_resolved=capability.scan,
-        existing_notes_scanned=capability.scan,
-        duplicate_check_completed=capability.scan,
-        backlink_check_completed=capability.scan,
+        vault_resolved=vault_resolved,
+        existing_notes_scanned=can_scan,
+        duplicate_check_completed=can_scan,
+        backlink_check_completed=can_scan,
         mode_selected=knowledge_read.mode is not None,
     )
     return {

@@ -161,7 +161,7 @@ class RetrievalEntrypointTests(unittest.TestCase):
                 payload["preflight"]["blocked_reasons"],
             )
 
-    def test_chat_only_does_not_claim_scan_dependent_checks(self) -> None:
+    def test_chat_only_skips_scan_derived_decisions(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             vault = Path(temp_dir)
             (vault / "Portable Draft.md").write_text(
@@ -202,7 +202,66 @@ class RetrievalEntrypointTests(unittest.TestCase):
                 {
                     "action": "blocked",
                     "target_note": "",
-                    "reason": "Scan capability is unavailable for chat-only.",
+                    "reason": "Scan capability is unavailable.",
+                },
+                payload["decision"],
+            )
+            self.assertEqual([], payload["duplicate_risks"])
+            self.assertEqual([], payload["suggested_backlinks"])
+            self.assertFalse(preflight["ready"])
+            self.assertIn("scan_capability_unavailable", preflight["blocked_reasons"])
+            self.assertIn("write_capability_unavailable", preflight["blocked_reasons"])
+            self.assertEqual([], payload["writes"])
+            choose_decision.assert_not_called()
+            find_duplicate_risks.assert_not_called()
+            rank_backlinks.assert_not_called()
+
+    def test_nonexistent_programmatic_vault_is_not_ready(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            (workspace / "Portable Draft.md").write_text(
+                "# Portable Draft\n\nRelated material.\n",
+                encoding="utf-8",
+            )
+            missing_vault = workspace / "missing"
+
+            with (
+                patch.object(
+                    dry_run_module,
+                    "choose_decision",
+                    return_value={
+                        "action": "create",
+                        "target_note": "Portable Draft.md",
+                        "reason": "Unexpected scan-derived decision.",
+                    },
+                ) as choose_decision,
+                patch.object(
+                    dry_run_module,
+                    "find_duplicate_risks",
+                    return_value=[],
+                ) as find_duplicate_risks,
+                patch.object(
+                    dry_run_module,
+                    "rank_backlinks",
+                    return_value=[],
+                ) as rank_backlinks,
+            ):
+                payload = build_payload(
+                    vault_path=missing_vault,
+                    config=CobsidianConfig(config_path=None, raw={}),
+                    topic="Portable Draft",
+                    mode="capture",
+                    text="draft material",
+                    notes=scan_vault(workspace),
+                    mode_explicit=True,
+                )
+
+            preflight = payload["preflight"]
+            self.assertEqual(
+                {
+                    "action": "blocked",
+                    "target_note": "",
+                    "reason": "Vault path is unavailable.",
                 },
                 payload["decision"],
             )
@@ -213,12 +272,40 @@ class RetrievalEntrypointTests(unittest.TestCase):
             self.assertFalse(preflight["duplicate_check_completed"])
             self.assertFalse(preflight["backlink_check_completed"])
             self.assertFalse(preflight["ready"])
-            self.assertIn("scan_capability_unavailable", preflight["blocked_reasons"])
-            self.assertIn("write_capability_unavailable", preflight["blocked_reasons"])
-            self.assertEqual([], payload["writes"])
+            for reason in (
+                "vault_unresolved",
+                "existing_notes_not_scanned",
+                "duplicate_check_incomplete",
+                "backlink_check_incomplete",
+            ):
+                with self.subTest(reason=reason):
+                    self.assertIn(reason, preflight["blocked_reasons"])
             choose_decision.assert_not_called()
             find_duplicate_risks.assert_not_called()
             rank_backlinks.assert_not_called()
+
+    def test_chat_only_existing_vault_has_no_scan_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+
+            payload = build_payload(
+                vault_path=vault,
+                config=CobsidianConfig(config_path=None, raw={}),
+                topic="Portable Draft",
+                mode="capture",
+                text="draft material",
+                notes=[],
+                mode_explicit=True,
+                capability_level="chat-only",
+            )
+
+            preflight = payload["preflight"]
+            self.assertTrue(preflight["vault_resolved"])
+            self.assertFalse(preflight["existing_notes_scanned"])
+            self.assertFalse(preflight["duplicate_check_completed"])
+            self.assertFalse(preflight["backlink_check_completed"])
+            self.assertFalse(preflight["ready"])
+            self.assertNotIn("vault_unresolved", preflight["blocked_reasons"])
 
     def test_chat_only_cli_does_not_scan_vault(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
