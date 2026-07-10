@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -59,11 +60,10 @@ class CobsidianConfig:
 
     @property
     def knowledge_read_policy(self) -> str:
-        policy = self.get(
-            "interaction",
-            "knowledge_read",
-            default="auto",
-        )
+        interaction = self.raw.get("interaction", {})
+        if not isinstance(interaction, dict):
+            raise ValueError("interaction must be a mapping.")
+        policy = interaction.get("knowledge_read", "auto")
         allowed = ", ".join(sorted(KNOWLEDGE_READ_POLICIES))
         if not isinstance(policy, str):
             raise ValueError(
@@ -112,11 +112,12 @@ class CobsidianConfig:
         return str(directory) if directory else None
 
     def public_summary(self) -> ConfigData:
+        interaction = self.raw.get("interaction", {})
         return {
             "path": str(self.config_path) if self.config_path else None,
             "defaults": dict(self.raw.get("defaults", {})) if isinstance(self.raw.get("defaults"), dict) else {},
             "duplicates": dict(self.raw.get("duplicates", {})) if isinstance(self.raw.get("duplicates"), dict) else {},
-            "interaction": dict(self.raw.get("interaction", {})) if isinstance(self.raw.get("interaction"), dict) else {},
+            "interaction": deepcopy(interaction) if isinstance(interaction, dict) else {},
             "linking": dict(self.raw.get("linking", {})) if isinstance(self.raw.get("linking"), dict) else {},
             "validation": dict(self.raw.get("validation", {})) if isinstance(self.raw.get("validation"), dict) else {},
         }

@@ -29,6 +29,25 @@ class ConfigAndDryRunTests(unittest.TestCase):
     def test_knowledge_read_policy_defaults_to_auto(self) -> None:
         self.assertEqual("auto", self.knowledge_read_policy_for())
 
+    def test_knowledge_read_policy_defaults_to_auto_for_empty_interaction(self) -> None:
+        config = CobsidianConfig(
+            config_path=None,
+            raw={"interaction": {}},
+        )
+
+        self.assertEqual("auto", config.knowledge_read_policy)
+
+    def test_knowledge_read_policy_rejects_non_mapping_interaction(self) -> None:
+        for interaction in ("off", None, False, []):
+            with self.subTest(interaction=interaction):
+                config = CobsidianConfig(
+                    config_path=None,
+                    raw={"interaction": interaction},
+                )
+
+                with self.assertRaisesRegex(ValueError, r"interaction"):
+                    _ = config.knowledge_read_policy
+
     def test_knowledge_read_policy_accepts_all_supported_values(self) -> None:
         for policy in ("auto", "always", "off"):
             with self.subTest(policy=policy):
@@ -97,6 +116,25 @@ class ConfigAndDryRunTests(unittest.TestCase):
         )
 
         self.assertEqual({}, config.public_summary().get("interaction"))
+
+    def test_public_summary_deeply_copies_interaction(self) -> None:
+        config = CobsidianConfig(
+            config_path=None,
+            raw={
+                "interaction": {
+                    "knowledge_read": "auto",
+                    "metadata": {"labels": ["original"]},
+                }
+            },
+        )
+
+        summary = config.public_summary()
+        summary["interaction"]["metadata"]["labels"].append("mutated")
+
+        self.assertEqual(
+            ["original"],
+            config.raw["interaction"]["metadata"]["labels"],
+        )
 
     def test_scan_vault_uses_config_vault_path(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
