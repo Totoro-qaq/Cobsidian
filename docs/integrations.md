@@ -12,6 +12,21 @@ Use this page after you have installed the product you want to use. For product 
 - Obsidian vault management: <https://obsidian.md/help/manage-vaults>
 - Obsidian Brand Guidelines: <https://obsidian.md/brand>
 
+## Adaptive Host Path
+
+Run capability detection against the tools exposed in the current session; do not infer access from a product name. Cobsidian uses capability-based degradation across four levels:
+
+| Level | Integration path |
+|---|---|
+| `full-local` | Use MCP-backed inspection plus an approved local write and validation path. |
+| `filesystem-only` | Use the local scripts, filesystem edits, and validation without MCP. |
+| `mcp-readonly` | Use Cobsidian MCP for scan and dry-run, then return a change plan because no write path exists. |
+| `chat-only` | Return a portable draft or request a usable vault/config path; do not claim a scan or write. |
+
+This is a zero-write MCP design: Cobsidian's MCP server exposes inspection and planning only, always returns `writes: []` from dry-run, and never gains write access from a `capability_level` argument. `ready` describes whether the active host has completed checks and can proceed after approval, not whether a write already happened.
+
+See [Agent Compatibility](agent-compatibility.md) for the full capability table and [MCP Server](mcp-server.md) for parameter parity and fail-closed errors.
+
 ## Use With An Obsidian Vault
 
 Cobsidian works with an Obsidian vault because an Obsidian vault is a local folder of Markdown files.
@@ -110,10 +125,11 @@ See [MCP Server](mcp-server.md) for registered tools, resources, prompts, and sa
 For Hermes, Claude Code, Cursor, or another coding agent, keep the adapter thin:
 
 1. Point the agent to `skills/cobsidian/SKILL.md`.
-2. Give it the vault path or `cobsidian.config.yml`.
-3. Allow it to run the helper scripts in `skills/cobsidian/scripts/`.
-4. Require a dry-run summary before write actions.
-5. Require duplicate checks, backlink suggestions, and validation output in the final report.
+2. Ask it to detect actual scan, write, MCP, and validation capabilities.
+3. Give it the vault path or `cobsidian.config.yml`.
+4. Allow it to run the helper scripts in `skills/cobsidian/scripts/` when local execution exists.
+5. Require Knowledge Read, preflight, and a dry-run summary before write actions.
+6. Require duplicate checks, backlink suggestions, and validation output in the final report.
 
 Generic prompt:
 

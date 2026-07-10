@@ -1,14 +1,69 @@
 from __future__ import annotations
 
+import json
+import re
 import xml.etree.ElementTree as ET
 import unittest
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+KNOWLEDGE_READ_FIELDS = {
+    "mode",
+    "mode_explicit",
+    "recommended_modes",
+    "depth",
+    "granularity",
+    "evidence",
+    "display_policy",
+    "display_style",
+}
+SUPPORTED_MODES = {
+    "learning",
+    "project",
+    "review",
+    "comparison",
+    "index",
+    "capture",
+    "dissection",
+}
+SUPPORTED_DEPTHS = {"capture", "standard", "deep"}
+SUPPORTED_GRANULARITIES = {"append", "single-note", "multi-note"}
+SUPPORTED_EVIDENCE = {"conversation", "source-grounded", "verified"}
+SUPPORTED_DISPLAY_POLICIES = {"auto", "always", "off"}
+SUPPORTED_DISPLAY_STYLES = {"compact", "expanded", "hidden"}
+
+
+def extract_json_example(readme: str, heading: str) -> dict[str, object]:
+    pattern = rf"{re.escape(heading)}.*?```json\s+(.*?)\s+```"
+    match = re.search(pattern, readme, flags=re.DOTALL)
+    if match is None:
+        raise AssertionError(f"Missing JSON example after {heading!r}.")
+    payload = json.loads(match.group(1))
+    if not isinstance(payload, dict):
+        raise AssertionError(f"Example after {heading!r} must be a JSON object.")
+    return payload
 
 
 class ReadmeLandingContractTests(unittest.TestCase):
+    def assert_valid_knowledge_read(
+        self,
+        payload: dict[str, object],
+        expected_style: str,
+    ) -> None:
+        self.assertEqual(KNOWLEDGE_READ_FIELDS, set(payload))
+        self.assertIn(payload["mode"], SUPPORTED_MODES | {None})
+        self.assertIsInstance(payload["mode_explicit"], bool)
+        self.assertIsInstance(payload["recommended_modes"], list)
+        self.assertLessEqual(len(payload["recommended_modes"]), 2)
+        self.assertTrue(set(payload["recommended_modes"]) <= SUPPORTED_MODES)
+        self.assertIn(payload["depth"], SUPPORTED_DEPTHS)
+        self.assertIn(payload["granularity"], SUPPORTED_GRANULARITIES)
+        self.assertIn(payload["evidence"], SUPPORTED_EVIDENCE)
+        self.assertIn(payload["display_policy"], SUPPORTED_DISPLAY_POLICIES)
+        self.assertIn(payload["display_style"], SUPPORTED_DISPLAY_STYLES)
+        self.assertEqual(expected_style, payload["display_style"])
+
     def test_english_readme_has_product_landing_sections(self) -> None:
         readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
 
@@ -59,6 +114,48 @@ class ReadmeLandingContractTests(unittest.TestCase):
         self.assertTrue((REPO_ROOT / "docs" / "assets" / "cobsidian-demo.gif").is_file())
         self.assertNotIn("readme-typing-svg", english_readme + chinese_readme)
         self.assertNotIn("capsule-render", english_readme + chinese_readme)
+
+    def test_readmes_present_the_v05_adaptive_surface_concisely(self) -> None:
+        english_readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        chinese_readme = (REPO_ROOT / "docs" / "README.zh-CN.md").read_text(
+            encoding="utf-8"
+        )
+
+        shared_fragments = [
+            "Knowledge Read",
+            "整理判读",
+            "auto | always | off",
+            "capability-based degradation",
+            "v0.5.0",
+        ]
+        for readme in (english_readme, chinese_readme):
+            for fragment in shared_fragments:
+                with self.subTest(fragment=fragment):
+                    self.assertIn(fragment, readme)
+            self.assertIn("skills/cobsidian/references/", readme)
+            self.assertNotIn("## Default Knowledge Read", readme)
+            self.assertNotIn("## Append, Single-Note, and Split Criteria", readme)
+
+        self.assertIn("complete JSON", english_readme)
+        self.assertIn("完整 JSON", chinese_readme)
+        self.assertIn("supported config surface", english_readme)
+        self.assertIn("当前支持的配置面", chinese_readme)
+
+    def test_readmes_include_valid_compact_and_expanded_knowledge_reads(self) -> None:
+        readmes = {
+            "english": (REPO_ROOT / "README.md").read_text(encoding="utf-8"),
+            "chinese": (REPO_ROOT / "docs" / "README.zh-CN.md").read_text(
+                encoding="utf-8"
+            ),
+        }
+
+        for language, readme in readmes.items():
+            with self.subTest(language=language, style="compact"):
+                compact = extract_json_example(readme, "### Compact Knowledge Read")
+                self.assert_valid_knowledge_read(compact, "compact")
+            with self.subTest(language=language, style="expanded"):
+                expanded = extract_json_example(readme, "### Expanded Knowledge Read")
+                self.assert_valid_knowledge_read(expanded, "expanded")
 
     def test_banner_svg_is_parseable_and_self_contained(self) -> None:
         banner_path = REPO_ROOT / "docs" / "assets" / "cobsidian-banner.svg"

@@ -72,6 +72,40 @@ python skills/cobsidian/mcp_server.py
 
 现在故意不提供写入 tool。写入流程应该先 dry-run，再由用户在 host 里确认。
 
+## 自适应 Dry-run 契约
+
+`cobsidian_dry_run` 是 zero-write MCP tool。它在原有规划 payload 上增加 `knowledge_read` 和 `preflight`，`writes` 始终是 `[]`。无论传入什么 `capability_level`，MCP server 本身都保持 read-only；这个参数只描述 preflight 所评估的当前 host，不会授予 server 写权限。
+
+`ready: true` 表示所描述的 host 已完成必要检查，并且确认后有批准的写入路径；它不表示已经写入。默认 `mcp-readonly` 在只读检查成功后仍返回 `ready=false` 和 `write_capability_unavailable`。
+
+### CLI/MCP Parameter Parity
+
+CLI/MCP parameter parity（参数一致性）由共享 dry-run 实现保证，两种入口校验同一组可选上下文：
+
+| MCP 参数 | CLI 选项 | 契约 |
+|---|---|---|
+| `mode` | `--mode` | `learning`、`project`、`review`、`comparison`、`index`、`capture`、`dissection` 之一；未决时省略。 |
+| `mode_explicit` | `--mode-explicit` / `--no-mode-explicit` | 记录是否由用户明确选择模式的布尔值。 |
+| `recommended_modes` | 重复使用 `--recommended-mode` | 仅在 `mode` 未决时给出零到两个 canonical mode。 |
+| `depth` | `--depth` | `capture`、`standard` 或 `deep`。 |
+| `granularity` | `--granularity` | `append`、`single-note` 或 `multi-note`。 |
+| `evidence` | `--evidence` | `conversation`、`source-grounded` 或 `verified`。 |
+| `knowledge_read_policy` | `--knowledge-read` | `auto`、`always` 或 `off`。 |
+| `capability_level` | `--capability-level` | `full-local`、`filesystem-only`、`mcp-readonly` 或 `chat-only`。 |
+
+MCP 的 `capability_level` 默认值是 `mcp-readonly`，本地 CLI 默认值是 `filesystem-only`。等价输入会得到相同的 Knowledge Read 字段和 preflight 规则。
+
+### 错误边界
+
+Server 与共享 dry-run 会 fail closed（失败关闭）：
+
+- Vault/config 输入缺失或无效时拒绝请求，不声称完成规划或写入。
+- 空 topic、无效枚举、超过两个推荐，或 mode 已解析时仍传推荐，都会被拒绝。
+- `auto` 下模式未决时返回 expanded Knowledge Read、`ready=false` 和 `mode_unresolved`；`off` 只隐藏对话展示，任何策略都不会静默选择模式。
+- Host 没有扫描能力时，decision 为 `blocked`，不能声称完成扫描派生检查。
+- 只读 host 报告 `write_capability_unavailable`，不会把自己升级成写入路径。
+- Note resource 拒绝绝对路径和越出已解析 vault 的 `..` 路径。
+
 ## 大型 Vault 边界
 
 - `cobsidian_scan_vault` 默认 `offset=0`、`limit=100`，单页最大 `500`；响应包含 `total_note_count` 和分页元数据。
@@ -100,6 +134,8 @@ python skills/cobsidian/mcp_server.py
 | `cobsidian-dry-run` | 要求 agent 先规划，不改文件。 |
 | `cobsidian-organize-after-confirmation` | 用户确认 dry-run 方案后，再组织材料。 |
 
+Prompt 只向 host 提供说明，不会给这个 server 增加写入 tool。
+
 ## 本地验证
 
 ```bash
@@ -117,6 +153,6 @@ python -c "import asyncio; from skills.cobsidian.mcp_server import create_mcp_se
 - 私人 vault 优先使用本地 `stdio`。
 - 不要把 server 暴露到公网。
 - 不要加入任意 shell 执行工具。
-- 写入 tool 等 dry-run 和确认策略稳定后再加。
+- 所有 vault 写入都保持在 MCP server 之外，并由 host 明确批准。
 - 用 `COBSIDIAN_CONFIG` 或 `COBSIDIAN_VAULT` 限定目标 vault。
 - note resource 读取会限制在已解析的 vault 路径内。

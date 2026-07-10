@@ -72,6 +72,40 @@ The server registers read/planning tools only:
 
 There is intentionally no write tool yet. Write workflows should go through dry-run first and require user confirmation in the host.
 
+## Adaptive Dry-run Contract
+
+`cobsidian_dry_run` is a zero-write MCP tool. It returns the existing planning payload plus `knowledge_read` and `preflight`; `writes` is always `[]`. The MCP server remains read-only regardless of the supplied `capability_level`. That parameter describes the active host for preflight and never grants the server write access.
+
+`ready: true` means the described host completed all required checks and has an approved write path available after confirmation. It does not mean a write occurred. With the default `mcp-readonly`, preflight returns `ready=false` and `write_capability_unavailable` after successful read checks.
+
+### CLI/MCP Parameter Parity
+
+CLI/MCP parameter parity comes from the shared dry-run implementation, which validates the same optional context from both entry points:
+
+| MCP parameter | CLI option | Contract |
+|---|---|---|
+| `mode` | `--mode` | One of `learning`, `project`, `review`, `comparison`, `index`, `capture`, `dissection`; omit when unresolved. |
+| `mode_explicit` | `--mode-explicit` / `--no-mode-explicit` | Boolean that records whether the user selected the mode. |
+| `recommended_modes` | repeat `--recommended-mode` | Zero to two canonical modes, only while `mode` is unresolved. |
+| `depth` | `--depth` | `capture`, `standard`, or `deep`. |
+| `granularity` | `--granularity` | `append`, `single-note`, or `multi-note`. |
+| `evidence` | `--evidence` | `conversation`, `source-grounded`, or `verified`. |
+| `knowledge_read_policy` | `--knowledge-read` | `auto`, `always`, or `off`. |
+| `capability_level` | `--capability-level` | `full-local`, `filesystem-only`, `mcp-readonly`, or `chat-only`. |
+
+MCP defaults `capability_level` to `mcp-readonly`; the local CLI defaults to `filesystem-only`. Equivalent inputs produce the same Knowledge Read fields and preflight rules.
+
+### Error Boundaries
+
+The server and shared dry-run fail closed:
+
+- Missing or invalid vault/config input is rejected without a planning or write claim.
+- A blank topic, invalid enum, more than two recommendations, or recommendations alongside a resolved mode is rejected.
+- Under `auto`, an unresolved mode returns expanded Knowledge Read with `ready=false` and `mode_unresolved`; `off` hides only the conversational presentation, and no policy silently selects a mode.
+- A host without scan capability gets a `blocked` decision and cannot claim scan-derived checks.
+- A read-only host reports `write_capability_unavailable`; it never upgrades itself to a write path.
+- Note resources reject absolute paths and `..` traversal outside the resolved vault.
+
 ## Large Vault Limits
 
 - `cobsidian_scan_vault` defaults to `offset=0` and `limit=100`; the maximum page size is `500`. Responses include `total_note_count` and page metadata.
@@ -100,6 +134,8 @@ Prefer `cobsidian://vault-page/{offset}/{limit}` for large vaults. The static `v
 | `cobsidian-dry-run` | Ask the agent to plan a vault write without changing files. |
 | `cobsidian-organize-after-confirmation` | Ask the agent to organize material after the user confirms the dry-run plan. |
 
+Prompts provide instructions to the host; they do not add a write tool to this server.
+
 ## Verify Locally
 
 ```bash
@@ -117,6 +153,6 @@ python -c "import asyncio; from skills.cobsidian.mcp_server import create_mcp_se
 - Prefer local `stdio` transport for private vaults.
 - Do not expose this server to a public network.
 - Do not add arbitrary shell execution tools.
-- Keep write actions out of MCP until dry-run and confirmation policies are stable.
+- Keep all vault writes outside this MCP server and behind explicit host approval.
 - Use `COBSIDIAN_CONFIG` or `COBSIDIAN_VAULT` to narrow the intended vault.
 - Note resource reads are constrained to the resolved vault path.

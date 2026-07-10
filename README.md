@@ -24,7 +24,8 @@ Cobsidian is an agent-agnostic workflow skill for maintaining Obsidian or Markdo
 
 - Turns useful AI conversations into reusable Markdown notes.
 - Searches existing notes before writing so agents append or merge instead of creating duplicates.
-- Keeps writes reviewable with dry-run planning, backlink suggestions, and validation output.
+- Explains the proposed organization through a structured Knowledge Read (`整理判读`).
+- Keeps writes reviewable with dry-run planning, capability-based degradation, backlink suggestions, and validation output.
 
 ## Quick Start
 
@@ -82,6 +83,50 @@ Dry run is the default safe path: it plans the change, reports duplicate risks a
   "writes": []
 }
 ```
+
+## Knowledge Read / 整理判读
+
+v0.5.0 computes a Knowledge Read before writing: the selected mode, depth, note granularity, evidence level, and display choice. `auto | always | off` controls conversational presentation only. With `off`, `display_style` becomes `hidden`, but the complete JSON object remains in dry-run output.
+
+Capability-based degradation keeps that result honest when tools are missing: a local host can become ready after checks, MCP stays read-only, and a chat-only host returns a draft or asks for a usable path instead of claiming work it could not perform.
+
+These examples show the exact `knowledge_read` object returned in JSON.
+
+### Compact Knowledge Read
+
+An explicit, simple learning request stays compact:
+
+```json
+{
+  "mode": "learning",
+  "mode_explicit": true,
+  "recommended_modes": [],
+  "depth": "standard",
+  "granularity": "single-note",
+  "evidence": "conversation",
+  "display_policy": "auto",
+  "display_style": "compact"
+}
+```
+
+### Expanded Knowledge Read
+
+An inferred, source-grounded dissection expands the explanation:
+
+```json
+{
+  "mode": "dissection",
+  "mode_explicit": false,
+  "recommended_modes": [],
+  "depth": "deep",
+  "granularity": "multi-note",
+  "evidence": "source-grounded",
+  "display_policy": "auto",
+  "display_style": "expanded"
+}
+```
+
+The dry-run machine action is only `create | append | blocked`. A split is a separate mode-level note plan reported as `multi-note`, not another machine action. Detailed execution rules live in the [mode and host references](skills/cobsidian/references/) and the shared [preflight contract](skills/cobsidian/references/preflight.md).
 
 ## Not Just Markdown Generation
 
@@ -187,23 +232,7 @@ If a related note already exists, append instead of creating a duplicate.
 
 ## Modes
 
-Cobsidian supports modes so users can tell the agent what kind of note they want.
-
-| Mode | Use when | Example prompt |
-|---|---|---|
-| Learning | You are studying a concept, course, paper, video, or technical topic. | `Use Cobsidian in learning mode to organize this explanation.` |
-| Project | You are documenting a project, repository, architecture, implementation, or operation. | `Use Cobsidian in project mode to summarize this repo analysis.` |
-| Review | You are reviewing an incident, failed experiment, decision, or result. | `Use Cobsidian in review mode to write a failure review.` |
-| Comparison | You are comparing tools, architectures, models, libraries, databases, or approaches. | `Use Cobsidian in comparison mode to compare these options.` |
-| Index | You need a topic map, learning path, hub note, or navigation page. | `Use Cobsidian in index mode to build a knowledge map.` |
-| Daily Capture | You want to save rough material quickly before deep organization. | `Use Cobsidian in daily capture mode to save this for later.` |
-| Dissection | You are breaking down a tool, framework, repo, skill, prompt system, or source code. | `Use Cobsidian in dissection mode to analyze this agent framework.` |
-
-If you do not choose a mode, the agent should infer one and report the choice.
-
-When the request is unclear, the agent should introduce the mode choices in the conversation instead of expecting users to read this README first.
-
-See [Modes](docs/modes.md) for details.
+Cobsidian accepts an explicit mode or routes from natural language. Clear requests use one inferred mode; ambiguous requests recommend at most two relevant modes instead of dumping a seven-item menu. See [Modes](docs/modes.md) for user outcomes and routing, and [mode references](skills/cobsidian/references/modes/) for detailed execution contracts.
 
 ## CLI Utilities
 
@@ -221,7 +250,14 @@ Each script also accepts `--config cobsidian.config.yml` when the config contain
 
 ## Optional Config
 
-`cobsidian.config.example.yml` is the supported `v0.4.0` config surface. It covers the vault path, default mode, mode directories, backlink limit, duplicate threshold and append preference, plus validation behavior. Copy it to `cobsidian.config.yml` for reusable local settings.
+`cobsidian.config.example.yml` is the current `v0.5.0` supported config surface. It covers the vault path, default mode, mode directories, Knowledge Read presentation, backlink limit, duplicate threshold and append preference, plus validation behavior. Copy it to `cobsidian.config.yml` for reusable local settings.
+
+```yaml
+interaction:
+  knowledge_read: auto
+```
+
+`interaction.knowledge_read` accepts only `auto`, `always`, or `off`. Existing configs remain valid because the default is `auto`.
 
 The helper scripts read it with `--config`.
 
@@ -233,8 +269,6 @@ Naming templates, redaction, and write-policy customization are not enforced by 
 - Frontmatter support for vaults that use YAML metadata.
 - Optional note templates.
 - Configurable naming rules.
-- Safer dry-run mode for proposed edits.
-- Thin adapters for Hermes, Claude Code, and Cursor.
 - Optional Obsidian plugin integration after the workflow stabilizes.
 
 ## Contributing

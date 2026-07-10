@@ -2,165 +2,50 @@
 
 [English](modes.md)
 
-Cobsidian 的模式用于告诉 Agent：这次要生成哪一类笔记。模式会影响笔记结构、整理深度，以及是新建、追加还是拆分。
+模式描述 Cobsidian 要交付给用户的结果。它会影响整理深度和 mode-level note plan；dry-run 则用另一份契约记录机器可以新建、追加，还是必须阻断。
 
-如果用户没有指定模式，Agent 应该自动推断，并在结果中说明使用了哪个模式。
+## 自然语言路由
 
-用户不应该必须先读这个文档。实际交互时，如果请求比较宽泛、有歧义，或者同一份材料可能整理成不同形态，Agent 应该先用很短的方式介绍可选模式；如果模式很明显，则直接说明推断出的模式并继续执行。
+Cobsidian 使用 natural-language routing（自然语言路由），用户不需要记住模式 ID。
 
-## 快速选择
+- 用户明确指定模式：使用该 canonical mode，并在结果中说明。
+- 意图清晰：根据目标推断一个模式，并说明选择。
+- 请求有歧义：保持模式未决，at most two（最多推荐两个）相关模式。
+- 一两个上下文选项足够时，不展示完整七项菜单。
 
-| 你想做什么 | 使用模式 |
-|---|---|
-| 学一个概念，整理课程、视频、文章 | 学习模式 |
-| 整理项目、仓库、架构、实现 | 项目模式 |
-| 分析发生了什么，下次怎么避免 | 复盘模式 |
-| 在多个方案之间做选择 | 对比模式 |
-| 建主题总览、学习路线、导航页 | 索引模式 |
-| 先快速保存粗糙材料 | 日常捕获模式 |
-| 拆解一个工具、框架、仓库、skill 的工作方式 | 拆解模式 |
+`recommended_modes` 只在 `mode` 未决时使用，包含零到两个 canonical mode ID，不会用未支持的值代替。
 
-## 学习模式
+## 结果速查
 
-用于概念、课程、论文、视频、文章和技术解释。
+| 用户想得到的结果 | Canonical mode | 默认深度 | 默认粒度 | 详细契约 |
+|---|---|---|---|---|
+| 理解概念，整理课程、论文、视频或技术解释 | `learning` | `standard` | `single-note` | [学习模式](../skills/cobsidian/references/modes/learning.md) |
+| 维护自己项目的上下文、架构、实现或运维记录 | `project` | `deep` | `single-note` | [项目模式](../skills/cobsidian/references/modes/project.md) |
+| 解释事故、失败实验、决策和经验教训 | `review` | `deep` | `single-note` | [复盘模式](../skills/cobsidian/references/modes/review.md) |
+| 对比方案并明确展示取舍 | `comparison` | `standard` | `single-note` | [对比模式](../skills/cobsidian/references/modes/comparison.md) |
+| 创建主题总览、知识地图、学习路线或导航页 | `index` | `deep` | `multi-note` | [索引模式](../skills/cobsidian/references/modes/index.md) |
+| 尽量不打断当前工作，快速保存有价值的粗糙材料 | `capture` | `capture` | `single-note` | [捕获模式](../skills/cobsidian/references/modes/capture.md) |
+| 从工具、仓库、skill、prompt 或工作流提取内部机制与可复用模式 | `dissection` | `deep` | `multi-note` | [拆解模式](../skills/cobsidian/references/modes/dissection.md) |
 
-适合：
+这些默认值会进入 Knowledge Read。证据级别仍从 `conversation` 开始，只有 host 实际读取或验证来源后，才能提升为 `source-grounded` 或 `verified`。
 
-- “解释一下这个并存到知识库。”
-- “把这个视频总结整理成学习笔记。”
-- “把这些概念整理并补相关链接。”
+## 机器动作与笔记计划
 
-常见结构：
+Dry-run 的机器动作和 mode-level note plan 是两份不同契约：
 
-- Summary
-- Core Concepts
-- Workflow or Mental Model
-- Common Mistakes
-- Related Notes
+- `decision.action`: `create | append | blocked`
+- mode-level note plan: `single-note | multi-note | report-only`
 
-## 项目模式
+拆分要求以 `multi-note` 计划汇报，不是第四种机器动作。重复检查决定追加到已有笔记时，Knowledge Read 的 `granularity` 会变为 `append`。`report-only` 描述不写入的用户结果，不是 Knowledge Read 的 `granularity` 枚举。
 
-用于具体项目、仓库、代码库、功能、架构、实现和运维。
+## 用户会得到什么
 
-适合：
+- `learning`：便于以后复习的长期解释。
+- `project`：当前项目上下文、实现证据、风险和下一步。
+- `review`：原因、决策、教训和后续行动。
+- `comparison`：由明确取舍支撑的简洁结论。
+- `index`：可导航的链接和已有笔记阅读路径。
+- `capture`：简短、可检索，并明确留待后续整理的记录。
+- `dissection`：入口、内部流程、证据、可复用模式和边界。
 
-- 仓库分析
-- 架构笔记
-- 实现记录
-- 部署和运维记录
-
-常见结构：
-
-- Context
-- Goal
-- Architecture or Implementation
-- Evidence
-- Result
-- Risks and Next Steps
-- Related Notes
-
-## 复盘模式
-
-用于事故、失败实验、训练记录、调试过程、技术决策和经验总结。
-
-适合：
-
-- “这次为什么失败？”
-- “写一个复盘。”
-- “对比尝试、修复和剩余风险。”
-
-常见结构：
-
-- Context
-- Timeline
-- Symptoms
-- Root Cause
-- Fix or Decision
-- Lessons
-- Next Steps
-
-## 对比模式
-
-用于多个选项之间的比较。
-
-适合：
-
-- 工具选型
-- 模型选型
-- 数据库选型
-- 架构取舍
-- 版本对比
-
-常见结构：
-
-- Short Conclusion
-- Comparison Table
-- Decision Rules
-- Recommended Use Cases
-- Related Notes
-
-## 索引模式
-
-用于主题地图、学习路线、导航页和总览笔记。
-
-适合：
-
-- “做一个学习路线。”
-- “给这个主题建一个总览页。”
-- “把这些笔记组织成知识地图。”
-
-常见结构：
-
-- Map
-- Core Notes
-- Project Notes
-- Open Questions
-- Next Learning Path
-
-## 日常捕获模式
-
-用于材料值得保存，但还不值得深度整理的时候。
-
-适合：
-
-- 临时想法
-- 粗糙聊天输出
-- 今日短学习
-- 待回看链接
-- 不想打断当前流程的临时记录
-
-常见结构：
-
-- Capture
-- Useful Points
-- Possible Links
-- Follow-up
-
-保持简短。目标是以后能搜到，不是当场写漂亮。
-
-## 拆解模式
-
-用于拆解一个东西内部是怎么工作的。
-
-适合：
-
-- 源码分析
-- 框架分析
-- Agent 系统
-- 工作流或 harness 设计
-- prompt / skill 仓库
-- Claude Code、Superpowers、OpenSpec、Hermes 这类系统或案例
-
-常见结构：
-
-- Object of Study
-- Purpose
-- Entry Points
-- Core Concepts
-- Architecture or Flow
-- Key Files or Components
-- Reusable Patterns
-- Limits and Open Questions
-- Related Notes
-
-拆解模式和项目模式不同：项目模式记录你自己的项目；拆解模式从你研究的对象里抽取可复用模式。
+详细标题、证据规则、拆分条件和校验要求只放在 [`skills/cobsidian/references/modes/`](../skills/cobsidian/references/modes/) 中。本文只讲用户可见结果和路由，不复制完整操作 prompt。

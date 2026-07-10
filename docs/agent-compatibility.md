@@ -1,76 +1,64 @@
 # Agent Compatibility
 
-Cobsidian is designed as an agent-agnostic workflow.
+[简体中文](agent-compatibility.zh-CN.md)
 
-The core contract is simple:
+Cobsidian is agent-agnostic. Compatibility depends on detected tools, not the host product name or an assumed feature set.
 
-```text
-read instructions
--> inspect the vault
--> decide create vs append vs split
--> write Markdown
--> add wiki links and backlink suggestions
--> run validation
--> report changes
-```
+## Capability Detection
 
-## Compatibility Matrix
+Every run starts with capability detection. Inspect actual access to the vault, local shell, filesystem edits, Cobsidian MCP tools/resources, and validation. Then map the host to exactly one level before making claims.
 
-| Agent | Support level | Recommended usage |
+| Capability level | Scan | Dry-run | Agent write | Validate | Use when |
+|---|---:|---:|---:|---:|---|
+| `full-local` | yes | yes | yes | yes | MCP-backed scan/dry-run and an approved local write and validation path are all available. |
+| `filesystem-only` | yes | yes | yes | yes | Local read, script, edit, and validation tools are available without usable MCP access. |
+| `mcp-readonly` | yes | yes | no | yes | Cobsidian MCP can inspect and plan, but the host has no approved filesystem write path. |
+| `chat-only` | no | no | no | no | The host cannot access or scan the target vault. |
+
+`ready: true` means every required preflight check completed and the active host can proceed to an approved write. It does not mean a write happened; dry-run still returns `writes: []`. `mcp-readonly` is never write-ready and includes `write_capability_unavailable`. The MCP server itself remains read-only even if a caller describes another host capability.
+
+See the shared [preflight contract](../skills/cobsidian/references/preflight.md) for all blocked reasons.
+
+## Capability-based Degradation
+
+This capability-based degradation preserves truthful results:
+
+- `full-local` and `filesystem-only`: scan, plan, request approval, write through the detected local path, then validate.
+- `mcp-readonly`: return the zero-write dry-run and an approved change plan; never claim a vault edit.
+- `chat-only`: return a portable draft or ask for one usable vault/config path; do not claim scan-derived create or append decisions.
+- Missing or failed evidence: keep `ready=false`, report every blocked reason, and fail closed.
+
+Possessing a tool is not evidence that a check completed. Preflight fields reflect completed work, not expected host features.
+
+## Adapter Map
+
+| Host family | Adapter reference | Notes |
 |---|---|---|
-| Codex | First-class | Install `skills/cobsidian` as a Codex skill. |
-| MCP hosts | First-class local server | Launch `skills/cobsidian/mcp_server.py` over local `stdio`. |
-| Hermes | Portable workflow | Register or reference `skills/cobsidian/SKILL.md` as a local workflow/skill and allow script execution. |
-| Claude Code / OpenCode | First-class | Install as a Claude skill or reference from CLAUDE.md. See `agents/claude.md`. |
-| Cursor | Portable workflow | Reference the workflow from Cursor rules or project instructions, then run scripts from the integrated terminal. |
-| Other coding agents | Portable workflow | Provide `SKILL.md` as instructions and expose the Python scripts. |
+| Codex | [Codex](../skills/cobsidian/references/hosts/codex.md) | Detect MCP, shell, edit, and validation paths independently. |
+| Claude Code / OpenCode | [Claude Code](../skills/cobsidian/references/hosts/claude-code.md) | Use only tools exposed in the current session. |
+| Cursor | [Cursor](../skills/cobsidian/references/hosts/cursor.md) | Treat editor and terminal access as separately detected capabilities. |
+| Hermes | [Hermes](../skills/cobsidian/references/hosts/hermes.md) | Map the registered workflow and tools before execution. |
+| Generic MCP host | [MCP](../skills/cobsidian/references/hosts/mcp.md) | Cobsidian's server is a zero-write inspection and planning surface. |
 
-## What Must Be Preserved
+Thin adapters load the canonical router, one matching host reference, and one mode reference. They do not copy the entire workflow.
 
-Any adapter should preserve these behaviors:
+## Required Workflow Contract
 
-1. Search before writing.
-2. Prefer append/merge over duplicate notes.
-3. Add useful `[[wiki links]]`, not keyword spam.
-4. Report whether validation was run.
-5. Avoid private paths, secrets, and raw chat logs by default.
+Any compatible host must preserve these rules:
 
-## Adapter Strategy
+1. Resolve the target vault before vault operations.
+2. Scan before proposing a write when scan capability exists.
+3. Keep `decision.action` to `create | append | blocked`; report split separately as a `multi-note` plan.
+4. Prefer append over a near-duplicate and link only to confirmed notes.
+5. Dry-run by default, request approval before local edits, and report actual validation evidence.
+6. Keep private paths, secrets, and raw chat logs out of public or generic notes.
 
-Do not duplicate the whole workflow for every agent.
-
-Keep the canonical instructions here:
-
-```text
-skills/cobsidian/SKILL.md
-skills/cobsidian/references/
-skills/cobsidian/scripts/
-```
-
-Agent-specific adapters should stay thin:
-
-```text
-adapter = how this agent loads Cobsidian
-core = what Cobsidian tells the agent to do
-```
-
-For MCP hosts, the adapter is `skills/cobsidian/mcp_server.py`. See [MCP Server](mcp-server.md).
-
-For product-specific setup notes, see [Integrations](integrations.md).
-
-## Suggested Prompts
-
-Generic prompt:
+## Suggested Prompt
 
 ```text
 Use the Cobsidian workflow in skills/cobsidian/SKILL.md.
-Organize this material into my Obsidian vault.
-Search existing notes first, decide create vs append, add useful wiki links, and run validation if possible.
+Detect the available capabilities, run a dry run, and report Knowledge Read and preflight.
+Search existing notes before any proposed write, then wait for confirmation.
 ```
 
-Safer dry-run prompt:
-
-```text
-Use the Cobsidian workflow in skills/cobsidian/SKILL.md.
-Do not edit files yet. First report the target note, duplicate risks, suggested backlinks, and proposed Markdown outline.
-```
+Product setup is documented in [Integrations](integrations.md); MCP tools and parameter parity are documented in [MCP Server](mcp-server.md).

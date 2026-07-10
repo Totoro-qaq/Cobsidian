@@ -2,165 +2,50 @@
 
 [简体中文](modes.zh-CN.md)
 
-Cobsidian modes help users tell the agent what kind of note they want. The mode affects the note structure, level of polish, and create/append decision.
+Modes describe the user outcome Cobsidian should produce. They affect organization depth and the mode-level note plan, while the dry-run decision separately records whether a machine may create, append, or must stop.
 
-If the user does not choose a mode, the agent should infer one and report the inferred mode before or after writing.
+## Natural-language Routing
 
-The user should not need to read this file first. In conversation, the agent should briefly introduce the available modes when the request is broad, ambiguous, or could produce different note shapes. If the mode is obvious, the agent should state the inferred mode and continue.
+Cobsidian uses natural-language routing; users do not need to memorize mode IDs.
 
-## Quick Selection
+- Explicit mode: use that canonical mode and report it.
+- Clear request: infer one mode from the user's goal and state the choice.
+- Ambiguous request: leave the mode unresolved and recommend at most two relevant modes.
+- Do not show all seven modes as a generic picker when one or two contextual choices are enough.
 
-| If you want to... | Use |
-|---|---|
-| Learn a concept or summarize a course/video/article | Learning |
-| Document a project, repo, architecture, or implementation | Project |
-| Analyze what happened and what to improve next time | Review |
-| Choose between options | Comparison |
-| Build a topic hub or learning path | Index |
-| Save rough notes quickly | Daily Capture |
-| Break down how a tool/framework/repo/skill works | Dissection |
+`recommended_modes` is only used while `mode` is unresolved. It contains zero, one, or two canonical mode IDs and never substitutes an unsupported value.
 
-## Learning Mode
+## Outcome Guide
 
-Use for concepts, courses, papers, videos, articles, and technical explanations.
+| User outcome | Canonical mode | Default depth | Default granularity | Detailed contract |
+|---|---|---|---|---|
+| Understand a concept, course, paper, video, or technical explanation | `learning` | `standard` | `single-note` | [Learning](../skills/cobsidian/references/modes/learning.md) |
+| Maintain context, architecture, implementation, or operations for your project | `project` | `deep` | `single-note` | [Project](../skills/cobsidian/references/modes/project.md) |
+| Explain an incident, failed experiment, decision, or lesson | `review` | `deep` | `single-note` | [Review](../skills/cobsidian/references/modes/review.md) |
+| Compare options and make tradeoffs visible | `comparison` | `standard` | `single-note` | [Comparison](../skills/cobsidian/references/modes/comparison.md) |
+| Build a topic hub, knowledge map, learning path, or navigation page | `index` | `deep` | `multi-note` | [Index](../skills/cobsidian/references/modes/index.md) |
+| Save useful rough material with minimal interruption | `capture` | `capture` | `single-note` | [Capture](../skills/cobsidian/references/modes/capture.md) |
+| Extract internals and reusable patterns from a tool, repo, skill, prompt, or workflow | `dissection` | `deep` | `multi-note` | [Dissection](../skills/cobsidian/references/modes/dissection.md) |
 
-Best for:
+These defaults feed Knowledge Read. Evidence still begins at `conversation`; it becomes `source-grounded` or `verified` only after the host actually reads or verifies sources.
 
-- "Explain this and save it to my vault."
-- "Turn this video summary into a learning note."
-- "Organize these concepts with related notes."
+## Machine Action And Note Plan
 
-Typical sections:
+The dry-run machine action and the mode-level note plan are different contracts:
 
-- Summary
-- Core Concepts
-- Workflow or Mental Model
-- Common Mistakes
-- Related Notes
+- `decision.action`: `create | append | blocked`
+- mode-level note plan: `single-note | multi-note | report-only`
 
-## Project Mode
+A split request is reported as a `multi-note` plan, not as a fourth machine action. If duplicate resolution selects an existing note, Knowledge Read changes `granularity` to `append`. `report-only` describes a no-write user outcome; it is not a Knowledge Read `granularity` enum.
 
-Use for a concrete project, repository, codebase, feature, architecture, implementation, or operation.
+## What Users Receive
 
-Best for:
+- `learning`: a durable explanation organized for later recall.
+- `project`: current project context, implementation evidence, risks, and next steps.
+- `review`: causes, decisions, lessons, and follow-up actions.
+- `comparison`: a concise conclusion backed by explicit tradeoffs.
+- `index`: navigable links and a useful path through existing notes.
+- `capture`: a short retrievable record with deferred cleanup made clear.
+- `dissection`: entry points, internal flow, evidence, reusable patterns, and limits.
 
-- repo analysis
-- architecture notes
-- implementation logs
-- deployment and operation notes
-
-Typical sections:
-
-- Context
-- Goal
-- Architecture or Implementation
-- Evidence
-- Result
-- Risks and Next Steps
-- Related Notes
-
-## Review Mode
-
-Use for incidents, failed experiments, training runs, debugging sessions, decisions, and lessons learned.
-
-Best for:
-
-- "Why did this fail?"
-- "Write a postmortem."
-- "Compare the attempt, fix, and remaining risk."
-
-Typical sections:
-
-- Context
-- Timeline
-- Symptoms
-- Root Cause
-- Fix or Decision
-- Lessons
-- Next Steps
-
-## Comparison Mode
-
-Use when the value is in comparing options.
-
-Best for:
-
-- tool selection
-- model selection
-- database selection
-- architecture tradeoffs
-- version-to-version comparison
-
-Typical sections:
-
-- Short Conclusion
-- Comparison Table
-- Decision Rules
-- Recommended Use Cases
-- Related Notes
-
-## Index Mode
-
-Use for topic maps, learning paths, navigation pages, and hub notes.
-
-Best for:
-
-- "Build a learning roadmap."
-- "Make a hub note for this topic."
-- "Organize these notes into a map."
-
-Typical sections:
-
-- Map
-- Core Notes
-- Project Notes
-- Open Questions
-- Next Learning Path
-
-## Daily Capture Mode
-
-Use when the material is worth saving but not ready for a polished note.
-
-Best for:
-
-- quick ideas
-- rough chat output
-- short daily learning
-- links to revisit
-- temporary notes that should not block the current flow
-
-Typical sections:
-
-- Capture
-- Useful Points
-- Possible Links
-- Follow-up
-
-Keep it short. The goal is retrieval, not polish.
-
-## Dissection Mode
-
-Use when breaking down how something works internally.
-
-Best for:
-
-- source-code analysis
-- framework analysis
-- agent systems
-- workflow or harness design
-- prompt/skill repositories
-- products such as Claude Code, Superpowers, OpenSpec, Hermes-like systems
-
-Typical sections:
-
-- Object of Study
-- Purpose
-- Entry Points
-- Core Concepts
-- Architecture or Flow
-- Key Files or Components
-- Reusable Patterns
-- Limits and Open Questions
-- Related Notes
-
-Dissection mode is different from project mode: project mode documents your own project; dissection mode extracts reusable patterns from something you are studying.
+The detailed headings, evidence rules, split criteria, and validation additions live only in [`skills/cobsidian/references/modes/`](../skills/cobsidian/references/modes/). This page describes user-visible outcomes and routing rather than duplicating operational prompts.
