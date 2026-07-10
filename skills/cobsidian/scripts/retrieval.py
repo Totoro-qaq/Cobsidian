@@ -53,6 +53,8 @@ class NoteLike(Protocol):
 
 def build_query(topic: str | None, text: str) -> str:
     parts = [part.strip() for part in (topic, text) if part and part.strip()]
+    if not parts:
+        raise ValueError("Provide at least one non-empty query source.")
     return "\n".join(parts)
 
 

@@ -84,15 +84,23 @@ def build_payload(
     text: str,
     notes: list[NoteInfo],
 ) -> dict[str, object]:
-    decision = choose_decision(topic, mode, notes, config)
-    risks = find_duplicate_risks(topic, notes, config.similar_title_threshold)
+    normalized_topic = topic.strip()
+    if not normalized_topic:
+        raise ValueError("Provide a non-empty topic.")
+
+    decision = choose_decision(normalized_topic, mode, notes, config)
+    risks = find_duplicate_risks(
+        normalized_topic,
+        notes,
+        config.similar_title_threshold,
+    )
     excluded_paths = (
         {decision["target_note"]}
         if decision["action"] == "append"
         else set()
     )
     backlinks = rank_backlinks(
-        build_query(topic=topic, text=text),
+        build_query(topic=normalized_topic, text=text),
         build_search_documents(vault_path, notes),
         limit=config.max_suggested_backlinks,
         excluded_paths=excluded_paths,
@@ -102,7 +110,7 @@ def build_payload(
         "vault": str(vault_path),
         "config": config.public_summary() if config.config_path else None,
         "mode": mode,
-        "topic": topic,
+        "topic": normalized_topic,
         "decision": decision,
         "duplicate_risks": [asdict(risk) for risk in risks],
         "suggested_backlinks": [asdict(suggestion) for suggestion in backlinks],
@@ -141,7 +149,17 @@ def main() -> int:
     )
     mode = args.mode or config.mode
     notes = scan_vault(vault_path)
-    payload = build_payload(vault_path=vault_path, config=config, topic=args.topic, mode=mode, text=source_text, notes=notes)
+    try:
+        payload = build_payload(
+            vault_path=vault_path,
+            config=config,
+            topic=args.topic,
+            mode=mode,
+            text=source_text,
+            notes=notes,
+        )
+    except ValueError as error:
+        raise SystemExit(str(error)) from error
 
     if args.json:
         print(json.dumps(payload, ensure_ascii=False, indent=2))

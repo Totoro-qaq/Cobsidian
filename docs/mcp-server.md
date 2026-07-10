@@ -78,6 +78,7 @@ There is intentionally no write tool yet. Write workflows should go through dry-
 - `cobsidian_find_duplicates` always finds all exact normalized-title duplicates. Similar-title work compares unique normalized titles, defaults to at most `100000` comparisons, and returns `comparisons` plus `truncated` metadata.
 - Backlink ranking reads title, tags, wiki links, and note body text. Chinese text uses deterministic CJK bigrams and trigrams without an external tokenizer.
 - Backlink result limits must be between `1` and `100`; the configured default is `8`.
+- Backlink requests require at least one non-empty topic or material source; blank strings and empty source files are rejected.
 
 ## Resources
 

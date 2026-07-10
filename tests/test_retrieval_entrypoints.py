@@ -214,6 +214,64 @@ class RetrievalEntrypointTests(unittest.TestCase):
             self.assertEqual(cli_paths, dry_run_paths)
             self.assertEqual(cli_paths, mcp_paths)
 
+    def test_blank_and_empty_file_queries_are_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+            empty_draft = vault / "Empty Draft.md"
+            empty_draft.write_text("", encoding="utf-8")
+
+            backlink_cli = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS_DIR / "suggest_backlinks.py"),
+                    str(vault),
+                    "--topic",
+                    "   ",
+                ],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+            empty_file_cli = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS_DIR / "suggest_backlinks.py"),
+                    str(vault),
+                    "--file",
+                    str(empty_draft),
+                ],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+            dry_run_cli = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS_DIR / "dry_run.py"),
+                    str(vault),
+                    "--topic",
+                    "   ",
+                    "--json",
+                ],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+
+            self.assertNotEqual(0, backlink_cli.returncode)
+            self.assertNotEqual(0, empty_file_cli.returncode)
+            self.assertNotEqual(0, dry_run_cli.returncode)
+            with self.assertRaisesRegex(ValueError, "non-empty query"):
+                tool_cobsidian_suggest_backlinks(
+                    vault=str(vault),
+                    topic="   ",
+                )
+            with self.assertRaisesRegex(ValueError, "non-empty query"):
+                tool_cobsidian_suggest_backlinks(
+                    vault=str(vault),
+                    note_path=empty_draft.name,
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

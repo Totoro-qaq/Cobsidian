@@ -18,9 +18,6 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=None)
     args = parser.parse_args()
 
-    if not args.topic and not args.file and not args.text:
-        raise SystemExit("Provide --topic, --file, or --text.")
-
     config = load_config(args.config)
     vault_path = resolve_vault_path(args.vault, config)
     limit = args.limit if args.limit is not None else config.max_suggested_backlinks
@@ -29,10 +26,10 @@ def main() -> int:
 
     compared_file = args.file.expanduser().resolve() if args.file else None
     query_text = read_utf8(compared_file) if compared_file else str(args.text or "")
-    query = build_query(topic=args.topic, text=query_text)
-    if not query:
-        print("No usable tokens found for backlink suggestions.")
-        return 0
+    try:
+        query = build_query(topic=args.topic, text=query_text)
+    except ValueError as error:
+        raise SystemExit(str(error)) from error
 
     excluded_paths: set[str] = set()
     if compared_file is not None:

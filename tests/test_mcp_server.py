@@ -195,7 +195,7 @@ class McpServerTests(unittest.TestCase):
 
     def test_backlink_tool_requires_at_least_one_query_source(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
-            with self.assertRaisesRegex(ValueError, "topic, text, or note_path"):
+            with self.assertRaisesRegex(ValueError, "non-empty query"):
                 tool_cobsidian_suggest_backlinks(vault=temp_dir)
 
 

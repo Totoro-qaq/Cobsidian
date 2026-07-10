@@ -78,6 +78,7 @@ python skills/cobsidian/mcp_server.py
 - `cobsidian_find_duplicates` 始终完整发现归一化标题完全相同的笔记；相似标题只比较唯一归一化标题，默认最多比较 `100000` 次，并返回 `comparisons` 与 `truncated`。
 - 反链排名会读取标题、标签、已有双链和正文；中文采用确定性的 CJK bigram/trigram，不依赖外部分词器。
 - 反链结果数量必须在 `1` 到 `100` 之间，配置默认值为 `8`。
+- 反链请求至少需要一个非空主题或素材来源；纯空白字符串与空文件会被拒绝。
 
 ## Resources
 
