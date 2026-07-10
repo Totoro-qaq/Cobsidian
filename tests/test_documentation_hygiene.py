@@ -110,6 +110,7 @@ class DocumentationHygieneTests(unittest.TestCase):
                 self.assertIn("ready", text)
                 self.assertIn("write_capability_unavailable", text)
                 self.assertIn("read-only", text)
+                self.assertIn("transport-neutral effective read-only", text)
 
     def test_integration_docs_explain_adaptive_fallbacks(self) -> None:
         for relative_path in ("docs/integrations.md", "docs/integrations.zh-CN.md"):
@@ -122,6 +123,7 @@ class DocumentationHygieneTests(unittest.TestCase):
                 self.assertIn("mcp-readonly", text)
                 self.assertIn("chat-only", text)
                 self.assertIn("zero-write MCP", text)
+                self.assertIn("transport-neutral effective read-only", text)
 
     def test_mcp_docs_lock_parity_and_fail_closed_boundaries(self) -> None:
         parity_parameters = (
@@ -131,6 +133,8 @@ class DocumentationHygieneTests(unittest.TestCase):
             "depth",
             "granularity",
             "evidence",
+            "source_read_completed",
+            "verification_completed",
             "knowledge_read_policy",
             "capability_level",
         )
@@ -146,6 +150,18 @@ class DocumentationHygieneTests(unittest.TestCase):
                 self.assertIn("fail closed", text)
                 self.assertIn("mode_unresolved", text)
                 self.assertIn("write_capability_unavailable", text)
+                self.assertIn("transport-neutral effective read-only", text)
+                self.assertIn("host-completed", text)
+                self.assertIn("granularity=append", text)
+
+    def test_modes_docs_define_evidence_provenance(self) -> None:
+        for relative_path in ("docs/modes.md", "docs/modes.zh-CN.md"):
+            text = read_public_doc(relative_path)
+            with self.subTest(path=relative_path):
+                self.assertIn("source_read_completed=true", text)
+                self.assertIn("verification_completed=true", text)
+                self.assertIn("host-completed", text)
+                self.assertIn("granularity=append", text)
 
     def test_changelog_has_an_undated_v05_release_section(self) -> None:
         changelog = read_public_doc("CHANGELOG.md")

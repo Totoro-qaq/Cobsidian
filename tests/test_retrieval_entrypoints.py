@@ -92,6 +92,22 @@ class RetrievalEntrypointTests(unittest.TestCase):
             self.assertEqual([], payload["preflight"]["blocked_reasons"])
             self.assertEqual([], payload["writes"])
 
+    def test_empty_vault_and_text_cannot_claim_source_grounding(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+
+            with self.assertRaisesRegex(ValueError, "source_read_completed"):
+                build_payload(
+                    vault_path=vault,
+                    config=CobsidianConfig(config_path=None, raw={}),
+                    topic="Unsupported Claim",
+                    mode="learning",
+                    text="",
+                    notes=scan_vault(vault),
+                    mode_explicit=True,
+                    evidence="source-grounded",
+                )
+
     def test_append_decision_forces_append_granularity(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             vault = Path(temp_dir)
@@ -110,6 +126,22 @@ class RetrievalEntrypointTests(unittest.TestCase):
 
             self.assertEqual("append", payload["decision"]["action"])
             self.assertEqual("append", payload["knowledge_read"]["granularity"])
+
+    def test_create_decision_rejects_requested_append_granularity(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+
+            with self.assertRaisesRegex(ValueError, "append decision"):
+                build_payload(
+                    vault_path=vault,
+                    config=CobsidianConfig(config_path=None, raw={}),
+                    topic="New Topic",
+                    mode="learning",
+                    text="new material",
+                    notes=scan_vault(vault),
+                    mode_explicit=True,
+                    granularity="append",
+                )
 
     def test_unresolved_mode_recommends_two_modes_and_blocks_readiness(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -27,7 +27,7 @@ Create one named hub note with `Purpose`, `Start Here`, `Core Concepts`, `Projec
 
 ## Evidence Rules
 
-Start at `conversation`. Upgrade to `source-grounded` only after reading the relevant target notes or source materials. Use `verified` only after link validation and another concrete check confirm the proposed map.
+Start at `conversation`. Upgrade to `source-grounded` only after reading the relevant target notes or source materials. Use `verified` only after link validation and another concrete check confirm the proposed map. These are host-completed facts: submit `source_read_completed=true` for source grounding and both `source_read_completed=true` and `verification_completed=true` for verified evidence; mode choice or a user claim cannot set them.
 
 ## Mode-Specific Validation
 

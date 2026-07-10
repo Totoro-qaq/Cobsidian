@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -112,12 +111,13 @@ class CobsidianConfig:
         return str(directory) if directory else None
 
     def public_summary(self) -> ConfigData:
-        interaction = self.raw.get("interaction", {})
         return {
             "path": str(self.config_path) if self.config_path else None,
             "defaults": dict(self.raw.get("defaults", {})) if isinstance(self.raw.get("defaults"), dict) else {},
             "duplicates": dict(self.raw.get("duplicates", {})) if isinstance(self.raw.get("duplicates"), dict) else {},
-            "interaction": deepcopy(interaction) if isinstance(interaction, dict) else {},
+            "interaction": {
+                "knowledge_read": self.knowledge_read_policy,
+            },
             "linking": dict(self.raw.get("linking", {})) if isinstance(self.raw.get("linking"), dict) else {},
             "validation": dict(self.raw.get("validation", {})) if isinstance(self.raw.get("validation"), dict) else {},
         }

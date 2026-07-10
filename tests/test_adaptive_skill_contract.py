@@ -100,6 +100,14 @@ class AdaptiveSkillContractTests(unittest.TestCase):
                 for decision in ("**Append**", "**Single-note**", "**Split**"):
                     self.assertIn(decision, criteria)
                 self.assertIn("`conversation`", sections["Evidence Rules"])
+                self.assertIn(
+                    "`source_read_completed=true`",
+                    sections["Evidence Rules"],
+                )
+                self.assertIn(
+                    "`verification_completed=true`",
+                    sections["Evidence Rules"],
+                )
                 self.assertIn("Verify", sections["Mode-Specific Validation"])
 
     def test_mode_boundaries_are_explicit(self) -> None:
@@ -175,14 +183,71 @@ class AdaptiveSkillContractTests(unittest.TestCase):
                 text = self.read_reference(
                     REFERENCES_PATH / "hosts" / f"{host}.md"
                 )
+                mapping = h2_sections(text)["Capability Mapping"]
                 full_local_lines = [
                     line.casefold()
-                    for line in text.splitlines()
+                    for line in mapping.splitlines()
                     if "use `full-local`" in line.casefold()
                 ]
                 self.assertEqual(1, len(full_local_lines))
                 for required_path in required_paths:
                     self.assertIn(required_path, full_local_lines[0])
+
+    def test_write_capable_mappings_require_the_complete_write_loop(self) -> None:
+        required_paths = ("scan", "dry-run", "approved write", "validation")
+        for host in HOST_NAMES:
+            text = self.read_reference(
+                REFERENCES_PATH / "hosts" / f"{host}.md"
+            )
+            mapping = h2_sections(text)["Capability Mapping"]
+            for capability_level in ("full-local", "filesystem-only"):
+                with self.subTest(host=host, capability_level=capability_level):
+                    mapping_lines = [
+                        line.casefold()
+                        for line in mapping.splitlines()
+                        if f"use `{capability_level}`" in line.casefold()
+                    ]
+                    self.assertEqual(1, len(mapping_lines))
+                    for required_path in required_paths:
+                        self.assertIn(required_path, mapping_lines[0])
+
+    def test_mcp_readonly_mapping_is_transport_neutral(self) -> None:
+        for host in HOST_NAMES:
+            with self.subTest(host=host):
+                text = self.read_reference(
+                    REFERENCES_PATH / "hosts" / f"{host}.md"
+                )
+                mapping = h2_sections(text)["Capability Mapping"]
+                self.assertIn("transport-neutral effective read-only", text)
+                self.assertIn("without MCP", text)
+                read_only_lines = [
+                    line.casefold()
+                    for line in mapping.splitlines()
+                    if "use `mcp-readonly`" in line.casefold()
+                ]
+                self.assertEqual(1, len(read_only_lines))
+                for fragment in (
+                    "scan",
+                    "dry-run",
+                    "approved write and validation loop",
+                ):
+                    self.assertIn(fragment, read_only_lines[0])
+
+    def test_chat_only_mapping_requires_no_scan_path(self) -> None:
+        for host in HOST_NAMES:
+            with self.subTest(host=host):
+                text = self.read_reference(
+                    REFERENCES_PATH / "hosts" / f"{host}.md"
+                )
+                mapping = h2_sections(text)["Capability Mapping"]
+                chat_only_lines = [
+                    line.casefold()
+                    for line in mapping.splitlines()
+                    if "use `chat-only`" in line.casefold()
+                ]
+                self.assertEqual(1, len(chat_only_lines))
+                self.assertIn("no", chat_only_lines[0])
+                self.assertIn("scan", chat_only_lines[0])
 
     def test_host_references_have_no_user_specific_absolute_paths(self) -> None:
         absolute_path_patterns = (
@@ -206,6 +271,8 @@ class AdaptiveSkillContractTests(unittest.TestCase):
         self.assertIn("does not mean that a write already happened", text)
         self.assertIn("Never claim", text)
         self.assertIn("unavailable", text)
+        self.assertIn("transport-neutral effective read-only", text)
+        self.assertIn("historical name", text)
 
     def test_skill_routes_to_one_mode_one_host_and_shared_preflight(self) -> None:
         text = SKILL_PATH.read_text(encoding="utf-8")
@@ -231,6 +298,10 @@ class AdaptiveSkillContractTests(unittest.TestCase):
             self.assertIn(fragment, text)
         self.assertIn("always computed", text)
         self.assertIn("presentation only", text)
+        self.assertIn("`source_read_completed=true`", text)
+        self.assertIn("`verification_completed=true`", text)
+        self.assertIn("host-completed facts", text)
+        self.assertIn("granularity=append", text)
 
 
 if __name__ == "__main__":

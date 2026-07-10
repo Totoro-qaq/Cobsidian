@@ -18,12 +18,12 @@ Run capability detection against the tools exposed in the current session; do no
 
 | Level | Integration path |
 |---|---|
-| `full-local` | Use MCP-backed inspection plus an approved local write and validation path. |
-| `filesystem-only` | Use the local scripts, filesystem edits, and validation without MCP. |
-| `mcp-readonly` | Use Cobsidian MCP for scan and dry-run, then return a change plan because no write path exists. |
+| `full-local` | Use MCP-backed scan and dry-run with a complete approved write and validation loop. |
+| `filesystem-only` | Use local scan and dry-run with a complete approved write and validation loop without MCP. |
+| `mcp-readonly` | Scan and dry-run, then return a change plan because the approved write and validation loop is incomplete, regardless of transport. |
 | `chat-only` | Return a portable draft or request a usable vault/config path; do not claim a scan or write. |
 
-This is a zero-write MCP design: Cobsidian's MCP server exposes inspection and planning only, always returns `writes: []` from dry-run, and never gains write access from a `capability_level` argument. `ready` describes whether the active host has completed checks and can proceed after approval, not whether a write already happened.
+The historical name `mcp-readonly` is retained for compatibility. It is the transport-neutral effective read-only level, including local read-only operation without MCP. This remains a zero-write MCP design: Cobsidian's MCP server exposes inspection and planning only, always returns `writes: []` from dry-run, and never gains write access from a `capability_level` argument. `ready` describes whether the active host has completed checks and can proceed after approval, not whether a write already happened.
 
 See [Agent Compatibility](agent-compatibility.md) for the full capability table and [MCP Server](mcp-server.md) for parameter parity and fail-closed errors.
 

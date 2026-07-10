@@ -27,7 +27,7 @@ Use a focused note with `Summary`, `Learning Goals`, `Core Concepts`, `Mental Mo
 
 ## Evidence Rules
 
-Start at `conversation`. Upgrade to `source-grounded` only after reading the cited paper, video transcript, course material, file, or page. Use `verified` only when claims are additionally checked against runnable examples, tests, or authoritative results.
+Start at `conversation`. Upgrade to `source-grounded` only after reading the cited paper, video transcript, course material, file, or page. Use `verified` only when claims are additionally checked against runnable examples, tests, or authoritative results. These are host-completed facts: submit `source_read_completed=true` for source grounding and both `source_read_completed=true` and `verification_completed=true` for verified evidence; mode choice or a user claim cannot set them.
 
 ## Mode-Specific Validation
 

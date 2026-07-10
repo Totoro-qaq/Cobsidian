@@ -67,7 +67,7 @@ Detect the host's actual tools before loading only the matching host reference. 
 - [Hermes](references/hosts/hermes.md)
 - [Generic MCP host](references/hosts/mcp.md)
 
-Map observed tools to `full-local`, `filesystem-only`, `mcp-readonly`, or `chat-only`. Use [preflight](references/preflight.md) for readiness and degradation. Never load multiple host references speculatively.
+Map observed tools to `full-local`, `filesystem-only`, `mcp-readonly`, or `chat-only`. The historical `mcp-readonly` name means the transport-neutral effective read-only level, including local read-only operation without MCP. Use [preflight](references/preflight.md) for readiness and degradation. Never load multiple host references speculatively.
 
 ## Knowledge Read
 
@@ -77,7 +77,7 @@ Knowledge Read (`整理判读`) is always computed and remains in structured dry
 - `always`: expanded.
 - `off`: hidden in conversation while the complete object remains in JSON.
 
-Mode defaults apply before duplicate resolution; an append decision changes granularity to `append`. Evidence starts at `conversation`, becomes `source-grounded` only after source material is actually read, and becomes `verified` only after an additional concrete check.
+Mode defaults apply before duplicate resolution. A requested `granularity=append` is valid only when `decision.action=append`; an actual append decision always forces append granularity. Evidence starts at `conversation`. Evidence upgrades require host-completed facts: `source-grounded` requires `source_read_completed=true`, while `verified` requires both `source_read_completed=true` and `verification_completed=true`. Mode choice and user claims never set these facts automatically.
 
 ## Common Workflow
 

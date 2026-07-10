@@ -27,7 +27,7 @@ Use `Context`, `Goals`, `Current State`, `Architecture`, `Components`, `Data Flo
 
 ## Evidence Rules
 
-Start at `conversation`. Upgrade to `source-grounded` only after reading the relevant code, configuration, logs, or project records. Use `verified` only after tests, builds, commands, or equivalent checks confirm the documented behavior.
+Start at `conversation`. Upgrade to `source-grounded` only after reading the relevant code, configuration, logs, or project records. Use `verified` only after tests, builds, commands, or equivalent checks confirm the documented behavior. These are host-completed facts: submit `source_read_completed=true` for source grounding and both `source_read_completed=true` and `verification_completed=true` for verified evidence; mode choice or a user claim cannot set them.
 
 ## Mode-Specific Validation
 

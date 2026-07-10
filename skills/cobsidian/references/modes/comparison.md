@@ -27,7 +27,7 @@ Use `Decision Context`, `Requirements`, `Evaluation Dimensions`, `Evidence`, `Co
 
 ## Evidence Rules
 
-Start at `conversation`. Upgrade to `source-grounded` only after reading specifications, benchmarks, code, pricing, or primary documentation. Use `verified` only when representative tests or validated measurements confirm the compared claims.
+Start at `conversation`. Upgrade to `source-grounded` only after reading specifications, benchmarks, code, pricing, or primary documentation. Use `verified` only when representative tests or validated measurements confirm the compared claims. These are host-completed facts: submit `source_read_completed=true` for source grounding and both `source_read_completed=true` and `verification_completed=true` for verified evidence; mode choice or a user claim cannot set them.
 
 ## Mode-Specific Validation
 

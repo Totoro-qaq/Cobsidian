@@ -10,12 +10,12 @@ Every run starts with capability detection. Inspect actual access to the vault, 
 
 | Capability level | Scan | Dry-run | Agent write | Validate | Use when |
 |---|---:|---:|---:|---:|---|
-| `full-local` | yes | yes | yes | yes | MCP-backed scan/dry-run and an approved local write and validation path are all available. |
-| `filesystem-only` | yes | yes | yes | yes | Local read, script, edit, and validation tools are available without usable MCP access. |
-| `mcp-readonly` | yes | yes | no | yes | Cobsidian MCP can inspect and plan, but the host has no approved filesystem write path. |
+| `full-local` | yes | yes | yes | yes | MCP-backed scan, dry-run, approved write, and validation paths form a complete loop. |
+| `filesystem-only` | yes | yes | yes | yes | Local scan, dry-run, approved write, and validation paths form a complete loop without MCP. |
+| `mcp-readonly` | yes | yes | no | optional | The host can scan and dry-run but lacks a complete approved write and validation loop, regardless of transport. |
 | `chat-only` | no | no | no | no | The host cannot access or scan the target vault. |
 
-`ready: true` means every required preflight check completed and the active host can proceed to an approved write. It does not mean a write happened; dry-run still returns `writes: []`. `mcp-readonly` is never write-ready and includes `write_capability_unavailable`. The MCP server itself remains read-only even if a caller describes another host capability.
+The historical name `mcp-readonly` is retained for compatibility. It is the transport-neutral effective read-only level and includes a local read-only host without MCP. `ready: true` means every required preflight check completed and the active host can proceed to an approved write. It does not mean a write happened; dry-run still returns `writes: []`. `mcp-readonly` is never write-ready and includes `write_capability_unavailable`. The MCP server itself remains read-only even if a caller describes another host capability.
 
 See the shared [preflight contract](../skills/cobsidian/references/preflight.md) for all blocked reasons.
 
@@ -24,7 +24,7 @@ See the shared [preflight contract](../skills/cobsidian/references/preflight.md)
 This capability-based degradation preserves truthful results:
 
 - `full-local` and `filesystem-only`: scan, plan, request approval, write through the detected local path, then validate.
-- `mcp-readonly`: return the zero-write dry-run and an approved change plan; never claim a vault edit.
+- `mcp-readonly`: return the zero-write dry-run and an approved change plan whenever the approved write and validation loop is incomplete; never claim a vault edit.
 - `chat-only`: return a portable draft or ask for one usable vault/config path; do not claim scan-derived create or append decisions.
 - Missing or failed evidence: keep `ready=false`, report every blocked reason, and fail closed.
 

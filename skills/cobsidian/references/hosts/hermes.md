@@ -7,9 +7,11 @@ Inspect the actual available tools before choosing a capability level. Query the
 ## Capability Mapping
 
 - Use `full-local` only when MCP-backed scan and dry-run plus approved write and validation paths are all actually available through detected tools.
-- Use `filesystem-only` when local read, shell, edit, and validation operations are available without MCP.
-- Use `mcp-readonly` when the Cobsidian MCP surface can scan or dry-run but cannot write.
-- Use `chat-only` when no active tool can read and scan the requested vault.
+- Use `filesystem-only` only when local scan, dry-run, approved write, and validation paths are all available without MCP.
+- Use `mcp-readonly` when scan and dry-run are available but the host lacks a complete approved write and validation loop, including local read-only operation without MCP.
+- Use `chat-only` when no scan path can reach the target vault.
+
+The historical name `mcp-readonly` is retained for compatibility; it is the transport-neutral effective read-only level, including a local read-only host without MCP.
 
 Send the observed level to [preflight](../preflight.md); the product name is not capability evidence.
 
@@ -19,7 +21,7 @@ Map exposed Hermes filesystem, shell, edit, and MCP invocations to the canonical
 
 ## Degradation
 
-If the registry exposes only MCP reads, return the dry-run and approved change plan as `mcp-readonly`. If no vault read exists, use `chat-only`, provide a portable draft, or request a usable path without fabricating a scan.
+If scan and dry-run work but the approved write and validation loop is incomplete, return the approved change plan as `mcp-readonly`, including for local-only reads without MCP. If no vault scan exists, use `chat-only`, provide a portable draft, or request a usable path without fabricating a scan.
 
 ## Safety
 

@@ -7,9 +7,11 @@ Inspect the actual available tools and resources advertised by the connected ser
 ## Capability Mapping
 
 - Use `full-local` only when scan, dry-run, approved write, and validation paths are all actually available through advertised MCP and companion filesystem tools.
-- Use `filesystem-only` when local read, shell, edit, and validation tools exist but Cobsidian MCP is unavailable.
-- Use `mcp-readonly` by default when Cobsidian MCP can scan, retrieve, or dry-run without a write path.
-- Use `chat-only` when no advertised resource or tool can reach the target vault.
+- Use `filesystem-only` only when local scan, dry-run, approved write, and validation paths are all available without MCP.
+- Use `mcp-readonly` when scan and dry-run are available but the host lacks a complete approved write and validation loop, including local read-only operation without MCP.
+- Use `chat-only` when no scan path can reach the target vault.
+
+The historical name `mcp-readonly` is retained for compatibility; it is the transport-neutral effective read-only level, including a local read-only host without MCP.
 
 Record this evidence in [preflight](../preflight.md) instead of inferring capabilities from an MCP server label.
 
@@ -19,7 +21,7 @@ Map generic MCP resource reads and tool calls only to operations present in the 
 
 ## Degradation
 
-Under `mcp-readonly`, return scan evidence, dry-run output, and an approved change plan without claiming a write. Under `chat-only`, return a portable draft or ask for one usable host or path; do not manufacture create, append, or validation results.
+Under `mcp-readonly`, return scan evidence, dry-run output, and an approved change plan without claiming a write, regardless of whether reads use MCP or local tools. Under `chat-only`, return a portable draft or ask for one usable host or path; do not manufacture create, append, or validation results.
 
 ## Safety
 

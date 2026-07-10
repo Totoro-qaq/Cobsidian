@@ -27,7 +27,7 @@ Use `Context`, `Expected Outcome`, `Actual Outcome`, `Timeline`, `Evidence`, `Ro
 
 ## Evidence Rules
 
-Start at `conversation`. Upgrade to `source-grounded` only after reading logs, metrics, experiment output, tickets, or records. Use `verified` only when reproduction, tests, monitoring, or follow-up checks confirm the relevant conclusion.
+Start at `conversation`. Upgrade to `source-grounded` only after reading logs, metrics, experiment output, tickets, or records. Use `verified` only when reproduction, tests, monitoring, or follow-up checks confirm the relevant conclusion. These are host-completed facts: submit `source_read_completed=true` for source grounding and both `source_read_completed=true` and `verification_completed=true` for verified evidence; mode choice or a user claim cannot set them.
 
 ## Mode-Specific Validation
 

@@ -27,7 +27,7 @@ Cobsidian 使用 natural-language routing（自然语言路由），用户不需
 | 尽量不打断当前工作，快速保存有价值的粗糙材料 | `capture` | `capture` | `single-note` | [捕获模式](../skills/cobsidian/references/modes/capture.md) |
 | 从工具、仓库、skill、prompt 或工作流提取内部机制与可复用模式 | `dissection` | `deep` | `multi-note` | [拆解模式](../skills/cobsidian/references/modes/dissection.md) |
 
-这些默认值会进入 Knowledge Read。证据级别仍从 `conversation` 开始，只有 host 实际读取或验证来源后，才能提升为 `source-grounded` 或 `verified`。
+这些默认值会进入 Knowledge Read。证据级别仍从 `conversation` 开始。证据升级必须提交 host-completed facts（host 已完成动作的事实）：`source-grounded` 要求 `source_read_completed=true`，`verified` 同时要求 `source_read_completed=true` 和 `verification_completed=true`。模式选择或用户声称都不会自动升级证据。
 
 ## 机器动作与笔记计划
 
@@ -36,7 +36,7 @@ Dry-run 的机器动作和 mode-level note plan 是两份不同契约：
 - `decision.action`: `create | append | blocked`
 - mode-level note plan: `single-note | multi-note | report-only`
 
-拆分要求以 `multi-note` 计划汇报，不是第四种机器动作。重复检查决定追加到已有笔记时，Knowledge Read 的 `granularity` 会变为 `append`。`report-only` 描述不写入的用户结果，不是 Knowledge Read 的 `granularity` 枚举。
+拆分要求以 `multi-note` 计划汇报，不是第四种机器动作。请求 `granularity=append` 时，只有 `decision.action=append` 合法；重复检查决定追加到已有笔记时，Knowledge Read 始终强制 append granularity。`report-only` 描述不写入的用户结果，不是 Knowledge Read 的 `granularity` 枚举。
 
 ## 用户会得到什么
 

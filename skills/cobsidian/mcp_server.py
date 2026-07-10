@@ -5,9 +5,10 @@ import sys
 from collections import defaultdict
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any, Literal
 
 from mcp.server.fastmcp import FastMCP
+from pydantic import Field, StrictBool
 
 
 SCRIPTS_DIR = Path(__file__).resolve().parent / "scripts"
@@ -30,6 +31,29 @@ from validate_notes import extract_wikilinks  # noqa: E402
 SERVER_NAME = "cobsidian"
 DEFAULT_SCAN_LIMIT = 100
 MAX_SCAN_LIMIT = 500
+Mode = Literal[
+    "learning",
+    "project",
+    "review",
+    "comparison",
+    "index",
+    "capture",
+    "dissection",
+]
+Depth = Literal["capture", "standard", "deep"]
+Granularity = Literal["append", "single-note", "multi-note"]
+Evidence = Literal["conversation", "source-grounded", "verified"]
+DisplayPolicy = Literal["auto", "always", "off"]
+CapabilityLevel = Literal[
+    "full-local",
+    "filesystem-only",
+    "mcp-readonly",
+    "chat-only",
+]
+RecommendedModes = Annotated[
+    list[Mode],
+    Field(max_length=2, json_schema_extra={"uniqueItems": True}),
+]
 
 
 def resolve_optional_path(path: str | None) -> Path | None:
@@ -234,15 +258,17 @@ def tool_cobsidian_dry_run(
     text: str,
     vault: str | None = None,
     config: str | None = None,
-    mode: str | None = None,
+    mode: Mode | None = None,
     *,
-    mode_explicit: bool | None = None,
-    recommended_modes: list[str] | None = None,
-    depth: str | None = None,
-    granularity: str | None = None,
-    evidence: str = "conversation",
-    knowledge_read_policy: str | None = None,
-    capability_level: str = "mcp-readonly",
+    mode_explicit: StrictBool | None = None,
+    recommended_modes: RecommendedModes | None = None,
+    depth: Depth | None = None,
+    granularity: Granularity | None = None,
+    evidence: Evidence = "conversation",
+    source_read_completed: StrictBool = False,
+    verification_completed: StrictBool = False,
+    knowledge_read_policy: DisplayPolicy | None = None,
+    capability_level: CapabilityLevel = "mcp-readonly",
 ) -> dict[str, Any]:
     vault_path, loaded_config = resolve_vault_from_inputs(vault=vault, config=config)
     resolved_mode = loaded_config.mode if mode is None else mode
@@ -263,6 +289,8 @@ def tool_cobsidian_dry_run(
         depth=depth,
         granularity=granularity,
         evidence=evidence,
+        source_read_completed=source_read_completed,
+        verification_completed=verification_completed,
         capability_level=capability_level,
         knowledge_read_policy=knowledge_read_policy,
     )

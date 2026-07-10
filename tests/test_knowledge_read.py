@@ -61,11 +61,14 @@ class KnowledgeReadTests(unittest.TestCase):
                 "mode": "learning",
                 "mode_explicit": True,
                 "evidence": "source-grounded",
+                "source_read_completed": True,
             },
             "verified": {
                 "mode": "learning",
                 "mode_explicit": True,
                 "evidence": "verified",
+                "source_read_completed": True,
+                "verification_completed": True,
             },
         }
 
@@ -83,6 +86,55 @@ class KnowledgeReadTests(unittest.TestCase):
         )
 
         self.assertEqual("compact", knowledge_read.display_style)
+
+    def test_evidence_requires_completed_host_actions(self) -> None:
+        invalid_cases = (
+            {"evidence": "source-grounded"},
+            {"evidence": "verified"},
+            {"evidence": "verified", "source_read_completed": True},
+            {"evidence": "verified", "verification_completed": True},
+        )
+
+        for arguments in invalid_cases:
+            with self.subTest(arguments=arguments):
+                with self.assertRaisesRegex(ValueError, "completed"):
+                    build_knowledge_read(
+                        mode="learning",
+                        mode_explicit=True,
+                        **arguments,
+                    )
+
+        verified = build_knowledge_read(
+            mode="learning",
+            mode_explicit=True,
+            evidence="verified",
+            source_read_completed=True,
+            verification_completed=True,
+        )
+        self.assertEqual("verified", verified.evidence)
+
+    def test_evidence_completion_facts_require_actual_bool_values(self) -> None:
+        for field_name in ("source_read_completed", "verification_completed"):
+            for invalid_value in (1, "true", None):
+                with self.subTest(field_name=field_name, value=invalid_value):
+                    with self.assertRaisesRegex(ValueError, field_name):
+                        build_knowledge_read(
+                            mode="learning",
+                            mode_explicit=True,
+                            **{field_name: invalid_value},
+                        )
+
+    def test_completion_facts_do_not_change_the_eight_field_payload(self) -> None:
+        knowledge_read = build_knowledge_read(
+            mode="learning",
+            mode_explicit=True,
+            source_read_completed=True,
+            verification_completed=True,
+        )
+
+        self.assertEqual("conversation", knowledge_read.evidence)
+        self.assertNotIn("source_read_completed", knowledge_read.to_payload())
+        self.assertNotIn("verification_completed", knowledge_read.to_payload())
 
     def test_always_and_off_control_display_only(self) -> None:
         always = build_knowledge_read(
@@ -131,9 +183,39 @@ class KnowledgeReadTests(unittest.TestCase):
                 decision_action="append",
             )
 
+    def test_append_granularity_requires_append_decision(self) -> None:
+        for decision_action in (None, "create", "blocked"):
+            with self.subTest(decision_action=decision_action):
+                with self.assertRaisesRegex(ValueError, "append decision"):
+                    build_knowledge_read(
+                        mode="learning",
+                        mode_explicit=True,
+                        granularity="append",
+                        decision_action=decision_action,
+                    )
+
+    def test_decision_action_accepts_only_domain_actions(self) -> None:
+        for decision_action in ("merge", "", 1):
+            with self.subTest(decision_action=decision_action):
+                with self.assertRaisesRegex(ValueError, "decision_action"):
+                    build_knowledge_read(
+                        mode="learning",
+                        mode_explicit=True,
+                        decision_action=decision_action,
+                    )
+
     def test_unresolved_mode_cannot_be_explicit(self) -> None:
         with self.assertRaisesRegex(ValueError, "mode_explicit"):
             build_knowledge_read(mode=None, mode_explicit=True)
+
+    def test_mode_explicit_requires_an_actual_bool(self) -> None:
+        for invalid_value in (1, "true", None):
+            with self.subTest(value=invalid_value):
+                with self.assertRaisesRegex(ValueError, "mode_explicit"):
+                    build_knowledge_read(
+                        mode="learning",
+                        mode_explicit=invalid_value,
+                    )
 
     def test_unresolved_mode_accepts_at_most_two_recommendations(self) -> None:
         knowledge_read = build_knowledge_read(

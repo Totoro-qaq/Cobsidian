@@ -17,6 +17,7 @@ DEPTHS = ("capture", "standard", "deep")
 GRANULARITIES = ("append", "single-note", "multi-note")
 EVIDENCE_LEVELS = ("conversation", "source-grounded", "verified")
 DISPLAY_POLICIES = ("auto", "always", "off")
+DECISION_ACTIONS = ("create", "append", "blocked")
 MODE_DEFAULTS = {
     "learning": ("standard", "single-note"),
     "project": ("deep", "single-note"),
@@ -59,6 +60,12 @@ def validated_choice(
 ) -> str:
     if value not in allowed:
         raise ValueError(f"{name} must be one of: {', '.join(allowed)}.")
+    return value
+
+
+def validated_bool(name: str, value: object) -> bool:
+    if type(value) is not bool:
+        raise ValueError(f"{name} must be a bool.")
     return value
 
 
@@ -111,9 +118,14 @@ def build_knowledge_read(
     depth: str | None = None,
     granularity: str | None = None,
     evidence: str = "conversation",
+    source_read_completed: bool = False,
+    verification_completed: bool = False,
     display_policy: str = "auto",
     decision_action: str | None = None,
 ) -> KnowledgeRead:
+    mode_explicit = validated_bool("mode_explicit", mode_explicit)
+    if decision_action is not None:
+        validated_choice("decision_action", decision_action, DECISION_ACTIONS)
     if mode is None:
         if mode_explicit:
             raise ValueError("mode_explicit cannot be true when mode is unresolved.")
@@ -135,10 +147,33 @@ def build_knowledge_read(
         requested_granularity,
         GRANULARITIES,
     )
+    if validated_granularity == "append" and decision_action != "append":
+        raise ValueError("append granularity requires an append decision.")
     resolved_granularity = (
         "append" if decision_action == "append" else validated_granularity
     )
+    source_read_completed = validated_bool(
+        "source_read_completed",
+        source_read_completed,
+    )
+    verification_completed = validated_bool(
+        "verification_completed",
+        verification_completed,
+    )
     resolved_evidence = validated_choice("evidence", evidence, EVIDENCE_LEVELS)
+    if resolved_evidence == "source-grounded" and not source_read_completed:
+        raise ValueError(
+            "source-grounded evidence requires source_read_completed=true."
+        )
+    if resolved_evidence == "verified":
+        if not source_read_completed:
+            raise ValueError(
+                "verified evidence requires source_read_completed=true."
+            )
+        if not verification_completed:
+            raise ValueError(
+                "verified evidence requires verification_completed=true."
+            )
     resolved_policy = validated_choice(
         "display_policy",
         display_policy,

@@ -6,7 +6,7 @@ Preflight records completed evidence and the active host's capability level befo
 
 `ready: true` means all required checks passed and the active host has a write path for an approved write. It does not mean that a write already happened. Dry-run still reports `writes: []`, and the agent must receive or consume approval before changing vault files.
 
-`full-local` and `filesystem-only` can become ready after every check passes. `mcp-readonly` and `chat-only` cannot become write-ready because they have no approved write capability.
+`full-local` and `filesystem-only` can become ready only when scan, dry-run, approved write, and validation paths form a complete loop and every check passes. `mcp-readonly` is the transport-neutral effective read-only level for any host that can scan and dry-run but lacks that approved write and validation loop. Its historical name is retained for compatibility and also covers local read-only hosts without MCP. `mcp-readonly` and `chat-only` cannot become write-ready because they have no approved write capability; `chat-only` additionally has no scan path.
 
 ## Blocked Reasons
 

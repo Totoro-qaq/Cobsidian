@@ -27,7 +27,7 @@ Use an overview with `Object of Study`, `Purpose`, `Entry Points`, `Architecture
 
 ## Evidence Rules
 
-Start at `conversation`. Upgrade to `source-grounded` only after reading relevant source code, prompts, configuration, traces, or documentation. Use `verified` only after tests, execution traces, or equivalent checks confirm the described mechanism.
+Start at `conversation`. Upgrade to `source-grounded` only after reading relevant source code, prompts, configuration, traces, or documentation. Use `verified` only after tests, execution traces, or equivalent checks confirm the described mechanism. These are host-completed facts: submit `source_read_completed=true` for source grounding and both `source_read_completed=true` and `verification_completed=true` for verified evidence; mode choice or a user claim cannot set them.
 
 ## Mode-Specific Validation
 

@@ -65,6 +65,8 @@ class McpServerTests(unittest.TestCase):
                     "depth",
                     "granularity",
                     "evidence",
+                    "source_read_completed",
+                    "verification_completed",
                     "knowledge_read_policy",
                     "capability_level",
                 }.issubset(dry_run_properties)
@@ -73,6 +75,60 @@ class McpServerTests(unittest.TestCase):
                 "mcp-readonly",
                 dry_run_properties["capability_level"]["default"],
             )
+
+        asyncio.run(run())
+
+    def test_dry_run_input_schema_publishes_domain_constraints(self) -> None:
+        async def run() -> None:
+            tools = await create_mcp_server().list_tools()
+            dry_run_tool = next(
+                tool for tool in tools if tool.name == "cobsidian_dry_run"
+            )
+            properties = dry_run_tool.inputSchema["properties"]
+
+            def value_schema(property_name: str) -> dict[str, object]:
+                schema = properties[property_name]
+                return next(
+                    candidate
+                    for candidate in schema.get("anyOf", [schema])
+                    if candidate.get("type") != "null"
+                )
+
+            expected_enums = {
+                "mode": [
+                    "learning",
+                    "project",
+                    "review",
+                    "comparison",
+                    "index",
+                    "capture",
+                    "dissection",
+                ],
+                "depth": ["capture", "standard", "deep"],
+                "granularity": ["append", "single-note", "multi-note"],
+                "evidence": ["conversation", "source-grounded", "verified"],
+                "knowledge_read_policy": ["auto", "always", "off"],
+                "capability_level": [
+                    "full-local",
+                    "filesystem-only",
+                    "mcp-readonly",
+                    "chat-only",
+                ],
+            }
+            for property_name, expected in expected_enums.items():
+                with self.subTest(property_name=property_name):
+                    self.assertEqual(
+                        expected,
+                        value_schema(property_name)["enum"],
+                    )
+
+            recommendations = value_schema("recommended_modes")
+            self.assertEqual(
+                expected_enums["mode"],
+                recommendations["items"]["enum"],
+            )
+            self.assertEqual(2, recommendations["maxItems"])
+            self.assertIs(True, recommendations["uniqueItems"])
 
         asyncio.run(run())
 
@@ -128,6 +184,34 @@ class McpServerTests(unittest.TestCase):
             self.assertEqual(payload["vault"], str(vault.resolve()))
             self.assertEqual(payload["note_count"], 1)
             self.assertEqual(payload["notes"][0]["title"], "Agent Workflows")
+
+    def test_config_resource_does_not_leak_unknown_interaction_fields(self) -> None:
+        async def run() -> None:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                config = Path(temp_dir) / "cobsidian.config.yml"
+                config.write_text(
+                    """
+interaction:
+  knowledge_read: " Off "
+  private_note: "do not publish"
+  token: "secret"
+  nested:
+    unknown: "private"
+""".strip(),
+                    encoding="utf-8",
+                )
+                with patch.dict(os.environ, {"COBSIDIAN_CONFIG": str(config)}):
+                    contents = await create_mcp_server().read_resource(
+                        "cobsidian://config"
+                    )
+
+            payload = json.loads(contents[0].content)
+            self.assertEqual(
+                {"knowledge_read": "off"},
+                payload["interaction"],
+            )
+
+        asyncio.run(run())
 
     def test_dry_run_missing_vault_inputs_raise_value_error(self) -> None:
         with self.assertRaisesRegex(
@@ -244,6 +328,8 @@ class McpServerTests(unittest.TestCase):
                 "depth": "deep",
                 "granularity": "multi-note",
                 "evidence": "verified",
+                "source_read_completed": True,
+                "verification_completed": True,
                 "knowledge_read_policy": "off",
                 "capability_level": "filesystem-only",
             }
@@ -269,6 +355,44 @@ class McpServerTests(unittest.TestCase):
             self.assertTrue(actual["preflight"]["ready"])
             self.assertEqual([], actual["writes"])
             self.assertEqual(before, snapshot_files(vault))
+
+    def test_fastmcp_rejects_unproven_verified_evidence(self) -> None:
+        async def run() -> None:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                with self.assertRaises(ToolError) as raised:
+                    await create_mcp_server().call_tool(
+                        "cobsidian_dry_run",
+                        {
+                            "vault": temp_dir,
+                            "topic": "Unsupported Claim",
+                            "text": "",
+                            "mode": "learning",
+                            "evidence": "verified",
+                        },
+                    )
+
+            self.assertIn("source_read_completed", str(raised.exception))
+
+        asyncio.run(run())
+
+    def test_fastmcp_rejects_non_boolean_mode_explicit(self) -> None:
+        async def run() -> None:
+            for invalid_value in (1, "true"):
+                with self.subTest(value=invalid_value):
+                    with tempfile.TemporaryDirectory() as temp_dir:
+                        with self.assertRaises(ToolError):
+                            await create_mcp_server().call_tool(
+                                "cobsidian_dry_run",
+                                {
+                                    "vault": temp_dir,
+                                    "topic": "Strict Bool",
+                                    "text": "",
+                                    "mode": "learning",
+                                    "mode_explicit": invalid_value,
+                                },
+                            )
+
+        asyncio.run(run())
 
     def test_dry_run_mode_explicitness_distinguishes_direct_and_config_modes(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

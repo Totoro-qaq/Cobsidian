@@ -109,31 +109,40 @@ class ConfigAndDryRunTests(unittest.TestCase):
             config.raw["interaction"]["knowledge_read"],
         )
 
-    def test_public_summary_uses_empty_dict_for_invalid_interaction(self) -> None:
+    def test_public_summary_rejects_invalid_interaction(self) -> None:
         config = CobsidianConfig(
             config_path=None,
             raw={"interaction": "off"},
         )
 
-        self.assertEqual({}, config.public_summary().get("interaction"))
+        with self.assertRaisesRegex(ValueError, "interaction"):
+            config.public_summary()
 
-    def test_public_summary_deeply_copies_interaction(self) -> None:
+    def test_public_summary_whitelists_normalized_knowledge_read(self) -> None:
         config = CobsidianConfig(
             config_path=None,
             raw={
                 "interaction": {
-                    "knowledge_read": "auto",
+                    "knowledge_read": "  AuTo  ",
+                    "private_note": "do not publish",
+                    "token": "secret",
                     "metadata": {"labels": ["original"]},
                 }
             },
         )
 
         summary = config.public_summary()
-        summary["interaction"]["metadata"]["labels"].append("mutated")
+        self.assertEqual(
+            {"knowledge_read": "auto"},
+            summary["interaction"],
+        )
+
+    def test_public_summary_publishes_default_knowledge_read(self) -> None:
+        summary = CobsidianConfig(config_path=None, raw={}).public_summary()
 
         self.assertEqual(
-            ["original"],
-            config.raw["interaction"]["metadata"]["labels"],
+            {"knowledge_read": "auto"},
+            summary["interaction"],
         )
 
     def test_scan_vault_uses_config_vault_path(self) -> None:
@@ -358,6 +367,7 @@ interaction:
                     "multi-note",
                     "--evidence",
                     "source-grounded",
+                    "--source-read-completed",
                     "--capability-level",
                     "mcp-readonly",
                     "--knowledge-read",
@@ -390,6 +400,31 @@ interaction:
                 ["write_capability_unavailable"],
                 payload["preflight"]["blocked_reasons"],
             )
+
+    def test_cli_rejects_unproven_source_grounded_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS_DIR / "dry_run.py"),
+                    temp_dir,
+                    "--topic",
+                    "Unproven Source",
+                    "--text",
+                    "",
+                    "--mode",
+                    "learning",
+                    "--evidence",
+                    "source-grounded",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+
+            self.assertNotEqual(0, result.returncode)
+            self.assertIn("source_read_completed", result.stderr)
 
     def test_cli_accepts_repeatable_recommended_modes_for_unresolved_mode(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

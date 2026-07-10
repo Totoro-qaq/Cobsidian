@@ -27,7 +27,7 @@ Cobsidian uses natural-language routing; users do not need to memorize mode IDs.
 | Save useful rough material with minimal interruption | `capture` | `capture` | `single-note` | [Capture](../skills/cobsidian/references/modes/capture.md) |
 | Extract internals and reusable patterns from a tool, repo, skill, prompt, or workflow | `dissection` | `deep` | `multi-note` | [Dissection](../skills/cobsidian/references/modes/dissection.md) |
 
-These defaults feed Knowledge Read. Evidence still begins at `conversation`; it becomes `source-grounded` or `verified` only after the host actually reads or verifies sources.
+These defaults feed Knowledge Read. Evidence still begins at `conversation`. Evidence upgrades use host-completed facts: `source-grounded` requires `source_read_completed=true`, while `verified` requires both `source_read_completed=true` and `verification_completed=true`. A mode or user claim never upgrades evidence by itself.
 
 ## Machine Action And Note Plan
 
@@ -36,7 +36,7 @@ The dry-run machine action and the mode-level note plan are different contracts:
 - `decision.action`: `create | append | blocked`
 - mode-level note plan: `single-note | multi-note | report-only`
 
-A split request is reported as a `multi-note` plan, not as a fourth machine action. If duplicate resolution selects an existing note, Knowledge Read changes `granularity` to `append`. `report-only` describes a no-write user outcome; it is not a Knowledge Read `granularity` enum.
+A split request is reported as a `multi-note` plan, not as a fourth machine action. Requested `granularity=append` is valid only with `decision.action=append`; when duplicate resolution selects an existing note, Knowledge Read always forces append granularity. `report-only` describes a no-write user outcome; it is not a Knowledge Read `granularity` enum.
 
 ## What Users Receive
 

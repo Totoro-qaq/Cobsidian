@@ -98,6 +98,8 @@ def build_payload(
     depth: str | None = None,
     granularity: str | None = None,
     evidence: str = "conversation",
+    source_read_completed: bool = False,
+    verification_completed: bool = False,
     capability_level: str = "filesystem-only",
     knowledge_read_policy: str | None = None,
 ) -> dict[str, object]:
@@ -132,6 +134,8 @@ def build_payload(
         depth=depth,
         granularity=granularity,
         evidence=evidence,
+        source_read_completed=source_read_completed,
+        verification_completed=verification_completed,
         display_policy=resolved_display_policy,
         decision_action=decision["action"],
     )
@@ -204,6 +208,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--granularity", choices=GRANULARITIES)
     parser.add_argument("--evidence", choices=EVIDENCE_LEVELS, default="conversation")
     parser.add_argument(
+        "--source-read-completed",
+        action="store_true",
+        help="Confirm that the host completed the relevant source read.",
+    )
+    parser.add_argument(
+        "--verification-completed",
+        action="store_true",
+        help="Confirm that the host completed an additional verification.",
+    )
+    parser.add_argument(
         "--capability-level",
         choices=CAPABILITY_LEVELS,
         default="filesystem-only",
@@ -254,6 +268,8 @@ def main() -> int:
             depth=args.depth,
             granularity=args.granularity,
             evidence=args.evidence,
+            source_read_completed=args.source_read_completed,
+            verification_completed=args.verification_completed,
             capability_level=args.capability_level,
             knowledge_read_policy=args.knowledge_read_policy,
         )
