@@ -7,12 +7,97 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from skills.cobsidian.scripts.cobsidian_config import CobsidianConfig
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS_DIR = REPO_ROOT / "skills" / "cobsidian" / "scripts"
 
 
 class ConfigAndDryRunTests(unittest.TestCase):
+    def knowledge_read_policy_for(self, value: object = ...) -> str:
+        raw = (
+            {}
+            if value is ...
+            else {"interaction": {"knowledge_read": value}}
+        )
+        config = CobsidianConfig(config_path=None, raw=raw)
+        if not hasattr(type(config), "knowledge_read_policy"):
+            self.fail("CobsidianConfig.knowledge_read_policy is missing.")
+        return config.knowledge_read_policy
+
+    def test_knowledge_read_policy_defaults_to_auto(self) -> None:
+        self.assertEqual("auto", self.knowledge_read_policy_for())
+
+    def test_knowledge_read_policy_accepts_all_supported_values(self) -> None:
+        for policy in ("auto", "always", "off"):
+            with self.subTest(policy=policy):
+                self.assertEqual(
+                    policy,
+                    self.knowledge_read_policy_for(policy),
+                )
+
+    def test_knowledge_read_policy_normalizes_string_input(self) -> None:
+        values = {
+            "  AuTo  ": "auto",
+            "\tALWAYS\n": "always",
+            " Off ": "off",
+        }
+        for configured, expected in values.items():
+            with self.subTest(configured=configured):
+                self.assertEqual(
+                    expected,
+                    self.knowledge_read_policy_for(configured),
+                )
+
+    def test_knowledge_read_policy_rejects_invalid_strings(self) -> None:
+        for policy in ("", "sometimes", "auto-ish"):
+            with self.subTest(policy=policy):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    r"interaction\.knowledge_read",
+                ):
+                    self.knowledge_read_policy_for(policy)
+
+    def test_knowledge_read_policy_rejects_non_string_values(self) -> None:
+        invalid_values = (None, True, 1, ["auto"], {"value": "auto"})
+        for value in invalid_values:
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    r"interaction\.knowledge_read",
+                ):
+                    self.knowledge_read_policy_for(value)
+
+    def test_public_summary_defensively_copies_interaction(self) -> None:
+        config = CobsidianConfig(
+            config_path=None,
+            raw={"interaction": {"knowledge_read": "off"}},
+        )
+
+        summary = config.public_summary()
+
+        self.assertEqual(
+            {"knowledge_read": "off"},
+            summary.get("interaction"),
+        )
+        interaction = summary.get("interaction")
+        self.assertIsInstance(interaction, dict)
+        assert isinstance(interaction, dict)
+        interaction["knowledge_read"] = "always"
+        self.assertEqual(
+            "off",
+            config.raw["interaction"]["knowledge_read"],
+        )
+
+    def test_public_summary_uses_empty_dict_for_invalid_interaction(self) -> None:
+        config = CobsidianConfig(
+            config_path=None,
+            raw={"interaction": "off"},
+        )
+
+        self.assertEqual({}, config.public_summary().get("interaction"))
+
     def test_scan_vault_uses_config_vault_path(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
