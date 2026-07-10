@@ -1,6 +1,10 @@
 ---
 name: cobsidian
-description: Use when the user wants to organize, save, or structure knowledge from conversations into an Obsidian vault or Markdown knowledge base. Covers study notes, project analysis, incident reviews, tool comparisons, topic maps, daily capture, and source dissection with duplicate checks, wiki-link suggestions, and dry-run planning. Also triggered by Chinese phrases: 整理到Obsidian, 知识库, 写成笔记, 记笔记, 帮我整理, 总结成笔记, 双链笔记, 知识点整理, 补双链, 学习模式, 项目模式, 复盘模式, 对比模式, 索引模式, 捕获模式, 拆解模式.
+description: >-
+  Use when a user asks to organize, save, compare, review, map, or dissect
+  conversations and source material into an Obsidian vault or Markdown
+  knowledge base, including Chinese requests about 知识库, 笔记, 双链,
+  学习模式, 项目模式, 复盘模式, 对比模式, 索引模式, 捕获模式, or 拆解模式.
 ---
 
 # Cobsidian

@@ -121,7 +121,7 @@ python skills/cobsidian/scripts/dry_run.py --config cobsidian.config.yml --topic
 Also include it in your agent prompt:
 
 ```text
-Use Cobsidian and follow cobsidian.config.yml for vault path, naming, safety, and validation rules.
+Use Cobsidian and follow cobsidian.config.yml for the vault path, mode directories, duplicate checks, backlink limits, and validation behavior.
 ```
 
 ## Verify The Helper Scripts

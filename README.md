@@ -109,12 +109,13 @@ flowchart TD
 
 - Create learning notes, project notes, comparison notes, and index notes.
 - Check existing notes before writing to reduce duplicates.
-- Suggest `[[wiki links]]` and related-note sections.
+- Suggest `[[wiki links]]` from note titles, metadata, and body text.
+- Match Chinese related phrases with deterministic CJK bigrams and trigrams.
 - Validate missing wiki-link targets.
 - Detect exact and similar note titles.
 - Keep note structure concise and reusable.
 - Avoid writing private paths, secrets, or raw chat transcripts by default.
-- Expose local MCP tools for read-only vault inspection and dry-run planning.
+- Expose paginated local MCP tools for read-only vault inspection and dry-run planning.
 
 ## Install
 
@@ -220,13 +221,15 @@ Each script also accepts `--config cobsidian.config.yml` when the config contain
 
 ## Optional Config
 
-`cobsidian.config.example.yml` documents optional vault, naming, safety, linking, and validation conventions for agents or adapters. Copy it to `cobsidian.config.yml` if you want a reusable local convention.
+`cobsidian.config.example.yml` is the supported `v0.4.0` config surface. It covers the vault path, default mode, mode directories, backlink limit, duplicate threshold and append preference, plus validation behavior. Copy it to `cobsidian.config.yml` for reusable local settings.
 
 The helper scripts read it with `--config`.
 
+Naming templates, redaction, and write-policy customization are not enforced by the config yet; they remain roadmap items.
+
 ## Roadmap
 
-- Better duplicate detection with configurable thresholds.
+- Semantic duplicate detection beyond title similarity.
 - Frontmatter support for vaults that use YAML metadata.
 - Optional note templates.
 - Configurable naming rules.

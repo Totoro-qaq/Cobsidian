@@ -21,10 +21,7 @@ Claude Code and OpenCode will pick up `SKILL.md` from this path automatically.
 If you prefer not to copy, add this to your project or global `CLAUDE.md`:
 
 ```markdown
-做后端就用superpowers，openspec等skill
-做知识整理就用cobsidian skill
-
-Read skills/cobsidian/SKILL.md when the user asks to organize material into an Obsidian vault or Markdown knowledge base.
+Read `skills/cobsidian/SKILL.md` when the user asks to organize material into an Obsidian vault or Markdown knowledge base.
 ```
 
 ## MCP Server (stdio)

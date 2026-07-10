@@ -134,6 +134,37 @@ validation:
             self.assertEqual(payload["writes"], [])
             self.assertTrue(payload["validation"]["would_run"])
 
+    def test_dry_run_uses_note_body_for_backlinks(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault_path = Path(temp_dir)
+            (vault_path / "Vector Search.md").write_text(
+                "# Vector Search\n\nSemantic retrieval through embeddings.\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS_DIR / "dry_run.py"),
+                    str(vault_path),
+                    "--topic",
+                    "Retrieval Pipeline",
+                    "--text",
+                    "semantic retrieval through embeddings",
+                    "--json",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+
+            payload = json.loads(result.stdout)
+            self.assertEqual(
+                "Vector Search.md",
+                payload["suggested_backlinks"][0]["path"],
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

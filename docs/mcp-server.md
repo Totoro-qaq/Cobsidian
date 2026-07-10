@@ -64,23 +64,34 @@ The server registers read/planning tools only:
 
 | Tool | Purpose |
 |---|---|
-| `cobsidian_scan_vault` | Scan Markdown notes, titles, tags, and wiki links. |
-| `cobsidian_find_duplicates` | Report exact and similar note titles. |
-| `cobsidian_suggest_backlinks` | Suggest related notes for text or a target note. |
+| `cobsidian_scan_vault` | Scan Markdown notes with bounded `offset` / `limit` pagination. |
+| `cobsidian_find_duplicates` | Report exact and similar note titles with bounded comparisons. |
+| `cobsidian_suggest_backlinks` | Suggest related notes for a topic, text, or target note. |
 | `cobsidian_validate_notes` | Report missing wiki links, duplicate titles, and empty notes. |
 | `cobsidian_dry_run` | Plan create/append behavior without writing files. |
 
 There is intentionally no write tool yet. Write workflows should go through dry-run first and require user confirmation in the host.
+
+## Large Vault Limits
+
+- `cobsidian_scan_vault` defaults to `offset=0` and `limit=100`; the maximum page size is `500`. Responses include `total_note_count` and page metadata.
+- `cobsidian_find_duplicates` always finds all exact normalized-title duplicates. Similar-title work compares unique normalized titles, defaults to at most `100000` comparisons, and returns `comparisons` plus `truncated` metadata.
+- Backlink ranking reads title, tags, wiki links, and note body text. Chinese text uses deterministic CJK bigrams and trigrams without an external tokenizer.
+- Backlink result limits must be between `1` and `100`; the configured default is `8`.
+- Backlink requests require at least one non-empty topic or material source; blank strings and empty source files are rejected.
 
 ## Resources
 
 | Resource | Purpose |
 |---|---|
 | `cobsidian://config` | Read the active config summary from `COBSIDIAN_CONFIG`. |
-| `cobsidian://vault-summary` | Scan the configured vault. |
+| `cobsidian://vault-summary` | Read the complete configured-vault summary for backward compatibility. |
+| `cobsidian://vault-page/{offset}/{limit}` | Read a bounded page from the configured vault. |
 | `cobsidian://note/{note_path}` | Read a note by vault-relative path. |
 
 `cobsidian://note/{note_path}` rejects absolute paths and `..` traversal outside the vault.
+
+Prefer `cobsidian://vault-page/{offset}/{limit}` for large vaults. The static `vault-summary` resource remains complete so existing clients are not silently truncated.
 
 ## Prompts
 

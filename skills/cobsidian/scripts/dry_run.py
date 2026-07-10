@@ -8,15 +8,8 @@ from difflib import SequenceMatcher
 from pathlib import Path
 
 from cobsidian_config import CobsidianConfig, load_config, resolve_vault_path
+from retrieval import build_query, build_search_documents, rank_backlinks
 from scan_vault import NoteInfo, read_text, scan_vault
-from suggest_backlinks import score_note, tokenize
-
-
-@dataclass(frozen=True)
-class BacklinkSuggestion:
-    title: str
-    path: str
-    score: int
 
 
 @dataclass(frozen=True)
@@ -83,22 +76,6 @@ def choose_decision(topic: str, mode: str | None, notes: list[NoteInfo], config:
     }
 
 
-def suggest_backlinks(topic: str, text: str, notes: list[NoteInfo], target_note: str | None, limit: int) -> list[BacklinkSuggestion]:
-    query_tokens = tokenize(f"{topic}\n{text}")
-    if not query_tokens:
-        return []
-
-    suggestions: list[BacklinkSuggestion] = []
-    for note in notes:
-        if target_note and note.path == target_note:
-            continue
-        note_tokens = tokenize(f"{note.title}\n{' '.join(note.tags)}\n{' '.join(note.wikilinks)}")
-        score = score_note(query_tokens, note_tokens)
-        if score > 0:
-            suggestions.append(BacklinkSuggestion(title=note.title, path=note.path, score=score))
-    return sorted(suggestions, key=lambda item: item.score, reverse=True)[:limit]
-
-
 def build_payload(
     vault_path: Path,
     config: CobsidianConfig,
@@ -107,21 +84,33 @@ def build_payload(
     text: str,
     notes: list[NoteInfo],
 ) -> dict[str, object]:
-    decision = choose_decision(topic, mode, notes, config)
-    risks = find_duplicate_risks(topic, notes, config.similar_title_threshold)
-    backlinks = suggest_backlinks(
-        topic=topic,
-        text=text,
-        notes=notes,
-        target_note=decision["target_note"] if decision["action"] == "append" else None,
+    normalized_topic = topic.strip()
+    if not normalized_topic:
+        raise ValueError("Provide a non-empty topic.")
+
+    decision = choose_decision(normalized_topic, mode, notes, config)
+    risks = find_duplicate_risks(
+        normalized_topic,
+        notes,
+        config.similar_title_threshold,
+    )
+    excluded_paths = (
+        {decision["target_note"]}
+        if decision["action"] == "append"
+        else set()
+    )
+    backlinks = rank_backlinks(
+        build_query(topic=normalized_topic, text=text),
+        build_search_documents(vault_path, notes),
         limit=config.max_suggested_backlinks,
+        excluded_paths=excluded_paths,
     )
     return {
         "dry_run": True,
         "vault": str(vault_path),
         "config": config.public_summary() if config.config_path else None,
         "mode": mode,
-        "topic": topic,
+        "topic": normalized_topic,
         "decision": decision,
         "duplicate_risks": [asdict(risk) for risk in risks],
         "suggested_backlinks": [asdict(suggestion) for suggestion in backlinks],
@@ -147,18 +136,30 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = build_parser().parse_args()
-    if not args.file and not args.text:
-        raise SystemExit("Provide --file or --text.")
 
     config = load_config(args.config)
     vault_path = resolve_vault_path(args.vault, config)
     if not vault_path.exists() or not vault_path.is_dir():
         raise SystemExit(f"Vault path does not exist or is not a directory: {vault_path}")
 
-    source_text = read_text(args.file.expanduser().resolve()) if args.file else str(args.text)
+    source_text = (
+        read_text(args.file.expanduser().resolve())
+        if args.file
+        else str(args.text or "")
+    )
     mode = args.mode or config.mode
     notes = scan_vault(vault_path)
-    payload = build_payload(vault_path=vault_path, config=config, topic=args.topic, mode=mode, text=source_text, notes=notes)
+    try:
+        payload = build_payload(
+            vault_path=vault_path,
+            config=config,
+            topic=args.topic,
+            mode=mode,
+            text=source_text,
+            notes=notes,
+        )
+    except ValueError as error:
+        raise SystemExit(str(error)) from error
 
     if args.json:
         print(json.dumps(payload, ensure_ascii=False, indent=2))

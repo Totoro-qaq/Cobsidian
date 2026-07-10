@@ -1,24 +1,16 @@
-# Cobsidian example config.
+# Cobsidian v0.4 supported config.
 # Copy to cobsidian.config.yml and adjust for your vault.
-# Helper scripts can read this file with --config.
-# Treat it as a convention for agents and adapters.
+# Every field below is consumed by the helper scripts or MCP server.
 
 vault:
   # Absolute path is safest. Relative paths are resolved from the current working directory.
   path: "/path/to/obsidian-vault"
-  language: "en"
 
 defaults:
-  # null means the agent should infer the mode or introduce mode choices when unclear.
+  # null means the agent should infer or ask for the mode.
   mode: null
-  dry_run_first: true
-  preserve_existing_style: true
 
 notes:
-  # Supported convention values: title, date-title, mode-title, folder-title.
-  naming: "title"
-  date_format: "%Y-%m-%d"
-  extension: ".md"
   directories:
     learning: "Learning"
     project: "Projects"
@@ -29,32 +21,12 @@ notes:
     dissection: "Dissections"
 
 linking:
-  wiki_links: true
-  related_notes_section: true
   max_suggested_backlinks: 8
-  # Avoid turning every repeated word into a link.
-  min_link_signal: "topic-or-title-match"
 
 duplicates:
-  check_before_writing: true
   prefer_append_over_duplicate: true
   similar_title_threshold: 0.88
-
-safety:
-  # Keep private machine details out of generic notes unless the user explicitly asks.
-  redact_private_paths: true
-  redact_tokens: true
-  avoid_raw_chat_transcripts: true
-  ask_before_large_rewrites: true
 
 validation:
   run_after_write: true
   strict: false
-  fail_on_missing_wikilinks: false
-
-report:
-  include_files_changed: true
-  include_create_append_decision: true
-  include_duplicate_check: true
-  include_backlinks: true
-  include_validation: true

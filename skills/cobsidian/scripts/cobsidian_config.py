@@ -6,6 +6,33 @@ from typing import Any
 
 
 ConfigData = dict[str, Any]
+SUPPORTED_CONFIG_LEAF_PATHS = {
+    "vault.path",
+    "defaults.mode",
+    "notes.directories.learning",
+    "notes.directories.project",
+    "notes.directories.review",
+    "notes.directories.comparison",
+    "notes.directories.index",
+    "notes.directories.capture",
+    "notes.directories.dissection",
+    "linking.max_suggested_backlinks",
+    "duplicates.similar_title_threshold",
+    "duplicates.prefer_append_over_duplicate",
+    "validation.run_after_write",
+    "validation.strict",
+}
+
+
+def flatten_leaf_paths(data: ConfigData, prefix: str = "") -> set[str]:
+    paths: set[str] = set()
+    for key, value in data.items():
+        path = f"{prefix}.{key}" if prefix else key
+        if isinstance(value, dict):
+            paths.update(flatten_leaf_paths(value, path))
+        else:
+            paths.add(path)
+    return paths
 
 
 @dataclass(frozen=True)

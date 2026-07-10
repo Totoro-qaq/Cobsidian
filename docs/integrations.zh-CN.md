@@ -75,6 +75,8 @@ Use Cobsidian and follow /absolute/path/to/cobsidian.config.yml.
 
 Cobsidian 也提供本地 MCP server。当前只暴露只读和规划工具，不暴露写入工具。
 
+Vault 扫描带分页（默认 `limit=100`，最大 `500`），相似标题比较达到上限时会明确报告。反链建议与 CLI、dry-run 共用正文感知的多语言排名器。
+
 安装 MCP 依赖：
 
 ```bash
