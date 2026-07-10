@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Iterable
 
 
 MODES = (
@@ -64,8 +64,13 @@ def validated_choice(
 
 def validated_recommendations(
     mode: str | None,
-    recommended_modes: Iterable[str] | None,
+    recommended_modes: Sequence[str] | None,
 ) -> tuple[str, ...]:
+    if isinstance(recommended_modes, (str, bytes)) or (
+        recommended_modes is not None
+        and not isinstance(recommended_modes, Sequence)
+    ):
+        raise ValueError("recommended_modes must be an ordered sequence of modes.")
     recommendations = tuple(recommended_modes or ())
     if len(recommendations) > 2:
         raise ValueError("recommended_modes accepts at most two modes.")
@@ -73,6 +78,8 @@ def validated_recommendations(
         raise ValueError("recommended_modes requires an unresolved mode.")
     for recommendation in recommendations:
         validated_choice("recommended mode", recommendation, MODES)
+    if len(set(recommendations)) != len(recommendations):
+        raise ValueError("recommended_modes cannot contain duplicate modes.")
     return recommendations
 
 
@@ -100,20 +107,21 @@ def resolve_display_style(
 def build_knowledge_read(
     mode: str | None,
     mode_explicit: bool,
-    recommended_modes: Iterable[str] | None = None,
+    recommended_modes: Sequence[str] | None = None,
     depth: str | None = None,
     granularity: str | None = None,
     evidence: str = "conversation",
     display_policy: str = "auto",
     decision_action: str | None = None,
 ) -> KnowledgeRead:
-    if mode is not None:
-        validated_choice("mode", mode, MODES)
+    if mode is None:
+        if mode_explicit:
+            raise ValueError("mode_explicit cannot be true when mode is unresolved.")
+        default_depth, default_granularity = "standard", "single-note"
+    else:
+        resolved_mode = validated_choice("mode", mode, MODES)
+        default_depth, default_granularity = MODE_DEFAULTS[resolved_mode]
     recommendations = validated_recommendations(mode, recommended_modes)
-    default_depth, default_granularity = MODE_DEFAULTS.get(
-        mode,
-        ("standard", "single-note"),
-    )
     resolved_depth = validated_choice(
         "depth",
         default_depth if depth is None else depth,
@@ -122,10 +130,13 @@ def build_knowledge_read(
     requested_granularity = (
         default_granularity if granularity is None else granularity
     )
-    resolved_granularity = validated_choice(
+    validated_granularity = validated_choice(
         "granularity",
-        "append" if decision_action == "append" else requested_granularity,
+        requested_granularity,
         GRANULARITIES,
+    )
+    resolved_granularity = (
+        "append" if decision_action == "append" else validated_granularity
     )
     resolved_evidence = validated_choice("evidence", evidence, EVIDENCE_LEVELS)
     resolved_policy = validated_choice(

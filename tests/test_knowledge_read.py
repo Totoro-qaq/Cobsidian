@@ -122,6 +122,19 @@ class KnowledgeReadTests(unittest.TestCase):
 
         self.assertEqual("append", knowledge_read.granularity)
 
+    def test_append_decision_validates_requested_granularity_first(self) -> None:
+        with self.assertRaisesRegex(ValueError, "granularity"):
+            build_knowledge_read(
+                mode="learning",
+                mode_explicit=True,
+                granularity="many",
+                decision_action="append",
+            )
+
+    def test_unresolved_mode_cannot_be_explicit(self) -> None:
+        with self.assertRaisesRegex(ValueError, "mode_explicit"):
+            build_knowledge_read(mode=None, mode_explicit=True)
+
     def test_unresolved_mode_accepts_at_most_two_recommendations(self) -> None:
         knowledge_read = build_knowledge_read(
             mode=None,
@@ -156,6 +169,39 @@ class KnowledgeReadTests(unittest.TestCase):
                 mode=None,
                 mode_explicit=False,
                 recommended_modes=["unknown"],
+            )
+
+    def test_recommendations_require_an_ordered_sequence(self) -> None:
+        invalid_recommendations = (
+            {"learning"},
+            iter(["learning"]),
+        )
+
+        for recommendations in invalid_recommendations:
+            with self.subTest(recommendations=recommendations):
+                with self.assertRaisesRegex(ValueError, "ordered sequence"):
+                    build_knowledge_read(
+                        mode=None,
+                        mode_explicit=False,
+                        recommended_modes=recommendations,
+                    )
+
+    def test_recommendations_reject_str_and_bytes(self) -> None:
+        for recommendations in ("learning", b"learning"):
+            with self.subTest(recommendations=recommendations):
+                with self.assertRaisesRegex(ValueError, "ordered sequence"):
+                    build_knowledge_read(
+                        mode=None,
+                        mode_explicit=False,
+                        recommended_modes=recommendations,
+                    )
+
+    def test_recommendations_reject_duplicates(self) -> None:
+        with self.assertRaisesRegex(ValueError, "duplicate"):
+            build_knowledge_read(
+                mode=None,
+                mode_explicit=False,
+                recommended_modes=["learning", "learning"],
             )
 
     def test_invalid_enums_are_rejected(self) -> None:
