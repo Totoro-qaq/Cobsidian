@@ -1,0 +1,197 @@
+from __future__ import annotations
+
+from collections.abc import Sequence
+from dataclasses import dataclass
+
+
+MODES = (
+    "learning",
+    "project",
+    "review",
+    "comparison",
+    "index",
+    "capture",
+    "dissection",
+)
+DEPTHS = ("capture", "standard", "deep")
+GRANULARITIES = ("append", "single-note", "multi-note")
+EVIDENCE_LEVELS = ("conversation", "source-grounded", "verified")
+DISPLAY_POLICIES = ("auto", "always", "off")
+DECISION_ACTIONS = ("create", "append", "blocked")
+MODE_DEFAULTS = {
+    "learning": ("standard", "single-note"),
+    "project": ("deep", "single-note"),
+    "review": ("deep", "single-note"),
+    "comparison": ("standard", "single-note"),
+    "index": ("deep", "multi-note"),
+    "capture": ("capture", "single-note"),
+    "dissection": ("deep", "multi-note"),
+}
+
+
+@dataclass(frozen=True)
+class KnowledgeRead:
+    mode: str | None
+    mode_explicit: bool
+    recommended_modes: tuple[str, ...]
+    depth: str
+    granularity: str
+    evidence: str
+    display_policy: str
+    display_style: str
+
+    def to_payload(self) -> dict[str, object]:
+        return {
+            "mode": self.mode,
+            "mode_explicit": self.mode_explicit,
+            "recommended_modes": list(self.recommended_modes),
+            "depth": self.depth,
+            "granularity": self.granularity,
+            "evidence": self.evidence,
+            "display_policy": self.display_policy,
+            "display_style": self.display_style,
+        }
+
+
+def validated_choice(
+    name: str,
+    value: str,
+    allowed: tuple[str, ...],
+) -> str:
+    if value not in allowed:
+        raise ValueError(f"{name} must be one of: {', '.join(allowed)}.")
+    return value
+
+
+def validated_bool(name: str, value: object) -> bool:
+    if type(value) is not bool:
+        raise ValueError(f"{name} must be a bool.")
+    return value
+
+
+def validated_recommendations(
+    mode: str | None,
+    recommended_modes: Sequence[str] | None,
+) -> tuple[str, ...]:
+    if isinstance(recommended_modes, (str, bytes)) or (
+        recommended_modes is not None
+        and not isinstance(recommended_modes, Sequence)
+    ):
+        raise ValueError("recommended_modes must be an ordered sequence of modes.")
+    recommendations = tuple(recommended_modes or ())
+    if len(recommendations) > 2:
+        raise ValueError("recommended_modes accepts at most two modes.")
+    if mode is not None and recommendations:
+        raise ValueError("recommended_modes requires an unresolved mode.")
+    for recommendation in recommendations:
+        validated_choice("recommended mode", recommendation, MODES)
+    if len(set(recommendations)) != len(recommendations):
+        raise ValueError("recommended_modes cannot contain duplicate modes.")
+    return recommendations
+
+
+def resolve_display_style(
+    policy: str,
+    mode_explicit: bool,
+    depth: str,
+    granularity: str,
+    evidence: str,
+) -> str:
+    if policy == "always":
+        return "expanded"
+    if policy == "off":
+        return "hidden"
+    if (
+        not mode_explicit
+        or depth == "deep"
+        or granularity == "multi-note"
+        or evidence in {"source-grounded", "verified"}
+    ):
+        return "expanded"
+    return "compact"
+
+
+def build_knowledge_read(
+    mode: str | None,
+    mode_explicit: bool,
+    recommended_modes: Sequence[str] | None = None,
+    depth: str | None = None,
+    granularity: str | None = None,
+    evidence: str = "conversation",
+    source_read_completed: bool = False,
+    verification_completed: bool = False,
+    display_policy: str = "auto",
+    decision_action: str | None = None,
+) -> KnowledgeRead:
+    mode_explicit = validated_bool("mode_explicit", mode_explicit)
+    if decision_action is not None:
+        validated_choice("decision_action", decision_action, DECISION_ACTIONS)
+    if mode is None:
+        if mode_explicit:
+            raise ValueError("mode_explicit cannot be true when mode is unresolved.")
+        default_depth, default_granularity = "standard", "single-note"
+    else:
+        resolved_mode = validated_choice("mode", mode, MODES)
+        default_depth, default_granularity = MODE_DEFAULTS[resolved_mode]
+    recommendations = validated_recommendations(mode, recommended_modes)
+    resolved_depth = validated_choice(
+        "depth",
+        default_depth if depth is None else depth,
+        DEPTHS,
+    )
+    requested_granularity = (
+        default_granularity if granularity is None else granularity
+    )
+    validated_granularity = validated_choice(
+        "granularity",
+        requested_granularity,
+        GRANULARITIES,
+    )
+    if validated_granularity == "append" and decision_action != "append":
+        raise ValueError("append granularity requires an append decision.")
+    resolved_granularity = (
+        "append" if decision_action == "append" else validated_granularity
+    )
+    source_read_completed = validated_bool(
+        "source_read_completed",
+        source_read_completed,
+    )
+    verification_completed = validated_bool(
+        "verification_completed",
+        verification_completed,
+    )
+    resolved_evidence = validated_choice("evidence", evidence, EVIDENCE_LEVELS)
+    if resolved_evidence == "source-grounded" and not source_read_completed:
+        raise ValueError(
+            "source-grounded evidence requires source_read_completed=true."
+        )
+    if resolved_evidence == "verified":
+        if not source_read_completed:
+            raise ValueError(
+                "verified evidence requires source_read_completed=true."
+            )
+        if not verification_completed:
+            raise ValueError(
+                "verified evidence requires verification_completed=true."
+            )
+    resolved_policy = validated_choice(
+        "display_policy",
+        display_policy,
+        DISPLAY_POLICIES,
+    )
+    return KnowledgeRead(
+        mode=mode,
+        mode_explicit=mode_explicit,
+        recommended_modes=recommendations,
+        depth=resolved_depth,
+        granularity=resolved_granularity,
+        evidence=resolved_evidence,
+        display_policy=resolved_policy,
+        display_style=resolve_display_style(
+            resolved_policy,
+            mode_explicit,
+            resolved_depth,
+            resolved_granularity,
+            resolved_evidence,
+        ),
+    )

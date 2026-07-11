@@ -29,16 +29,33 @@ Keep it short. Prefer preserving retrieval value over polishing structure.
 
 ## Project Note
 
-Use for a specific project, experiment, incident, or implementation.
+Use for a specific project, its architecture, implementation, or operations. Use a Review Note when retrospective analysis is the primary purpose.
 
 Recommended sections:
 
 - Context
 - Goal
-- Implementation or Process
+- Architecture or Implementation
+- Operations
 - Evidence
 - Result
 - Risks and Next Steps
+- Related Notes
+
+## Review Note
+
+Use for incidents, failures, and experiments whose durable value comes from evidence-based learning and corrective action.
+
+Recommended sections:
+
+- Context
+- Expected Outcome
+- Actual Outcome
+- Timeline
+- Evidence
+- Root Causes
+- Corrective Actions
+- Unresolved Questions
 - Related Notes
 
 ## Dissection Note

@@ -1,0 +1,28 @@
+# Preflight Contract
+
+Preflight records completed evidence and the active host's capability level before any write can be approved. It is deterministic and fail-closed: every unmet requirement adds a blocked reason.
+
+## Readiness
+
+`ready: true` means all required checks passed and the active host has a write path for an approved write. It does not mean that a write already happened. Dry-run still reports `writes: []`, and the agent must receive or consume approval before changing vault files.
+
+Capability level records the effective scan/write transport. Validation readiness is reported independently through the strict Boolean `validation_available`. Its default is true for `full-local`, `filesystem-only`, and `mcp-readonly`, and false for `chat-only`; callers may override the default with observed capability evidence. A scanless `chat-only` host cannot claim vault validation.
+
+`full-local` and `filesystem-only` can become ready after every check passes only when `validation_available=true`. If validation is unavailable, keep the write-capable transport level and report `validation_available=false`; do not downgrade to `mcp-readonly`. `mcp-readonly` is the transport-neutral effective read-only level for hosts that can scan and dry-run but have no approved write path. Its historical name is retained for compatibility and also covers local read-only hosts without MCP. By default it is blocked only by write capability. `chat-only` has neither scan, write, nor validation capability.
+
+## Blocked Reasons
+
+- `vault_unresolved`: no valid target vault was resolved.
+- `scan_capability_unavailable`: the active host cannot scan the vault.
+- `existing_notes_not_scanned`: no completed existing-note scan supports the decision.
+- `duplicate_check_incomplete`: duplicate or near-duplicate evaluation did not complete.
+- `backlink_check_incomplete`: backlink targets were not checked against existing notes.
+- `mode_unresolved`: no canonical mode was selected or clearly inferred.
+- `write_capability_unavailable`: the active host has no approved vault write path.
+- `validation_capability_unavailable`: the active host cannot validate vault changes; this follows the write-capability reason in deterministic order.
+
+Blocked reasons are additive and ordered by the shared preflight implementation. Capability, completed evidence, and validation availability are separate: possessing a scan or write tool does not prove that validation can run.
+
+## Reporting
+
+Never claim an unavailable scan, write, validation, create, append, or split action. Report completed checks from tool evidence, list every blocked reason, and describe the exact degradation path. When `ready` is false, return a dry-run, approved change plan, portable draft, or one concise request for the missing path or capability.

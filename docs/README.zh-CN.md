@@ -24,14 +24,15 @@ Cobsidian 是一个 agent-agnostic 的 Obsidian / Markdown 知识库维护工作
 
 - 把 AI 对话里有复用价值的内容整理成长期可维护的 Markdown 笔记。
 - 写入前先扫描已有笔记，优先追加或合并，减少重复笔记。
-- 通过 dry-run、反链建议和校验结果，让 Agent 写入变得可审阅。
+- 用结构化 Knowledge Read（`整理判读`）说明准备怎样整理。
+- 通过 dry-run、capability-based degradation（按 capability 降级）、反链建议和校验结果，让 Agent 写入变得可审阅。
 
 ## 快速开始
 
 ```bash
 git clone https://github.com/Totoro-qaq/Cobsidian.git
 cd Cobsidian
-python skills/cobsidian/scripts/dry_run.py examples/demo-vault --topic "AI Conversations" --text "agent workflow notes" --json
+python skills/cobsidian/scripts/dry_run.py examples/demo-vault --topic "AI Conversations" --mode learning --text "agent workflow notes" --json
 ```
 
 然后让 Agent 读取 `skills/cobsidian/SKILL.md`，并提供 vault 路径或 `cobsidian.config.yml`。
@@ -48,17 +49,18 @@ Run a dry run first, check duplicates, suggest backlinks, and wait for confirmat
 flowchart LR
     A["AI 对话、日志、项目分析"] --> B["Cobsidian dry run"]
     B --> C["扫描已有 vault 笔记"]
-    C --> D{"新建、追加、拆分？"}
-    D --> E["结构清晰的 Markdown 笔记"]
-    E --> F["双链和相关笔记"]
-    F --> G["经过校验的 Obsidian vault"]
+    C --> D{"机器动作<br/>create | append | blocked"}
+    D --> E["笔记计划<br/>single-note | multi-note | report-only<br/>split = multi-note"]
+    E --> F["结构清晰的 Markdown 笔记"]
+    F --> G["双链和相关笔记"]
+    G --> H["经过校验的 Obsidian vault"]
 ```
 
 | 使用前 | 使用后 |
 |---|---|
 | 有价值内容留在聊天记录里 | 进入你的 Obsidian vault |
 | 零散 Markdown 文件 | 带 `[[双链]]` 的知识网络 |
-| 重复问一次就多一篇重复笔记 | 先判断新建、追加还是拆分 |
+| 重复问一次就多一篇重复笔记 | 分层汇报机器动作与笔记计划 |
 | Agent 直接写入，不好审 | dry-run 先给计划，再确认写入 |
 
 ## Dry-run 预览
@@ -83,13 +85,57 @@ Dry run 是默认安全路径：只规划，不写文件；它会报告重复风
 }
 ```
 
+## Knowledge Read / 整理判读
+
+v0.5.0 会在写入前计算 Knowledge Read（整理判读），说明模式、整理深度、笔记粒度、证据级别和展示方式。`auto | always | off` 只控制对话里的展示：选择 `off` 时，`display_style` 为 `hidden`，但 dry-run 仍保留完整 JSON 对象。
+
+Capability-based degradation 会根据实际工具能力降级：本地主机完成检查后可以进入待批准写入状态，MCP 始终只读，chat-only 主机只返回草稿或请求一个可用路径，不会声称完成了无法执行的操作。
+
+以下示例都是 JSON 响应中字段完全一致的 `knowledge_read` 对象。
+
+### Compact Knowledge Read
+
+用户明确选择简单的学习任务时，使用紧凑展示：
+
+```json
+{
+  "mode": "learning",
+  "mode_explicit": true,
+  "recommended_modes": [],
+  "depth": "standard",
+  "granularity": "single-note",
+  "evidence": "conversation",
+  "display_policy": "auto",
+  "display_style": "compact"
+}
+```
+
+### Expanded Knowledge Read
+
+Agent 推断出的深度源码拆解会展开说明：
+
+```json
+{
+  "mode": "dissection",
+  "mode_explicit": false,
+  "recommended_modes": [],
+  "depth": "deep",
+  "granularity": "multi-note",
+  "evidence": "source-grounded",
+  "display_policy": "auto",
+  "display_style": "expanded"
+}
+```
+
+Dry-run 的机器动作只有 `create | append | blocked`。拆分属于单独的 mode-level note plan，以 `multi-note` 汇报，不是第四种机器动作。详细执行规则见 [模式与 host references](../skills/cobsidian/references/) 和共享的 [preflight contract](../skills/cobsidian/references/preflight.md)。
+
 ## 不是普通 Markdown 生成器
 
 | 普通 Markdown 生成 | Cobsidian |
 |---|---|
 | 生成一篇孤立文件 | 维护一个带链接的知识系统 |
 | 不看已有笔记 | 写入前扫描 vault |
-| 容易重复建主题 | 优先判断追加、合并或拆分 |
+| 容易重复建主题 | 区分 create/append/blocked 动作与笔记形态 |
 | 链接靠临场发挥 | 根据已有笔记建议反链 |
 | 直接写入 | 支持 dry-run 审阅后再写 |
 
@@ -99,7 +145,8 @@ Dry run 是默认安全路径：只规划，不写文件；它会报告重复风
 flowchart TD
     U["用户材料"] --> R["解析 vault 路径或配置"]
     R --> S["扫描笔记、标题、标签、双链"]
-    S --> P["规划：新建、追加、拆分或询问"]
+    S --> A{"机器动作<br/>create | append | blocked"}
+    A --> P["笔记计划<br/>single-note | multi-note | report-only<br/>split = multi-note"]
     P --> L["建议反链"]
     L --> V["校验笔记卫生"]
     V --> O["汇报文件、决策、链接和校验结果"]
@@ -189,23 +236,7 @@ If a related note already exists, append instead of creating a duplicate.
 
 ## 模式
 
-Cobsidian 支持模式选择，用户可以直接告诉 Agent 想生成哪类笔记。
-
-| 模式 | 适用场景 | 示例提示词 |
-|---|---|---|
-| 学习模式 | 学习概念、课程、论文、视频、技术主题。 | `用 Cobsidian 学习模式整理这段解释。` |
-| 项目模式 | 整理项目、仓库、架构、实现、运维过程。 | `用 Cobsidian 项目模式总结这次源码分析。` |
-| 复盘模式 | 复盘事故、失败实验、技术决策、运行结果。 | `用 Cobsidian 复盘模式整理这次失败原因。` |
-| 对比模式 | 对比工具、架构、模型、库、数据库或方案。 | `用 Cobsidian 对比模式比较这些选型。` |
-| 索引模式 | 建主题地图、学习路线、总览页、导航页。 | `用 Cobsidian 索引模式做一个知识地图。` |
-| 日常捕获模式 | 先快速保存碎片材料，后续再深度整理。 | `用 Cobsidian 日常捕获模式先记下来。` |
-| 拆解模式 | 拆解工具、框架、仓库、skill、提示词系统或源码。 | `用 Cobsidian 拆解模式分析这个 Agent 框架。` |
-
-如果用户不指定模式，Agent 应该自动推断，并在结果里说明选择了哪个模式。
-
-如果请求不明确，Agent 应该在交互中主动介绍模式选项，而不是默认用户已经读过 README。
-
-详见 [模式说明](modes.zh-CN.md)。
+Cobsidian 接受显式模式，也能按自然语言路由。意图清晰时只推断一个模式；有歧义时最多推荐两个相关模式，不展示完整七项菜单。用户结果与路由规则见 [模式说明](modes.zh-CN.md)，详细执行契约见 [mode references](../skills/cobsidian/references/modes/)。
 
 ## CLI 工具
 
@@ -223,7 +254,14 @@ python skills/cobsidian/scripts/dry_run.py /path/to/vault --topic "RAG" --text "
 
 ## 可选配置
 
-`cobsidian.config.example.yml` 是 `v0.4.0` 实际支持的配置面，包含 vault 路径、默认模式、模式目录、反链数量、重复阈值与追加偏好，以及校验行为。需要复用本地设置时，可以复制为 `cobsidian.config.yml`。
+`cobsidian.config.example.yml` 是 `v0.5.0` 当前支持的配置面，包含 vault 路径、默认模式、模式目录、Knowledge Read 展示、反链数量、重复阈值与追加偏好，以及校验行为。需要复用本地设置时，可以复制为 `cobsidian.config.yml`。
+
+```yaml
+interaction:
+  knowledge_read: auto
+```
+
+`interaction.knowledge_read` 只接受 `auto`、`always`、`off`。旧配置仍然有效，因为默认值是 `auto`。
 
 辅助脚本可以通过 `--config` 读取这个文件。
 
@@ -235,8 +273,6 @@ python skills/cobsidian/scripts/dry_run.py /path/to/vault --topic "RAG" --text "
 - 支持使用 YAML frontmatter 的 vault。
 - 可选笔记模板。
 - 可配置命名规则。
-- 更安全的 dry-run 模式。
-- Hermes、Claude Code、Cursor 的轻量适配层。
 - 工作流稳定后再考虑 Obsidian 插件集成。
 
 ## 贡献

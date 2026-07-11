@@ -6,9 +6,11 @@ from typing import Any
 
 
 ConfigData = dict[str, Any]
+KNOWLEDGE_READ_POLICIES = {"auto", "always", "off"}
 SUPPORTED_CONFIG_LEAF_PATHS = {
     "vault.path",
     "defaults.mode",
+    "interaction.knowledge_read",
     "notes.directories.learning",
     "notes.directories.project",
     "notes.directories.review",
@@ -56,6 +58,26 @@ class CobsidianConfig:
         return str(mode) if mode else None
 
     @property
+    def knowledge_read_policy(self) -> str:
+        interaction = self.raw.get("interaction", {})
+        if not isinstance(interaction, dict):
+            raise ValueError("interaction must be a mapping.")
+        policy = interaction.get("knowledge_read", "auto")
+        allowed = ", ".join(sorted(KNOWLEDGE_READ_POLICIES))
+        if not isinstance(policy, str):
+            raise ValueError(
+                "interaction.knowledge_read must be a string with one of: "
+                f"{allowed}."
+            )
+        normalized_policy = policy.strip().casefold()
+        if normalized_policy not in KNOWLEDGE_READ_POLICIES:
+            raise ValueError(
+                "interaction.knowledge_read must be one of: "
+                f"{allowed}."
+            )
+        return normalized_policy
+
+    @property
     def similar_title_threshold(self) -> float:
         return float(self.get("duplicates", "similar_title_threshold", default=0.86))
 
@@ -93,6 +115,9 @@ class CobsidianConfig:
             "path": str(self.config_path) if self.config_path else None,
             "defaults": dict(self.raw.get("defaults", {})) if isinstance(self.raw.get("defaults"), dict) else {},
             "duplicates": dict(self.raw.get("duplicates", {})) if isinstance(self.raw.get("duplicates"), dict) else {},
+            "interaction": {
+                "knowledge_read": self.knowledge_read_policy,
+            },
             "linking": dict(self.raw.get("linking", {})) if isinstance(self.raw.get("linking"), dict) else {},
             "validation": dict(self.raw.get("validation", {})) if isinstance(self.raw.get("validation"), dict) else {},
         }

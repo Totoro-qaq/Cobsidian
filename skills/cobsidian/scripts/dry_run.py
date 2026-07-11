@@ -8,6 +8,15 @@ from difflib import SequenceMatcher
 from pathlib import Path
 
 from cobsidian_config import CobsidianConfig, load_config, resolve_vault_path
+from knowledge_read import (
+    DEPTHS,
+    DISPLAY_POLICIES,
+    EVIDENCE_LEVELS,
+    GRANULARITIES,
+    MODES,
+    build_knowledge_read,
+)
+from preflight import CAPABILITY_LEVELS, build_preflight, validated_capability
 from retrieval import build_query, build_search_documents, rank_backlinks
 from scan_vault import NoteInfo, read_text, scan_vault
 
@@ -83,27 +92,82 @@ def build_payload(
     mode: str | None,
     text: str,
     notes: list[NoteInfo],
+    *,
+    mode_explicit: bool = False,
+    recommended_modes: list[str] | None = None,
+    depth: str | None = None,
+    granularity: str | None = None,
+    evidence: str = "conversation",
+    source_read_completed: bool = False,
+    verification_completed: bool = False,
+    validation_available: bool | None = None,
+    capability_level: str = "filesystem-only",
+    knowledge_read_policy: str | None = None,
 ) -> dict[str, object]:
     normalized_topic = topic.strip()
     if not normalized_topic:
         raise ValueError("Provide a non-empty topic.")
 
-    decision = choose_decision(normalized_topic, mode, notes, config)
-    risks = find_duplicate_risks(
-        normalized_topic,
-        notes,
-        config.similar_title_threshold,
+    capability = validated_capability(capability_level)
+    vault_resolved = vault_path.exists() and vault_path.is_dir()
+    can_scan = capability.scan and vault_resolved
+    if can_scan:
+        decision = choose_decision(normalized_topic, mode, notes, config)
+    else:
+        decision = {
+            "action": "blocked",
+            "target_note": "",
+            "reason": (
+                "Scan capability is unavailable."
+                if vault_resolved
+                else "Vault path is unavailable."
+            ),
+        }
+    resolved_display_policy = (
+        config.knowledge_read_policy
+        if knowledge_read_policy is None
+        else knowledge_read_policy
     )
-    excluded_paths = (
-        {decision["target_note"]}
-        if decision["action"] == "append"
-        else set()
+    knowledge_read = build_knowledge_read(
+        mode=mode,
+        mode_explicit=mode_explicit,
+        recommended_modes=recommended_modes,
+        depth=depth,
+        granularity=granularity,
+        evidence=evidence,
+        source_read_completed=source_read_completed,
+        verification_completed=verification_completed,
+        display_policy=resolved_display_policy,
+        decision_action=decision["action"],
     )
-    backlinks = rank_backlinks(
-        build_query(topic=normalized_topic, text=text),
-        build_search_documents(vault_path, notes),
-        limit=config.max_suggested_backlinks,
-        excluded_paths=excluded_paths,
+    if can_scan:
+        risks = find_duplicate_risks(
+            normalized_topic,
+            notes,
+            config.similar_title_threshold,
+        )
+        excluded_paths = (
+            {decision["target_note"]}
+            if decision["action"] == "append"
+            else set()
+        )
+        backlinks = rank_backlinks(
+            build_query(topic=normalized_topic, text=text),
+            build_search_documents(vault_path, notes),
+            limit=config.max_suggested_backlinks,
+            excluded_paths=excluded_paths,
+        )
+    else:
+        risks = []
+        backlinks = []
+    preflight = build_preflight(
+        capability_level=capability_level,
+        vault_resolved=vault_resolved,
+        existing_notes_scanned=can_scan,
+        duplicate_check_completed=can_scan,
+        backlink_check_completed=can_scan,
+        mode_selected=knowledge_read.mode is not None,
+        validation_available=validation_available,
     )
     return {
         "dry_run": True,
@@ -118,6 +182,8 @@ def build_payload(
             "would_run": config.validation_run_after_write,
             "strict": config.validation_strict,
         },
+        "knowledge_read": knowledge_read.to_payload(),
+        "preflight": preflight.to_payload(),
         "writes": [],
     }
 
@@ -127,7 +193,49 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("vault", nargs="?", type=Path)
     parser.add_argument("--config", type=Path, help="Path to cobsidian.config.yml.")
     parser.add_argument("--topic", required=True, help="Target note topic or title.")
-    parser.add_argument("--mode", help="Override mode from config.")
+    parser.add_argument("--mode", choices=MODES, help="Override mode from config.")
+    parser.add_argument(
+        "--mode-explicit",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Mark mode selection as explicit or inferred.",
+    )
+    parser.add_argument(
+        "--recommended-mode",
+        action="append",
+        choices=MODES,
+        help="Recommend a mode when the primary mode is unresolved; repeat at most twice.",
+    )
+    parser.add_argument("--depth", choices=DEPTHS)
+    parser.add_argument("--granularity", choices=GRANULARITIES)
+    parser.add_argument("--evidence", choices=EVIDENCE_LEVELS, default="conversation")
+    parser.add_argument(
+        "--source-read-completed",
+        action="store_true",
+        help="Confirm that the host completed the relevant source read.",
+    )
+    parser.add_argument(
+        "--verification-completed",
+        action="store_true",
+        help="Confirm that the host completed an additional verification.",
+    )
+    parser.add_argument(
+        "--validation-available",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Override whether the host can validate vault changes.",
+    )
+    parser.add_argument(
+        "--capability-level",
+        choices=CAPABILITY_LEVELS,
+        default="filesystem-only",
+    )
+    parser.add_argument(
+        "--knowledge-read",
+        dest="knowledge_read_policy",
+        choices=DISPLAY_POLICIES,
+        help="Override the configured Knowledge Read display policy for this request.",
+    )
     parser.add_argument("--file", type=Path, help="Source text file.")
     parser.add_argument("--text", help="Source text.")
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON.")
@@ -147,8 +255,14 @@ def main() -> int:
         if args.file
         else str(args.text or "")
     )
-    mode = args.mode or config.mode
-    notes = scan_vault(vault_path)
+    mode = args.mode if args.mode is not None else config.mode
+    mode_explicit = (
+        args.mode_explicit
+        if args.mode_explicit is not None
+        else args.mode is not None
+    )
+    capability = validated_capability(args.capability_level)
+    notes = scan_vault(vault_path) if capability.scan else []
     try:
         payload = build_payload(
             vault_path=vault_path,
@@ -157,6 +271,16 @@ def main() -> int:
             mode=mode,
             text=source_text,
             notes=notes,
+            mode_explicit=mode_explicit,
+            recommended_modes=args.recommended_mode,
+            depth=args.depth,
+            granularity=args.granularity,
+            evidence=args.evidence,
+            source_read_completed=args.source_read_completed,
+            verification_completed=args.verification_completed,
+            validation_available=args.validation_available,
+            capability_level=args.capability_level,
+            knowledge_read_policy=args.knowledge_read_policy,
         )
     except ValueError as error:
         raise SystemExit(str(error)) from error

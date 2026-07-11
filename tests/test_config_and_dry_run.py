@@ -7,12 +7,144 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from skills.cobsidian.scripts.cobsidian_config import CobsidianConfig
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS_DIR = REPO_ROOT / "skills" / "cobsidian" / "scripts"
 
 
 class ConfigAndDryRunTests(unittest.TestCase):
+    def knowledge_read_policy_for(self, value: object = ...) -> str:
+        raw = (
+            {}
+            if value is ...
+            else {"interaction": {"knowledge_read": value}}
+        )
+        config = CobsidianConfig(config_path=None, raw=raw)
+        if not hasattr(type(config), "knowledge_read_policy"):
+            self.fail("CobsidianConfig.knowledge_read_policy is missing.")
+        return config.knowledge_read_policy
+
+    def test_knowledge_read_policy_defaults_to_auto(self) -> None:
+        self.assertEqual("auto", self.knowledge_read_policy_for())
+
+    def test_knowledge_read_policy_defaults_to_auto_for_empty_interaction(self) -> None:
+        config = CobsidianConfig(
+            config_path=None,
+            raw={"interaction": {}},
+        )
+
+        self.assertEqual("auto", config.knowledge_read_policy)
+
+    def test_knowledge_read_policy_rejects_non_mapping_interaction(self) -> None:
+        for interaction in ("off", None, False, []):
+            with self.subTest(interaction=interaction):
+                config = CobsidianConfig(
+                    config_path=None,
+                    raw={"interaction": interaction},
+                )
+
+                with self.assertRaisesRegex(ValueError, r"interaction"):
+                    _ = config.knowledge_read_policy
+
+    def test_knowledge_read_policy_accepts_all_supported_values(self) -> None:
+        for policy in ("auto", "always", "off"):
+            with self.subTest(policy=policy):
+                self.assertEqual(
+                    policy,
+                    self.knowledge_read_policy_for(policy),
+                )
+
+    def test_knowledge_read_policy_normalizes_string_input(self) -> None:
+        values = {
+            "  AuTo  ": "auto",
+            "\tALWAYS\n": "always",
+            " Off ": "off",
+        }
+        for configured, expected in values.items():
+            with self.subTest(configured=configured):
+                self.assertEqual(
+                    expected,
+                    self.knowledge_read_policy_for(configured),
+                )
+
+    def test_knowledge_read_policy_rejects_invalid_strings(self) -> None:
+        for policy in ("", "sometimes", "auto-ish"):
+            with self.subTest(policy=policy):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    r"interaction\.knowledge_read",
+                ):
+                    self.knowledge_read_policy_for(policy)
+
+    def test_knowledge_read_policy_rejects_non_string_values(self) -> None:
+        invalid_values = (None, True, 1, ["auto"], {"value": "auto"})
+        for value in invalid_values:
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    r"interaction\.knowledge_read",
+                ):
+                    self.knowledge_read_policy_for(value)
+
+    def test_public_summary_defensively_copies_interaction(self) -> None:
+        config = CobsidianConfig(
+            config_path=None,
+            raw={"interaction": {"knowledge_read": "off"}},
+        )
+
+        summary = config.public_summary()
+
+        self.assertEqual(
+            {"knowledge_read": "off"},
+            summary.get("interaction"),
+        )
+        interaction = summary.get("interaction")
+        self.assertIsInstance(interaction, dict)
+        assert isinstance(interaction, dict)
+        interaction["knowledge_read"] = "always"
+        self.assertEqual(
+            "off",
+            config.raw["interaction"]["knowledge_read"],
+        )
+
+    def test_public_summary_rejects_invalid_interaction(self) -> None:
+        config = CobsidianConfig(
+            config_path=None,
+            raw={"interaction": "off"},
+        )
+
+        with self.assertRaisesRegex(ValueError, "interaction"):
+            config.public_summary()
+
+    def test_public_summary_whitelists_normalized_knowledge_read(self) -> None:
+        config = CobsidianConfig(
+            config_path=None,
+            raw={
+                "interaction": {
+                    "knowledge_read": "  AuTo  ",
+                    "private_note": "do not publish",
+                    "token": "secret",
+                    "metadata": {"labels": ["original"]},
+                }
+            },
+        )
+
+        summary = config.public_summary()
+        self.assertEqual(
+            {"knowledge_read": "auto"},
+            summary["interaction"],
+        )
+
+    def test_public_summary_publishes_default_knowledge_read(self) -> None:
+        summary = CobsidianConfig(config_path=None, raw={}).public_summary()
+
+        self.assertEqual(
+            {"knowledge_read": "auto"},
+            summary["interaction"],
+        )
+
     def test_scan_vault_uses_config_vault_path(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
@@ -133,6 +265,229 @@ validation:
             self.assertIn("Embedding Models", [item["title"] for item in payload["suggested_backlinks"]])
             self.assertEqual(payload["writes"], [])
             self.assertTrue(payload["validation"]["would_run"])
+
+    def test_config_off_hides_complete_knowledge_read(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            vault_path = workspace / "vault"
+            vault_path.mkdir()
+            config_path = workspace / "cobsidian.config.yml"
+            config_path.write_text(
+                """
+vault:
+  path: "vault"
+defaults:
+  mode: "learning"
+interaction:
+  knowledge_read: "off"
+""".strip(),
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS_DIR / "dry_run.py"),
+                    "--config",
+                    str(config_path),
+                    "--topic",
+                    "RAG",
+                    "--json",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+
+            knowledge_read = json.loads(result.stdout)["knowledge_read"]
+            self.assertEqual(
+                {
+                    "mode",
+                    "mode_explicit",
+                    "recommended_modes",
+                    "depth",
+                    "granularity",
+                    "evidence",
+                    "display_policy",
+                    "display_style",
+                },
+                set(knowledge_read),
+            )
+            self.assertEqual("learning", knowledge_read["mode"])
+            self.assertFalse(knowledge_read["mode_explicit"])
+            self.assertEqual("off", knowledge_read["display_policy"])
+            self.assertEqual("hidden", knowledge_read["display_style"])
+
+    def test_cli_defaults_to_filesystem_only_and_direct_mode_is_explicit(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault_path = Path(temp_dir)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS_DIR / "dry_run.py"),
+                    str(vault_path),
+                    "--topic",
+                    "RAG",
+                    "--mode",
+                    "learning",
+                    "--json",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+
+            payload = json.loads(result.stdout)
+            self.assertTrue(payload["knowledge_read"]["mode_explicit"])
+            self.assertEqual("compact", payload["knowledge_read"]["display_style"])
+            self.assertEqual("filesystem-only", payload["preflight"]["capability_level"])
+            self.assertTrue(payload["preflight"]["ready"])
+            self.assertEqual([], payload["writes"])
+
+    def test_cli_accepts_enum_options_and_boolean_override(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault_path = Path(temp_dir)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS_DIR / "dry_run.py"),
+                    str(vault_path),
+                    "--topic",
+                    "RAG",
+                    "--mode",
+                    "learning",
+                    "--no-mode-explicit",
+                    "--depth",
+                    "deep",
+                    "--granularity",
+                    "multi-note",
+                    "--evidence",
+                    "source-grounded",
+                    "--source-read-completed",
+                    "--capability-level",
+                    "mcp-readonly",
+                    "--knowledge-read",
+                    "always",
+                    "--json",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+
+            payload = json.loads(result.stdout)
+            self.assertEqual(
+                {
+                    "mode": "learning",
+                    "mode_explicit": False,
+                    "recommended_modes": [],
+                    "depth": "deep",
+                    "granularity": "multi-note",
+                    "evidence": "source-grounded",
+                    "display_policy": "always",
+                    "display_style": "expanded",
+                },
+                payload["knowledge_read"],
+            )
+            self.assertEqual("mcp-readonly", payload["preflight"]["capability_level"])
+            self.assertFalse(payload["preflight"]["ready"])
+            self.assertEqual(
+                ["write_capability_unavailable"],
+                payload["preflight"]["blocked_reasons"],
+            )
+
+    def test_cli_rejects_unproven_source_grounded_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS_DIR / "dry_run.py"),
+                    temp_dir,
+                    "--topic",
+                    "Unproven Source",
+                    "--text",
+                    "",
+                    "--mode",
+                    "learning",
+                    "--evidence",
+                    "source-grounded",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+
+            self.assertNotEqual(0, result.returncode)
+            self.assertIn("source_read_completed", result.stderr)
+
+    def test_cli_can_report_validation_capability_unavailable(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS_DIR / "dry_run.py"),
+                    temp_dir,
+                    "--topic",
+                    "Validation Gap",
+                    "--mode",
+                    "learning",
+                    "--no-validation-available",
+                    "--json",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+
+            payload = json.loads(result.stdout)
+            self.assertFalse(payload["preflight"]["validation_available"])
+            self.assertFalse(payload["preflight"]["ready"])
+            self.assertEqual(
+                ["validation_capability_unavailable"],
+                payload["preflight"]["blocked_reasons"],
+            )
+            self.assertEqual([], payload["writes"])
+
+    def test_cli_accepts_repeatable_recommended_modes_for_unresolved_mode(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault_path = Path(temp_dir)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS_DIR / "dry_run.py"),
+                    str(vault_path),
+                    "--topic",
+                    "Adaptive Notes",
+                    "--recommended-mode",
+                    "learning",
+                    "--recommended-mode",
+                    "dissection",
+                    "--json",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+
+            payload = json.loads(result.stdout)
+            self.assertEqual(
+                ["learning", "dissection"],
+                payload["knowledge_read"]["recommended_modes"],
+            )
+            self.assertEqual("expanded", payload["knowledge_read"]["display_style"])
+            self.assertEqual(
+                ["mode_unresolved"],
+                payload["preflight"]["blocked_reasons"],
+            )
 
     def test_dry_run_uses_note_body_for_backlinks(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

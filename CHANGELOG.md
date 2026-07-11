@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## v0.5.0
+
+- Add adaptive routing that loads one relevant mode reference and recommends at most two modes when intent is unresolved.
+- Add progressive mode and host references for user outcomes, execution rules, capability detection, and degradation.
+- Add structured Knowledge Read / `整理判读` output with compact, expanded, and hidden presentation while preserving complete JSON.
+- Add deterministic preflight readiness, completed-check evidence, and ordered blocked reasons for four capability levels.
+- Enforce the `interaction.knowledge_read` config surface with `auto`, `always`, and `off`, defaulting existing configs to `auto`.
+- Add CLI/MCP parity for adaptive dry-run context while preserving existing callers and keeping MCP read-only.
+- Include compatibility and safety fixes for scanless hosts, MCP vault-resolution errors, read-only tool registration, and machine-action boundaries.
+
 ## v0.4.0
 
 - Validate Agent Skill YAML frontmatter in tests and CI.

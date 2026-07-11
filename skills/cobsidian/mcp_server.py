@@ -5,9 +5,10 @@ import sys
 from collections import defaultdict
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any, Literal
 
 from mcp.server.fastmcp import FastMCP
+from pydantic import Field, StrictBool
 
 
 SCRIPTS_DIR = Path(__file__).resolve().parent / "scripts"
@@ -21,6 +22,7 @@ from duplicates import (  # noqa: E402
 )
 from dry_run import build_payload as build_dry_run_payload  # noqa: E402
 from dry_run import find_duplicate_risks  # noqa: E402
+from preflight import validated_capability  # noqa: E402
 from retrieval import build_query, build_search_documents, rank_backlinks  # noqa: E402
 from scan_vault import NoteInfo, read_text, scan_vault  # noqa: E402
 from validate_notes import extract_wikilinks  # noqa: E402
@@ -29,15 +31,45 @@ from validate_notes import extract_wikilinks  # noqa: E402
 SERVER_NAME = "cobsidian"
 DEFAULT_SCAN_LIMIT = 100
 MAX_SCAN_LIMIT = 500
+Mode = Literal[
+    "learning",
+    "project",
+    "review",
+    "comparison",
+    "index",
+    "capture",
+    "dissection",
+]
+Depth = Literal["capture", "standard", "deep"]
+Granularity = Literal["append", "single-note", "multi-note"]
+Evidence = Literal["conversation", "source-grounded", "verified"]
+DisplayPolicy = Literal["auto", "always", "off"]
+CapabilityLevel = Literal[
+    "full-local",
+    "filesystem-only",
+    "mcp-readonly",
+    "chat-only",
+]
+RecommendedModes = Annotated[
+    list[Mode],
+    Field(max_length=2, json_schema_extra={"uniqueItems": True}),
+]
 
 
 def resolve_optional_path(path: str | None) -> Path | None:
     return Path(path).expanduser().resolve() if path else None
 
 
-def resolve_vault_from_inputs(vault: str | None = None, config: str | None = None) -> tuple[Path, CobsidianConfig]:
-    loaded_config = load_config(resolve_optional_path(config))
-    vault_path = resolve_vault_path(resolve_optional_path(vault), loaded_config)
+def resolve_vault_from_inputs(
+    vault: str | None = None,
+    config: str | None = None,
+) -> tuple[Path, CobsidianConfig]:
+    try:
+        loaded_config = load_config(resolve_optional_path(config))
+        vault_path = resolve_vault_path(resolve_optional_path(vault), loaded_config)
+    except SystemExit as error:
+        message = str(error).strip() or "Unable to resolve the vault or config path."
+        raise ValueError(message) from error
     if not vault_path.exists() or not vault_path.is_dir():
         raise ValueError(f"Vault path does not exist or is not a directory: {vault_path}")
     return vault_path, loaded_config
@@ -226,17 +258,43 @@ def tool_cobsidian_dry_run(
     text: str,
     vault: str | None = None,
     config: str | None = None,
-    mode: str | None = None,
+    mode: Mode | None = None,
+    *,
+    mode_explicit: StrictBool | None = None,
+    recommended_modes: RecommendedModes | None = None,
+    depth: Depth | None = None,
+    granularity: Granularity | None = None,
+    evidence: Evidence = "conversation",
+    source_read_completed: StrictBool = False,
+    verification_completed: StrictBool = False,
+    validation_available: StrictBool | None = None,
+    knowledge_read_policy: DisplayPolicy | None = None,
+    capability_level: CapabilityLevel = "mcp-readonly",
 ) -> dict[str, Any]:
     vault_path, loaded_config = resolve_vault_from_inputs(vault=vault, config=config)
-    notes = scan_vault(vault_path)
+    resolved_mode = loaded_config.mode if mode is None else mode
+    resolved_mode_explicit = (
+        mode is not None if mode_explicit is None else mode_explicit
+    )
+    capability = validated_capability(capability_level)
+    notes = scan_vault(vault_path) if capability.scan else []
     return build_dry_run_payload(
         vault_path=vault_path,
         config=loaded_config,
         topic=topic,
-        mode=mode or loaded_config.mode,
+        mode=resolved_mode,
         text=text,
         notes=notes,
+        mode_explicit=resolved_mode_explicit,
+        recommended_modes=recommended_modes,
+        depth=depth,
+        granularity=granularity,
+        evidence=evidence,
+        source_read_completed=source_read_completed,
+        verification_completed=verification_completed,
+        validation_available=validation_available,
+        capability_level=capability_level,
+        knowledge_read_policy=knowledge_read_policy,
     )
 
 
@@ -244,8 +302,11 @@ def create_mcp_server() -> FastMCP:
     server = FastMCP(
         SERVER_NAME,
         instructions=(
-            "Cobsidian exposes local Obsidian/Markdown vault planning tools. "
-            "Use dry-run before write workflows; this server does not provide a write tool."
+            "Cobsidian is a read-only MCP server for local Obsidian/Markdown vault planning. "
+            "Dry-run returns knowledge_read, preflight read-only readiness, and writes=[]. "
+            "capability_level describes the active host's scan/write transport while "
+            "validation_available reports validation independently; neither grants this MCP "
+            "server write access."
         ),
     )
 
@@ -300,23 +361,27 @@ def create_mcp_server() -> FastMCP:
     @server.prompt(name="cobsidian-dry-run")
     def dry_run_prompt(vault: str, topic: str, material: str) -> str:
         return (
-            "Use Cobsidian dry-run first. "
+            "Use Cobsidian dry-run first; this MCP server is read-only. "
             f"Vault: {vault}\n"
             f"Topic: {topic}\n\n"
             f"Material:\n{material}\n\n"
             "Return the target note, create/append decision, duplicate risks, backlink suggestions, "
-            "validation intent, and writes as an empty list."
+            "knowledge_read, preflight with read-only readiness, validation_available, blocked "
+            "reasons, validation intent, and writes=[]. capability_level describes scan/write "
+            "transport only."
         )
 
     @server.prompt(name="cobsidian-organize-after-confirmation")
     def organize_after_confirmation_prompt(vault: str, topic: str, material: str) -> str:
         return (
-            "Use Cobsidian to organize this material after the user confirms the dry-run plan. "
+            "Use the confirmed Cobsidian dry-run plan through an active host with separately "
+            "approved filesystem write capability. This MCP server remains read-only and cannot "
+            "perform the write. "
             f"Vault: {vault}\n"
             f"Topic: {topic}\n\n"
             f"Material:\n{material}\n\n"
-            "Search existing notes first, avoid duplicates, add useful wiki links, run validation, "
-            "and report files changed."
+            "The active host must search existing notes first, avoid duplicates, add useful wiki "
+            "links, validate external changes, and report the files it actually changed."
         )
 
     return server

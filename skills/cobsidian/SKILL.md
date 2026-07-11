@@ -19,15 +19,15 @@ Maintain the vault as a linked knowledge system. Do not just generate a standalo
 NEVER WRITE TO THE VAULT WITHOUT SEARCHING EXISTING NOTES FIRST.
 ```
 
-Dry-run is the default safe path. Skip it only when the user explicitly says to write immediately.
+Dry-run is the default safe path. Skip it only when the user explicitly says to write immediately; the scan and duplicate checks still apply.
 
 ## Response Language
 
-Match the user's language for mode selection, clarification questions, and completion reports.
+Match the user's language for mode selection, clarification questions, Knowledge Read, and completion reports.
 
-- Chinese request -> Chinese mode names.
-- English request -> English mode names.
-- Mixed-language request -> use the dominant user language and include canonical mode IDs in backticks when helpful.
+- Chinese request -> Chinese mode names and `整理判读`.
+- English request -> English mode names and `Knowledge Read`.
+- Mixed-language request -> use the dominant user language and include canonical IDs when useful.
 
 ## Vault Resolution
 
@@ -38,133 +38,103 @@ Resolve the target vault in this order:
 3. MCP host configuration through `COBSIDIAN_CONFIG`.
 4. MCP host configuration through `COBSIDIAN_VAULT`.
 
-Do not guess a private vault path. If no valid vault path is available, ask for one concise input: the vault path or the config path. If a path is present but invalid, report the invalid path and ask for a corrected vault/config path before writing.
+Do not guess a private vault path. If no valid vault path is available, ask for one concise input: the vault path or the config path. If a supplied path is invalid, report it and request a corrected vault or config path before writing.
 
-## Mode Selection
+## Mode Routing
 
-If the user explicitly selects a mode, use it and do not show the full mode menu. If no mode is selected, infer the smallest useful mode and state it before writing. If the mode is ambiguous and file edits are involved, introduce the modes briefly and ask one concise question before writing.
-
-| Mode | English triggers | Chinese triggers | Use for |
+| Canonical mode | Representative cues | Use for | Load |
 |---|---|---|---|
-| `learning` | learning mode, study note, explain, teach me about | 学习模式, 知识点整理, 学习笔记, 帮我学, 这个概念讲一下 | Concepts, courses, videos, papers, technical explanations. |
-| `project` | project mode, repo analysis, architecture, document this repo | 项目模式, 项目整理, 源码项目, 这个仓库帮我分析一下 | Project architecture, implementation notes, repo analysis, operational docs. |
-| `review` | review mode, retrospective, failure review, what went wrong | 复盘模式, 事故复盘, 实验复盘, 失败复盘, 总结教训 | Incidents, experiment results, failures, lessons learned. |
-| `comparison` | comparison mode, compare, evaluate options, which should I choose | 对比模式, 选型, 方案比较, 哪个更好 | Tool choices, architecture options, model/database/framework comparisons. |
-| `index` | index mode, map, learning path, give me an overview | 索引模式, 总览, 知识地图, 学习路线, 帮我画个知识图谱 | Topic maps, hub notes, learning paths, navigation pages. |
-| `capture` | capture mode, daily capture, quick note, just save this | 捕获模式, 日常记录, 先记下来, 记一下, 帮我记笔记 | Lightweight daily capture before deeper organization. |
-| `dissection` | dissection mode, teardown, source analysis, how does X work internally | 拆解模式, 源码拆解, 框架拆解, skill拆解, 这个怎么实现的 | Reverse engineering tools, repos, frameworks, agent systems, prompts, skills, workflows. |
+| `learning` / 学习 | teach me about / 这个概念讲一下 | Concepts and explanations | [learning](references/modes/learning.md) |
+| `project` / 项目 | document this repo / 这个仓库帮我分析一下 | Project implementation and operations | [project](references/modes/project.md) |
+| `review` / 复盘 | what went wrong / 失败复盘 | Evidence, causes, and corrective actions | [review](references/modes/review.md) |
+| `comparison` / 对比 | which should I choose / 哪个更好 | Requirements-based decisions | [comparison](references/modes/comparison.md) |
+| `index` / 索引 | learning path / 学习路线 | Maps, paths, and hub notes | [index](references/modes/index.md) |
+| `capture` / 捕获 | just save this / 先记下来 | Low-friction temporary capture | [capture](references/modes/capture.md) |
+| `dissection` / 拆解 | how does X work internally / 这个怎么实现的 | Internal mechanics and reusable patterns | [dissection](references/modes/dissection.md) |
 
-## Interactive Mode Introduction
+- Explicit mode -> load only its mode reference.
+- Clear inferred mode -> state it and load only its mode reference.
+- Ambiguous mode -> recommend at most two modes with contextual reasons, then ask one concise question; do not dump all seven.
+- Do not combine mode references unless the user explicitly requests separate outputs with separate mode decisions.
 
-Do not assume the user has read the README or mode docs. Explain modes in the conversation when:
+## Host Routing
 
-- the user is new to Cobsidian or asks what Cobsidian can do
-- the user broadly asks to organize/write material into Obsidian without a clear note type
-- the same material could reasonably become different note types
-- the target edit would differ by mode, such as polished learning note vs rough daily capture
+Detect the host's actual tools before loading only the matching host reference. Product names select invocation mappings, never capability levels.
 
-Skip the picker when the user already chose a mode, the mode is obvious, or the user asked for direct execution. In that case, state the inferred mode and continue:
+- [Codex](references/hosts/codex.md)
+- [Claude Code](references/hosts/claude-code.md)
+- [Cursor](references/hosts/cursor.md)
+- [Hermes](references/hosts/hermes.md)
+- [Generic MCP host](references/hosts/mcp.md)
 
-```text
-Mode: dissection / 拆解, because this is a framework or workflow teardown.
-```
+Map observed scan/write transport to `full-local`, `filesystem-only`, `mcp-readonly`, or `chat-only`. The historical `mcp-readonly` name means the transport-neutral effective read-only level, including local read-only operation without MCP. Report validation capability independently through `validation_available`; a write-capable host with no validation keeps its `full-local` or `filesystem-only` level and becomes not ready. Use [preflight](references/preflight.md) for readiness and degradation. Never load multiple host references speculatively.
 
-When the picker is needed, use the user's language.
+## Knowledge Read
 
-English mode picker:
+Knowledge Read (`整理判读`) is always computed and remains in structured dry-run output. `auto`, `always`, and `off` change conversational presentation only:
 
-```text
-Cobsidian can organize this in several modes:
-- learning: concepts, courses, videos, papers
-- project: repos, architecture, implementation, operations
-- review: failures, incidents, experiments, lessons
-- comparison: tool/model/database/architecture choices
-- index: topic maps, learning paths, hub notes
-- capture: quick rough notes for later cleanup
-- dissection: internals of tools, frameworks, repos, skills, prompts
+- `auto`: compact for simple explicit work; expanded for inferred, deep, multi-note, or source-grounded work.
+- `always`: expanded.
+- `off`: hidden in conversation while the complete object remains in JSON.
 
-Choose one mode, or tell me to infer it.
-```
+Mode defaults apply before duplicate resolution. A requested `granularity=append` is valid only when `decision.action=append`; an actual append decision always forces append granularity. Evidence starts at `conversation`. Evidence upgrades require host-completed facts: `source-grounded` requires `source_read_completed=true`, while `verified` requires both `source_read_completed=true` and `verification_completed=true`. Mode choice and user claims never set these facts automatically.
 
-中文模式选择：
+## Common Workflow
 
-```text
-Cobsidian 可以按这些模式整理：
-- 学习模式：概念、课程、视频、论文、技术解释
-- 项目模式：仓库、架构、实现、运维记录
-- 复盘模式：失败、事故、实验结果、经验教训
-- 对比模式：工具、模型、数据库、架构选型
-- 索引模式：主题地图、学习路线、导航页
-- 捕获模式：先快速保存粗糙材料，后续再整理
-- 拆解模式：拆解工具、框架、仓库、skill、提示词系统
-
-选一个模式，或者告诉我由我推断。
-```
-
-## Workflow
-
-1. Identify the user's vault path and target topic.
-2. Search existing notes before writing.
-3. Select, infer, or introduce the mode before writing.
-4. Decide one of:
-   - create a new note
-   - append to an existing note
-   - split into multiple notes
-   - only report duplicates and ask before editing
-5. Write concise Markdown with stable headings.
-6. Add relevant `[[wiki links]]` to existing notes.
-7. Add a `Related notes` section when useful.
-8. Run validation or at least report what was checked.
+1. Detect host tools, map the scan/write capability level, report validation capability independently, and load one host reference.
+2. Resolve the vault and target topic.
+3. Scan existing notes and complete duplicate and backlink checks.
+4. Select or infer one mode and load one mode reference.
+5. Compute Knowledge Read and the mode-level note plan: `single-note | multi-note | report-only`; split means `multi-note`.
+6. Produce dry-run output with `decision.action`: `create | append | blocked`, then evaluate preflight.
+7. Request or consume approval; write only through an available approved path.
+8. Validate actual changes and report only completed actions.
 
 ## Write Rules
 
-- Preserve the user's existing note naming style.
+- Preserve the vault's existing naming and organization style.
+- Use vault-relative paths in note content; never embed user-specific absolute paths.
+- Prefer append or merge over creating a near-duplicate.
 - Prefer durable concepts over chat transcript summaries.
-- Keep private paths, tokens, account names, and raw logs out of generic notes unless the user explicitly wants local operational records.
-- Do not fabricate sources, file names, or completed checks.
-- If the same topic already exists, append or merge instead of creating a near-duplicate.
+- Local operational records still use minimum necessary disclosure; redact credentials, tokens, private identifiers, and unnecessary raw log content.
+- Add `[[wiki links]]` only to notes confirmed to exist; report missing targets instead of creating broken links.
+- Do not fabricate sources, filenames, scans, writes, or validation results.
+- Use stable headings and keep each note responsible for one maintainable knowledge boundary.
 
 ## Red Flags
 
-Stop and reconsider if you catch yourself thinking:
+Stop and reconsider when any of these thoughts appear:
 
-- "This topic is obviously new, no need to scan." — Scan anyway. The Iron Law has no exceptions.
-- "I will just create a fresh note and add links later." — Check first; there is probably an existing note to append to.
-- "The user said write, so I will skip dry-run." — Only skip dry-run when the user **explicitly** says to skip it. "Write this" does not mean "skip safety checks."
-- "This note is too small to need backlinks." — Even a one-paragraph capture note should link to related notes if they exist.
-- "I already know the vault structure." — Vault state changes between sessions. Always re-scan.
-
-## Common Mistakes
-
-| Mistake | Correction |
-|---|---|
-| Creating a new note when a highly similar one exists | Run `find_duplicates.py` or scan first; prefer append |
-| Dumping raw chat transcript as a note | Extract durable concepts; discard conversational noise |
-| Adding `[[wiki links]]` to notes that do not exist in the vault | Only link to notes confirmed by scan; mention missing targets in the report |
-| Hardcoding absolute paths in note content | Use relative references; never write `/Users/...` or `C:\...` into notes |
-| Skipping the completion report | Always end with files changed, decision, duplicates, backlinks, validation |
-| Writing in a different language than the user's request | Match the user's language; see Response Language rules |
+- "This topic is obviously new, so scanning is unnecessary." Scan anyway.
+- "The user said write, so dry-run is implicitly waived." Only an explicit opt-out waives dry-run.
+- "The mode is unclear, so list every mode." Recommend no more than two contextual options.
+- "This product usually has filesystem access." Detect actual tools and permissions first.
+- "`off` means Knowledge Read need not be computed." It hides presentation only.
+- "The host cannot perform the action, but the report can describe it as done." Report the blocked reason and degradation path instead.
+- "Write exists, so missing validation means `mcp-readonly`." Keep the write transport level, set `validation_available=false`, and block readiness.
 
 ## Helper Scripts
 
 - `scripts/scan_vault.py`: summarize notes, titles, tags, and wiki links.
 - `scripts/find_duplicates.py`: detect duplicate or similar note titles.
-- `scripts/suggest_backlinks.py`: suggest related notes for a draft or target note.
-- `scripts/validate_notes.py`: report missing wiki links and basic hygiene issues.
-- `scripts/dry_run.py`: plan a write without changing files; reports create/append decision, duplicate risks, backlink suggestions, validation intent, and empty writes.
+- `scripts/suggest_backlinks.py`: suggest related existing notes.
+- `scripts/validate_notes.py`: report missing wiki links and hygiene issues.
+- `scripts/dry_run.py`: return the zero-write plan, Knowledge Read, and preflight.
+- `scripts/knowledge_read.py`: validate mode defaults, evidence, granularity, and display policy.
+- `scripts/preflight.py`: derive readiness and deterministic blocked reasons.
 
-Use `--config cobsidian.config.yml` when the user has a project config with `vault.path`, thresholds, backlink limits, and validation preferences.
+Use `--config cobsidian.config.yml` when project configuration supplies vault, threshold, backlink, validation, or interaction settings.
 
-Read `references/note-types.md` when choosing the note shape.
-Read `references/backlink-policy.md` when adding links.
-Read `references/markdown-style.md` when formatting notes.
+Read [note types](references/note-types.md) for shared note-shape guidance, [backlink policy](references/backlink-policy.md) for links, and [Markdown style](references/markdown-style.md) for formatting.
 
 ## Completion Report
 
 End with:
 
-- files created or modified
-- create/append decision
-- duplicate checks performed
-- backlink suggestions added or skipped
-- validation result or reason validation was not run
+- files created or modified, or an explicit no-write result
+- dry-run `decision.action`: `create | append | blocked`
+- mode-level note plan: `single-note | multi-note | report-only`; report split as `multi-note`, not a machine action
+- selected mode, depth, granularity, and evidence level
+- capability level, preflight readiness, and every blocked reason
+- duplicate checks and backlink decisions
+- validation result, or the exact reason validation was unavailable

@@ -1,4 +1,4 @@
-# Cobsidian v0.4 supported config.
+# Cobsidian v0.5 supported config.
 # Copy to cobsidian.config.yml and adjust for your vault.
 # Every field below is consumed by the helper scripts or MCP server.
 
@@ -9,6 +9,10 @@ vault:
 defaults:
   # null means the agent should infer or ask for the mode.
   mode: null
+
+interaction:
+  # auto expands complex or inferred work; always expands; off only hides presentation.
+  knowledge_read: auto
 
 notes:
   directories:

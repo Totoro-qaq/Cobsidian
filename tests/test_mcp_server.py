@@ -8,14 +8,27 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from mcp.server.fastmcp.exceptions import ToolError
+
 from skills.cobsidian.mcp_server import (
+    build_dry_run_payload,
     create_mcp_server,
     ensure_relative_path_inside_vault,
+    resolve_vault_from_inputs,
+    scan_vault,
     tool_cobsidian_dry_run,
     tool_cobsidian_find_duplicates,
     tool_cobsidian_scan_vault,
     tool_cobsidian_suggest_backlinks,
 )
+
+
+def snapshot_files(root: Path) -> dict[str, bytes]:
+    return {
+        path.relative_to(root).as_posix(): path.read_bytes()
+        for path in sorted(root.rglob("*"))
+        if path.is_file()
+    }
 
 
 class McpServerTests(unittest.TestCase):
@@ -28,13 +41,142 @@ class McpServerTests(unittest.TestCase):
             tool_names = {tool.name for tool in tools}
             prompt_names = {prompt.name for prompt in prompts}
 
-            self.assertIn("cobsidian_scan_vault", tool_names)
-            self.assertIn("cobsidian_find_duplicates", tool_names)
-            self.assertIn("cobsidian_suggest_backlinks", tool_names)
-            self.assertIn("cobsidian_validate_notes", tool_names)
-            self.assertIn("cobsidian_dry_run", tool_names)
+            self.assertEqual(
+                {
+                    "cobsidian_scan_vault",
+                    "cobsidian_find_duplicates",
+                    "cobsidian_suggest_backlinks",
+                    "cobsidian_validate_notes",
+                    "cobsidian_dry_run",
+                },
+                tool_names,
+            )
             self.assertIn("cobsidian-dry-run", prompt_names)
             self.assertIn("cobsidian-organize-after-confirmation", prompt_names)
+
+            dry_run_tool = next(
+                tool for tool in tools if tool.name == "cobsidian_dry_run"
+            )
+            dry_run_properties = dry_run_tool.inputSchema["properties"]
+            self.assertTrue(
+                {
+                    "mode_explicit",
+                    "recommended_modes",
+                    "depth",
+                    "granularity",
+                    "evidence",
+                    "source_read_completed",
+                    "verification_completed",
+                    "validation_available",
+                    "knowledge_read_policy",
+                    "capability_level",
+                }.issubset(dry_run_properties)
+            )
+            self.assertEqual(
+                "mcp-readonly",
+                dry_run_properties["capability_level"]["default"],
+            )
+            self.assertEqual(
+                {"boolean", "null"},
+                {
+                    schema["type"]
+                    for schema in dry_run_properties["validation_available"]["anyOf"]
+                },
+            )
+
+        asyncio.run(run())
+
+    def test_dry_run_input_schema_publishes_domain_constraints(self) -> None:
+        async def run() -> None:
+            tools = await create_mcp_server().list_tools()
+            dry_run_tool = next(
+                tool for tool in tools if tool.name == "cobsidian_dry_run"
+            )
+            properties = dry_run_tool.inputSchema["properties"]
+
+            def value_schema(property_name: str) -> dict[str, object]:
+                schema = properties[property_name]
+                return next(
+                    candidate
+                    for candidate in schema.get("anyOf", [schema])
+                    if candidate.get("type") != "null"
+                )
+
+            expected_enums = {
+                "mode": [
+                    "learning",
+                    "project",
+                    "review",
+                    "comparison",
+                    "index",
+                    "capture",
+                    "dissection",
+                ],
+                "depth": ["capture", "standard", "deep"],
+                "granularity": ["append", "single-note", "multi-note"],
+                "evidence": ["conversation", "source-grounded", "verified"],
+                "knowledge_read_policy": ["auto", "always", "off"],
+                "capability_level": [
+                    "full-local",
+                    "filesystem-only",
+                    "mcp-readonly",
+                    "chat-only",
+                ],
+            }
+            for property_name, expected in expected_enums.items():
+                with self.subTest(property_name=property_name):
+                    self.assertEqual(
+                        expected,
+                        value_schema(property_name)["enum"],
+                    )
+
+            recommendations = value_schema("recommended_modes")
+            self.assertEqual(
+                expected_enums["mode"],
+                recommendations["items"]["enum"],
+            )
+            self.assertEqual(2, recommendations["maxItems"])
+            self.assertIs(True, recommendations["uniqueItems"])
+
+        asyncio.run(run())
+
+    def test_server_instructions_and_prompts_describe_read_only_readiness(self) -> None:
+        async def run() -> None:
+            server = create_mcp_server()
+            instructions = server.instructions.casefold()
+            for expected in (
+                "read-only",
+                "knowledge_read",
+                "preflight",
+                "writes=[]",
+                "active host",
+                "validation_available",
+            ):
+                with self.subTest(surface="instructions", expected=expected):
+                    self.assertIn(expected, instructions)
+
+            dry_run_result = await server.get_prompt(
+                "cobsidian-dry-run",
+                {"vault": "vault", "topic": "RAG", "material": "notes"},
+            )
+            dry_run_text = dry_run_result.messages[0].content.text.casefold()
+            for expected in (
+                "knowledge_read",
+                "preflight",
+                "read-only readiness",
+                "writes=[]",
+                "validation_available",
+            ):
+                with self.subTest(surface="dry-run prompt", expected=expected):
+                    self.assertIn(expected, dry_run_text)
+
+            organize_result = await server.get_prompt(
+                "cobsidian-organize-after-confirmation",
+                {"vault": "vault", "topic": "RAG", "material": "notes"},
+            )
+            organize_text = organize_result.messages[0].content.text.casefold()
+            self.assertIn("active host", organize_text)
+            self.assertIn("mcp server remains read-only", organize_text)
 
         asyncio.run(run())
 
@@ -53,6 +195,86 @@ class McpServerTests(unittest.TestCase):
             self.assertEqual(payload["note_count"], 1)
             self.assertEqual(payload["notes"][0]["title"], "Agent Workflows")
 
+    def test_config_resource_does_not_leak_unknown_interaction_fields(self) -> None:
+        async def run() -> None:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                config = Path(temp_dir) / "cobsidian.config.yml"
+                config.write_text(
+                    """
+interaction:
+  knowledge_read: " Off "
+  private_note: "do not publish"
+  token: "secret"
+  nested:
+    unknown: "private"
+""".strip(),
+                    encoding="utf-8",
+                )
+                with patch.dict(os.environ, {"COBSIDIAN_CONFIG": str(config)}):
+                    contents = await create_mcp_server().read_resource(
+                        "cobsidian://config"
+                    )
+
+            payload = json.loads(contents[0].content)
+            self.assertEqual(
+                {"knowledge_read": "off"},
+                payload["interaction"],
+            )
+
+        asyncio.run(run())
+
+    def test_dry_run_missing_vault_inputs_raise_value_error(self) -> None:
+        with self.assertRaisesRegex(
+            ValueError,
+            "Provide a vault path or --config with vault.path.",
+        ) as raised:
+            tool_cobsidian_dry_run(
+                topic="RAG",
+                text="Retrieval augmented generation.",
+            )
+
+        self.assertIsInstance(raised.exception.__cause__, SystemExit)
+
+    def test_dry_run_missing_config_path_raises_value_error(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            missing_config = Path(temp_dir) / "missing.yml"
+
+            with self.assertRaisesRegex(
+                ValueError,
+                "Config file does not exist:",
+            ) as raised:
+                tool_cobsidian_dry_run(
+                    vault=temp_dir,
+                    config=str(missing_config),
+                    topic="RAG",
+                    text="Retrieval augmented generation.",
+                )
+
+        self.assertIsInstance(raised.exception.__cause__, SystemExit)
+
+    def test_fastmcp_dispatch_contains_missing_vault_error(self) -> None:
+        async def run() -> None:
+            with self.assertRaises(ToolError) as raised:
+                await create_mcp_server().call_tool(
+                    "cobsidian_dry_run",
+                    {
+                        "topic": "RAG",
+                        "text": "Retrieval augmented generation.",
+                    },
+                )
+
+            self.assertIn(
+                "Provide a vault path or --config with vault.path.",
+                str(raised.exception),
+            )
+            self.assertIsInstance(raised.exception.__cause__, ValueError)
+            self.assertIsInstance(
+                raised.exception.__cause__.__cause__,
+                SystemExit,
+            )
+
+        asyncio.run(run())
+
     def test_dry_run_tool_does_not_write_files(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
@@ -61,6 +283,7 @@ class McpServerTests(unittest.TestCase):
             note = vault / "AI Conversations.md"
             note.write_text("# AI Conversations\n\nRelated to [[Agent Workflows]].\n", encoding="utf-8")
             (vault / "Agent Workflows.md").write_text("# Agent Workflows\n\nAI workflow notes.\n", encoding="utf-8")
+            before = snapshot_files(vault)
 
             payload = tool_cobsidian_dry_run(
                 vault=str(vault),
@@ -73,6 +296,303 @@ class McpServerTests(unittest.TestCase):
             self.assertEqual(payload["decision"]["target_note"], "AI Conversations.md")
             self.assertEqual(payload["writes"], [])
             self.assertEqual(note.read_text(encoding="utf-8"), "# AI Conversations\n\nRelated to [[Agent Workflows]].\n")
+            self.assertEqual(before, snapshot_files(vault))
+
+    def test_dry_run_defaults_to_mcp_readonly_after_completed_checks(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+
+            payload = tool_cobsidian_dry_run(
+                vault=str(vault),
+                topic="RAG",
+                text="Retrieval augmented generation.",
+                mode="learning",
+            )
+
+            self.assertTrue(payload["preflight"]["vault_resolved"])
+            self.assertTrue(payload["preflight"]["existing_notes_scanned"])
+            self.assertTrue(payload["preflight"]["duplicate_check_completed"])
+            self.assertTrue(payload["preflight"]["backlink_check_completed"])
+            self.assertEqual(
+                "mcp-readonly",
+                payload["preflight"]["capability_level"],
+            )
+            self.assertTrue(payload["preflight"]["validation_available"])
+            self.assertFalse(payload["preflight"]["ready"])
+            self.assertEqual(
+                ["write_capability_unavailable"],
+                payload["preflight"]["blocked_reasons"],
+            )
+            self.assertEqual([], payload["writes"])
+
+    def test_validation_unavailable_blocks_write_capable_mcp_request(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            payload = tool_cobsidian_dry_run(
+                vault=temp_dir,
+                topic="Validation Gap",
+                text="",
+                mode="learning",
+                capability_level="filesystem-only",
+                validation_available=False,
+            )
+
+            preflight = payload["preflight"]
+            self.assertFalse(preflight["validation_available"])
+            self.assertFalse(preflight["ready"])
+            self.assertEqual(
+                ["validation_capability_unavailable"],
+                preflight["blocked_reasons"],
+            )
+            self.assertNotIn(
+                "write_capability_unavailable",
+                preflight["blocked_reasons"],
+            )
+            self.assertEqual([], payload["writes"])
+
+    def test_dry_run_optional_fields_match_shared_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+            (vault / "Vector Search.md").write_text(
+                "# Vector Search\n\nSemantic retrieval through embeddings.\n",
+                encoding="utf-8",
+            )
+            before = snapshot_files(vault)
+            vault_path, config = resolve_vault_from_inputs(vault=str(vault))
+            optional_fields = {
+                "mode_explicit": False,
+                "depth": "deep",
+                "granularity": "multi-note",
+                "evidence": "verified",
+                "source_read_completed": True,
+                "verification_completed": True,
+                "knowledge_read_policy": "off",
+                "capability_level": "filesystem-only",
+            }
+
+            expected = build_dry_run_payload(
+                vault_path=vault_path,
+                config=config,
+                topic="Retrieval Pipeline",
+                mode="learning",
+                text="Semantic retrieval through embeddings.",
+                notes=scan_vault(vault_path),
+                **optional_fields,
+            )
+            actual = tool_cobsidian_dry_run(
+                vault=str(vault),
+                topic="Retrieval Pipeline",
+                mode="learning",
+                text="Semantic retrieval through embeddings.",
+                **optional_fields,
+            )
+
+            self.assertEqual(expected, actual)
+            self.assertTrue(actual["preflight"]["ready"])
+            self.assertEqual([], actual["writes"])
+            self.assertEqual(before, snapshot_files(vault))
+
+    def test_fastmcp_rejects_unproven_verified_evidence(self) -> None:
+        async def run() -> None:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                with self.assertRaises(ToolError) as raised:
+                    await create_mcp_server().call_tool(
+                        "cobsidian_dry_run",
+                        {
+                            "vault": temp_dir,
+                            "topic": "Unsupported Claim",
+                            "text": "",
+                            "mode": "learning",
+                            "evidence": "verified",
+                        },
+                    )
+
+            self.assertIn("source_read_completed", str(raised.exception))
+
+        asyncio.run(run())
+
+    def test_fastmcp_rejects_non_boolean_mode_explicit(self) -> None:
+        async def run() -> None:
+            for invalid_value in (1, "true"):
+                with self.subTest(value=invalid_value):
+                    with tempfile.TemporaryDirectory() as temp_dir:
+                        with self.assertRaises(ToolError):
+                            await create_mcp_server().call_tool(
+                                "cobsidian_dry_run",
+                                {
+                                    "vault": temp_dir,
+                                    "topic": "Strict Bool",
+                                    "text": "",
+                                    "mode": "learning",
+                                    "mode_explicit": invalid_value,
+                                },
+                            )
+
+        asyncio.run(run())
+
+    def test_fastmcp_rejects_non_boolean_validation_available(self) -> None:
+        async def run() -> None:
+            for invalid_value in (1, "true"):
+                with self.subTest(value=invalid_value):
+                    with tempfile.TemporaryDirectory() as temp_dir:
+                        with self.assertRaises(ToolError):
+                            await create_mcp_server().call_tool(
+                                "cobsidian_dry_run",
+                                {
+                                    "vault": temp_dir,
+                                    "topic": "Strict Validation Bool",
+                                    "text": "",
+                                    "mode": "learning",
+                                    "validation_available": invalid_value,
+                                },
+                            )
+
+        asyncio.run(run())
+
+    def test_dry_run_mode_explicitness_distinguishes_direct_and_config_modes(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            vault = workspace / "vault"
+            vault.mkdir()
+            config = workspace / "cobsidian.config.yml"
+            config.write_text(
+                'vault:\n  path: "vault"\ndefaults:\n  mode: "learning"\n',
+                encoding="utf-8",
+            )
+
+            cases = (
+                ({"mode": "project"}, True),
+                ({}, False),
+                ({"mode": "project", "mode_explicit": False}, False),
+                ({"mode_explicit": True}, True),
+            )
+            for arguments, expected in cases:
+                with self.subTest(arguments=arguments):
+                    payload = tool_cobsidian_dry_run(
+                        config=str(config),
+                        topic="RAG",
+                        text="Retrieval augmented generation.",
+                        **arguments,
+                    )
+                    self.assertEqual(
+                        expected,
+                        payload["knowledge_read"]["mode_explicit"],
+                    )
+
+    def test_dry_run_accepts_recommendations_only_for_unresolved_mode(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            payload = tool_cobsidian_dry_run(
+                vault=temp_dir,
+                topic="Adaptive Notes",
+                text="",
+                recommended_modes=["learning", "dissection"],
+            )
+
+            self.assertEqual(
+                ["learning", "dissection"],
+                payload["knowledge_read"]["recommended_modes"],
+            )
+            self.assertIn("mode_unresolved", payload["preflight"]["blocked_reasons"])
+            self.assertEqual([], payload["writes"])
+
+    def test_dry_run_rejects_invalid_enums_and_recommendation_combinations(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            vault = workspace / "vault"
+            vault.mkdir()
+            config = workspace / "cobsidian.config.yml"
+            config.write_text(
+                'vault:\n  path: "vault"\ndefaults:\n  mode: "learning"\n',
+                encoding="utf-8",
+            )
+            invalid_cases = (
+                {"mode": ""},
+                {"mode": "unknown"},
+                {"depth": "shallow"},
+                {"granularity": "per-topic"},
+                {"evidence": "assumed"},
+                {"knowledge_read_policy": "sometimes"},
+                {"capability_level": "writer"},
+                {"mode": "learning", "recommended_modes": ["project"]},
+                {"recommended_modes": ["learning", "project", "review"]},
+            )
+
+            for arguments in invalid_cases:
+                with self.subTest(arguments=arguments):
+                    with self.assertRaises(ValueError):
+                        tool_cobsidian_dry_run(
+                            config=str(config),
+                            topic="RAG",
+                            text="Retrieval augmented generation.",
+                            **arguments,
+                        )
+
+    def test_chat_only_dry_run_does_not_scan_vault(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch("skills.cobsidian.mcp_server.scan_vault") as scan_mock:
+                payload = tool_cobsidian_dry_run(
+                    vault=temp_dir,
+                    topic="RAG",
+                    text="Retrieval augmented generation.",
+                    mode="learning",
+                    capability_level="chat-only",
+                )
+
+            scan_mock.assert_not_called()
+            self.assertFalse(payload["preflight"]["existing_notes_scanned"])
+            self.assertFalse(payload["preflight"]["duplicate_check_completed"])
+            self.assertFalse(payload["preflight"]["backlink_check_completed"])
+            self.assertFalse(payload["preflight"]["validation_available"])
+            self.assertIn(
+                "validation_capability_unavailable",
+                payload["preflight"]["blocked_reasons"],
+            )
+            self.assertEqual([], payload["writes"])
+
+    def test_scan_capable_dry_run_scans_before_building_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            events: list[str] = []
+            original_scan_vault = scan_vault
+            original_build_payload = build_dry_run_payload
+
+            def tracked_scan_vault(vault_path: Path) -> object:
+                events.append("scan")
+                return original_scan_vault(vault_path)
+
+            def tracked_build_payload(**arguments: object) -> dict[str, object]:
+                events.append("build")
+                return original_build_payload(**arguments)
+
+            with (
+                patch(
+                    "skills.cobsidian.mcp_server.scan_vault",
+                    side_effect=tracked_scan_vault,
+                ),
+                patch(
+                    "skills.cobsidian.mcp_server.build_dry_run_payload",
+                    side_effect=tracked_build_payload,
+                ),
+            ):
+                tool_cobsidian_dry_run(
+                    vault=temp_dir,
+                    topic="RAG",
+                    text="Retrieval augmented generation.",
+                    mode="learning",
+                )
+
+            self.assertEqual(["scan", "build"], events)
+
+    def test_dry_run_preserves_legacy_five_argument_call(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            payload = tool_cobsidian_dry_run(
+                "RAG",
+                "Retrieval augmented generation.",
+                temp_dir,
+                None,
+                "learning",
+            )
+
+            self.assertTrue(payload["dry_run"])
+            self.assertEqual([], payload["writes"])
 
     def test_note_resource_path_must_stay_inside_vault(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
