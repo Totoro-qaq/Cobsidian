@@ -16,6 +16,8 @@ Cobsidian 是一个 agent-agnostic 的 Obsidian / Markdown 知识库维护工作
 
 [快速开始](#快速开始) · [MCP Server](mcp-server.zh-CN.md) · [Prompt Examples](../examples/prompts.md) · [Agent 兼容性](agent-compatibility.zh-CN.md)
 
+用你熟悉的 Agent 就行——Cobsidian 可以接入 [Claude Code](../skills/cobsidian/references/hosts/claude-code.md)、[Codex CLI](../skills/cobsidian/references/hosts/codex.md)、[GitHub Copilot CLI](../skills/cobsidian/references/hosts/github-copilot-cli.md)、[Kimi Code](../skills/cobsidian/references/hosts/kimi-code.md)、[OpenCode](../skills/cobsidian/references/hosts/opencode.md)、[Pi](../skills/cobsidian/references/hosts/pi.md) 和 [Antigravity](../skills/cobsidian/references/hosts/antigravity.md)。
+
 <p align="center">
   <img src="assets/cobsidian-demo.gif" alt="Cobsidian 工作流：匹配已有笔记 → 审阅改动 → 安全写入 → 生长知识图谱" width="100%" />
 </p>
