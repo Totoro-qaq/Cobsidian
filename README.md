@@ -16,6 +16,8 @@ Cobsidian is an agent-agnostic workflow skill for maintaining Obsidian or Markdo
 
 [Quick Start](#quick-start) · [MCP Server](docs/mcp-server.md) · [Prompt Examples](examples/prompts.md) · [Agent Compatibility](docs/agent-compatibility.md)
 
+Use the agent you already know — Cobsidian works with [Claude Code](skills/cobsidian/references/hosts/claude-code.md) · [Codex CLI](skills/cobsidian/references/hosts/codex.md) · [GitHub Copilot CLI](skills/cobsidian/references/hosts/github-copilot-cli.md) · [Kimi Code](skills/cobsidian/references/hosts/kimi-code.md) · [OpenCode](skills/cobsidian/references/hosts/opencode.md) · [Pi](skills/cobsidian/references/hosts/pi.md) · [Antigravity](skills/cobsidian/references/hosts/antigravity.md).
+
 <p align="center">
   <img src="docs/assets/cobsidian-demo.gif" alt="Cobsidian workflow: match an existing note → review changes → write safely → grow the knowledge graph" width="100%" />
 </p>

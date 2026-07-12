@@ -128,6 +128,37 @@ class ReadmeLandingContractTests(unittest.TestCase):
             with self.subTest(fragment=fragment):
                 self.assertIn(fragment, readme)
 
+    def test_supported_agents_are_visible_before_the_demo(self) -> None:
+        readmes = {
+            "english": (
+                (REPO_ROOT / "README.md").read_text(encoding="utf-8"),
+                "Use the agent you already know",
+            ),
+            "chinese": (
+                (REPO_ROOT / "docs" / "README.zh-CN.md").read_text(
+                    encoding="utf-8"
+                ),
+                "用你熟悉的 Agent 就行",
+            ),
+        }
+        supported_agents = (
+            "Claude Code",
+            "Codex CLI",
+            "GitHub Copilot CLI",
+            "Kimi Code",
+            "OpenCode",
+            "Pi",
+            "Antigravity",
+        )
+
+        for language, (readme, lead) in readmes.items():
+            landing = readme.split("cobsidian-demo.gif", maxsplit=1)[0]
+            with self.subTest(language=language, fragment=lead):
+                self.assertIn(lead, landing)
+            for agent in supported_agents:
+                with self.subTest(language=language, agent=agent):
+                    self.assertIn(agent, landing)
+
     def test_readmes_reference_local_landing_assets(self) -> None:
         english_readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
         chinese_readme = (REPO_ROOT / "docs" / "README.zh-CN.md").read_text(
