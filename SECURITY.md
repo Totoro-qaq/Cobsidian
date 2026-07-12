@@ -17,4 +17,7 @@ Cobsidian is a local workflow skill and helper-script project. Security-sensitiv
 - accidental leakage of private vault content
 - unsafe handling of personal paths, tokens, or raw logs
 - helper scripts that read or validate local Markdown files
+- local write plans, backups, and manifests under a vault's `.cobsidian/transactions/` directory
 - CI and GitHub Actions configuration
+
+Transaction records can contain complete before/after note content. Keep `.cobsidian/` private, exclude it from version control and support bundles, and delete old transactions according to your own retention policy.

@@ -27,6 +27,8 @@ Suggested checks:
 python skills/cobsidian/scripts/scan_vault.py examples --json
 python skills/cobsidian/scripts/find_duplicates.py examples
 python skills/cobsidian/scripts/validate_notes.py examples
+python skills/cobsidian/scripts/quality_eval.py evals/public-smoke.jsonl evals/fixtures/public-vault --mode-predictions evals/public-mode-predictions.jsonl --json
+python install_cobsidian.py --host all --scope user --dry-run --json
 ```
 
 ## Branch Protection Recommendation

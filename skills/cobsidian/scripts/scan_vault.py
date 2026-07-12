@@ -9,12 +9,14 @@ from typing import Iterable
 
 try:
     from cobsidian_config import CobsidianConfig, load_config, resolve_vault_path
+    from note_identity import build_note_identity
 except ModuleNotFoundError:
     from .cobsidian_config import CobsidianConfig, load_config, resolve_vault_path
+    from .note_identity import build_note_identity
 
 
 WIKILINK_RE = re.compile(r"\[\[([^\]]+)\]\]")
-TAG_RE = re.compile(r"(?<!\w)#([A-Za-z0-9_/\-]+)")
+TAG_RE = re.compile(r"(?<!\w)#([\w/\-]+)")
 
 
 @dataclass(frozen=True)
@@ -24,10 +26,16 @@ class NoteInfo:
     tags: list[str]
     wikilinks: list[str]
     bytes: int
+    filename_title: str = ""
+    heading_title: str | None = None
+    frontmatter_title: str | None = None
+    aliases: tuple[str, ...] = ()
+    core_titles: tuple[str, ...] = ()
+    identity_titles: tuple[str, ...] = ()
 
 
 def iter_markdown_files(vault_path: Path) -> Iterable[Path]:
-    ignored_dirs = {".obsidian", ".git", "__pycache__", ".trash"}
+    ignored_dirs = {".obsidian", ".cobsidian", ".git", "__pycache__", ".trash"}
     for path in vault_path.rglob("*.md"):
         if any(part in ignored_dirs for part in path.parts):
             continue
@@ -43,12 +51,7 @@ def read_text(path: Path) -> str:
 
 
 def extract_title(path: Path, text: str) -> str:
-    for line in text.splitlines():
-        if line.startswith("# "):
-            title = line[2:].strip()
-            if title:
-                return title
-    return path.stem
+    return build_note_identity(path, text).display_title
 
 
 def extract_wikilinks(text: str) -> list[str]:
@@ -68,13 +71,20 @@ def scan_vault(vault_path: Path) -> list[NoteInfo]:
     notes: list[NoteInfo] = []
     for path in sorted(iter_markdown_files(vault_path)):
         text = read_text(path)
+        identity = build_note_identity(path, text)
         notes.append(
             NoteInfo(
                 path=path.relative_to(vault_path).as_posix(),
-                title=extract_title(path, text),
+                title=identity.display_title,
                 tags=extract_tags(text),
                 wikilinks=extract_wikilinks(text),
                 bytes=path.stat().st_size,
+                filename_title=identity.filename_title,
+                heading_title=identity.heading_title,
+                frontmatter_title=identity.frontmatter_title,
+                aliases=identity.aliases,
+                core_titles=identity.core_titles,
+                identity_titles=identity.candidate_titles,
             )
         )
     return notes

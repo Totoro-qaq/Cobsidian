@@ -16,15 +16,16 @@ class DemoAssetContractTests(unittest.TestCase):
             "<title>Cobsidian</title>",
             'id="terminal-panel"',
             'id="note-panel"',
+            'id="graph-panel"',
             'id="link-panel"',
             'class="linked-note-mark"',
             "--accent-violet:",
             "--neutral-surface:",
-            "grid-template-columns: 1.35fr 0.9fr 1.2fr;",
-            "white-space: nowrap;",
-            "Use Cobsidian to organize this material",
-            "dry-run complete",
+            'pathLength="1"',
+            "Apply reviewed patch",
+            "Saved · Validated",
             "[[Agent Workflows]]",
+            "prefers-reduced-motion: reduce",
         ]
 
         for fragment in required_fragments:
@@ -40,6 +41,8 @@ class DemoAssetContractTests(unittest.TestCase):
             "obsidian-icon",
             "obsidian-logo",
             "crystal-mark",
+            '"plan_id"',
+            "confirmation code",
         ]
 
         for fragment in forbidden_fragments:

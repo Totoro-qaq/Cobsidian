@@ -1,10 +1,14 @@
 from __future__ import annotations
 
-import re
 from collections import defaultdict
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 from typing import Protocol
+
+try:
+    from note_identity import normalize_title, note_candidate_titles
+except ModuleNotFoundError:
+    from .note_identity import normalize_title, note_candidate_titles
 
 
 DEFAULT_MAX_COMPARISONS = 100_000
@@ -33,10 +37,6 @@ class DuplicateReport:
     truncated: bool
 
 
-def normalize_title(title: str) -> str:
-    return re.sub(r"[^a-z0-9\u4e00-\u9fff]+", "", title.casefold())
-
-
 def find_title_duplicates(
     notes: list[NoteInfoLike],
     threshold: float,
@@ -47,41 +47,74 @@ def find_title_duplicates(
     if max_comparisons < 0:
         raise ValueError("max_comparisons must be non-negative.")
 
-    exact_by_title: dict[str, list[NoteInfoLike]] = defaultdict(list)
-    for note in notes:
-        normalized = normalize_title(note.title)
-        if normalized:
-            exact_by_title[normalized].append(note)
+    if not notes:
+        return DuplicateReport([], [], 0, False)
 
-    exact_duplicates = [
-        sorted(group, key=lambda note: note.path.casefold())
-        for group in exact_by_title.values()
-        if len(group) > 1
-    ]
-    exact_duplicates.sort(key=lambda group: group[0].path.casefold())
+    parents = list(range(len(notes)))
 
-    normalized_notes = [
-        (
-            min(group, key=lambda note: note.path.casefold()),
-            normalized_title,
-        )
-        for normalized_title, group in exact_by_title.items()
-    ]
-    normalized_notes.sort(
-        key=lambda item: (item[1], item[0].path.casefold())
-    )
+    def find(index: int) -> int:
+        while parents[index] != index:
+            parents[index] = parents[parents[index]]
+            index = parents[index]
+        return index
+
+    def union(left: int, right: int) -> None:
+        left_root = find(left)
+        right_root = find(right)
+        if left_root != right_root:
+            parents[right_root] = left_root
+
+    note_identities: list[dict[str, str]] = []
+    identity_owner: dict[str, int] = {}
+    for index, note in enumerate(notes):
+        identities = {
+            normalize_title(candidate): candidate
+            for candidate in note_candidate_titles(note)
+            if normalize_title(candidate)
+        }
+        note_identities.append(identities)
+        for normalized in identities:
+            previous = identity_owner.get(normalized)
+            if previous is None:
+                identity_owner[normalized] = index
+            else:
+                union(previous, index)
+
+    components: dict[int, list[int]] = defaultdict(list)
+    for index in range(len(notes)):
+        components[find(index)].append(index)
+
+    component_rows: list[tuple[NoteInfoLike, list[NoteInfoLike], set[str]]] = []
+    for indexes in components.values():
+        group = sorted((notes[index] for index in indexes), key=lambda note: note.path.casefold())
+        identities = {
+            normalized
+            for index in indexes
+            for normalized in note_identities[index]
+        }
+        component_rows.append((group[0], group, identities))
+    component_rows.sort(key=lambda row: row[0].path.casefold())
+
+    exact_duplicates = [group for _, group, _ in component_rows if len(group) > 1]
 
     similar_titles: list[SimilarTitle] = []
     comparisons = 0
     truncated = False
-    for index, (left, left_title) in enumerate(normalized_notes):
-        for right_index in range(index + 1, len(normalized_notes)):
+    for index, (left, _, left_titles) in enumerate(component_rows):
+        for right_index in range(index + 1, len(component_rows)):
             if comparisons >= max_comparisons:
                 truncated = True
                 break
-            right, right_title = normalized_notes[right_index]
+            right, _, right_titles = component_rows[right_index]
             comparisons += 1
-            score = SequenceMatcher(None, left_title, right_title).ratio()
+            score = max(
+                (
+                    SequenceMatcher(None, left_title, right_title).ratio()
+                    for left_title in left_titles
+                    for right_title in right_titles
+                ),
+                default=0.0,
+            )
             if score >= threshold:
                 similar_titles.append(
                     SimilarTitle(

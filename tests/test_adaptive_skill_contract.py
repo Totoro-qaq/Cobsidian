@@ -12,7 +12,18 @@ SKILL_PATH = REPO_ROOT / "skills" / "cobsidian" / "SKILL.md"
 REFERENCES_PATH = REPO_ROOT / "skills" / "cobsidian" / "references"
 NOTE_TYPES_PATH = REFERENCES_PATH / "note-types.md"
 MODE_NAMES = tuple(MODE_DEFAULTS)
-HOST_NAMES = ("codex", "claude-code", "cursor", "hermes", "mcp")
+HOST_NAMES = (
+    "codex",
+    "claude-code",
+    "kimi-code",
+    "opencode",
+    "pi",
+    "antigravity",
+    "github-copilot-cli",
+    "cursor",
+    "hermes",
+    "mcp",
+)
 MODE_HEADINGS = (
     "When to Use",
     "Required Inputs",

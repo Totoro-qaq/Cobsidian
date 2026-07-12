@@ -35,8 +35,13 @@ Capability level 只记录有效 scan/write transport。校验通过 `validation
 
 | Host 类型 | Adapter reference | 说明 |
 |---|---|---|
-| Codex | [Codex](../skills/cobsidian/references/hosts/codex.md) | 分别检测 MCP、shell、编辑和校验路径。 |
-| Claude Code / OpenCode | [Claude Code](../skills/cobsidian/references/hosts/claude-code.md) | 只使用当前会话实际暴露的工具。 |
+| Codex CLI | [Codex](../skills/cobsidian/references/hosts/codex.md) | 从 `.agents/skills` 发现；可组合只读 MCP 和确定性本地写入器。 |
+| Claude Code CLI | [Claude Code](../skills/cobsidian/references/hosts/claude-code.md) | 从 `.claude/skills` 发现；只使用当前会话实际暴露的工具。 |
+| Kimi Code | [Kimi Code](../skills/cobsidian/references/hosts/kimi-code.md) | 发现 skill 后，分别检测本地与可选 MCP 路径。 |
+| OpenCode | [OpenCode](../skills/cobsidian/references/hosts/opencode.md) | 使用 `.agents/skills`，可选接入本地 MCP。 |
+| Pi | [Pi](../skills/cobsidian/references/hosts/pi.md) | 优先本地工具；MCP 来自 extension，不是 Pi 内置能力。 |
+| Antigravity | [Antigravity](../skills/cobsidian/references/hosts/antigravity.md) | 使用 workspace `.agents/skills` 或官方全局 skill 目录。 |
+| GitHub Copilot CLI | [GitHub Copilot CLI](../skills/cobsidian/references/hosts/github-copilot-cli.md) | 从 `.agents/skills` 发现；把 CLI 授权与 plan confirmation 分开。 |
 | Cursor | [Cursor](../skills/cobsidian/references/hosts/cursor.md) | 分别判断编辑器与终端能力。 |
 | Hermes | [Hermes](../skills/cobsidian/references/hosts/hermes.md) | 执行前映射已注册 workflow 和工具。 |
 | 通用 MCP host | [MCP](../skills/cobsidian/references/hosts/mcp.md) | Cobsidian server 是 zero-write 的检查与规划面。 |
@@ -51,8 +56,9 @@ Capability level 只记录有效 scan/write transport。校验通过 `validation
 2. 有扫描能力时，提出写入方案前先扫描。
 3. `decision.action` 仅为 `create | append | blocked`；拆分单独报告为 `multi-note` 计划。
 4. 优先追加到近似主题，只链接已确认存在的笔记。
-5. 默认 dry-run，本地编辑前请求批准，只汇报实际校验证据。
-6. 公共或通用笔记不写私人路径、密钥和原始聊天流水。
+5. 用 filename、清洗后的 H1、frontmatter title/aliases 和去模式前缀核心标题建立统一笔记身份。
+6. 默认 dry-run；本地写入必须经过 `prepare → 精确 plan ID 确认 → 原子 apply → validate`，并支持 rollback。
+7. 公共或通用笔记不写私人路径、密钥和原始聊天流水。
 
 ## 推荐提示词
 

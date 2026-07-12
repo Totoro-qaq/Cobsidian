@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## v0.6.0
+
+- Add a real note identity model spanning filename title, cleaned H1, frontmatter `title` and `aliases`, and prefix-free core titles.
+- Match duplicates across all identity candidates and weight identity metadata in backlink ranking.
+- Add labeled JSONL quality evaluation for duplicate precision/recall, append targets, backlink precision@k, and mode accuracy, including a 60-query private local benchmark excluded from Git.
+- Add deterministic `prepare → confirm → atomic apply → validate → rollback` writes with integrity hashes, stale-plan protection, transaction records, and automatic rollback on new warnings.
+- Add tested skill installation and host adapters for Kimi Code, OpenCode, Pi, Antigravity, GitHub Copilot CLI, Codex CLI, and Claude Code CLI.
+- Refresh the minimal banner and light Obsidian demo around identity-aware matching, safe writes, and a growing knowledge graph.
+
 ## v0.5.0
 
 - Add adaptive routing that loads one relevant mode reference and recommends at most two modes when intent is unresolved.

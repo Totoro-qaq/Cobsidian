@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE)
 
 <p align="center">
-  <img src="assets/cobsidian-banner.svg" alt="Cobsidian - 安全地把 AI 对话整理成带双链的 Obsidian 知识库。" width="100%" />
+  <img src="assets/cobsidian-banner.svg" alt="Cobsidian - 用你的编程 Agent 维护一个相互连接的 Obsidian 知识库。" width="100%" />
 </p>
 
 > 安全地把 AI 对话整理成带双链的 Obsidian 知识库。
@@ -17,7 +17,7 @@ Cobsidian 是一个 agent-agnostic 的 Obsidian / Markdown 知识库维护工作
 [快速开始](#快速开始) · [MCP Server](mcp-server.zh-CN.md) · [Prompt Examples](../examples/prompts.md) · [Agent 兼容性](agent-compatibility.zh-CN.md)
 
 <p align="center">
-  <img src="assets/cobsidian-demo.gif" alt="Cobsidian 工作流：提示 → dry-run 规划 → 生成带链接的笔记" width="100%" />
+  <img src="assets/cobsidian-demo.gif" alt="Cobsidian 工作流：匹配已有笔记 → 审阅改动 → 安全写入 → 生长知识图谱" width="100%" />
 </p>
 
 ## Cobsidian 做什么
@@ -155,7 +155,7 @@ flowchart TD
 ## 功能
 
 - 创建学习笔记、项目笔记、对比笔记、索引笔记。
-- 写入前检查已有笔记，减少重复。
+- 用 filename、清洗后的 H1、frontmatter `title`/`aliases` 与去模式前缀核心标题建立统一笔记身份，减少重复。
 - 根据笔记标题、元数据和正文建议 `[[双链]]` 与 Related notes 区块。
 - 使用确定性的中文 bigram/trigram 匹配相关短语。
 - 校验缺失的 wiki-link 目标。
@@ -163,13 +163,24 @@ flowchart TD
 - 保持笔记结构简洁、可复用。
 - 默认避免写入私人路径、密钥和原始聊天流水。
 - 提供带分页的本地 MCP tools，用于只读检查和 dry-run 规划。
+- 生成带完整性哈希的 diff，要求精确 plan ID 确认，原子写入并支持校验失败自动回滚与手动 rollback。
+- 用标注查询集评估 duplicate precision/recall、backlink precision@3、追加目标准确率和 mode accuracy。
 
 ## 安装
 
 完整安装、更新和卸载说明见 [INSTALL.md](../INSTALL.md)。
 Codex、Obsidian vault、MCP host 和其他 Agent 的接入方式见 [集成说明](integrations.zh-CN.md)。
 
-### Codex Skill
+### 支持的 CLI Skill
+
+一次适配 Kimi Code、OpenCode、Pi、Antigravity、GitHub Copilot CLI、Codex CLI 和 Claude Code CLI：
+
+```bash
+python install_cobsidian.py --host all --scope user --dry-run --json
+python install_cobsidian.py --host all --scope user
+```
+
+也可以手工复制共享 Agent Skills 目录：
 
 把 skill 目录复制到 Agent 的 skills 目录：
 
@@ -185,11 +196,11 @@ New-Item -ItemType Directory -Force "$env:USERPROFILE\.agents\skills" | Out-Null
 Copy-Item -Recurse -Force .\skills\cobsidian "$env:USERPROFILE\.agents\skills\cobsidian"
 ```
 
-Codex 当前官方文档里的用户级 skill 目录是 `$HOME/.agents/skills`。部分本地或旧版 Codex 构建可能扫描 `$HOME/.codex/skills`；以你正在使用的 Codex surface 显示的 skills 目录为准。
+每个 CLI 的用户级/项目级发现路径和 MCP 配置见 [集成说明](integrations.zh-CN.md)。Pi 没有内置 MCP client，默认直接走本地工作流。
 
 ### 其他 Agent
 
-Hermes、Claude Code、Cursor 和其他 Agent 使用同一套核心工作流：
+Hermes、Cursor 和其他 Agent 使用同一套核心工作流：
 
 1. 让 Agent 读取 `skills/cobsidian/SKILL.md`。
 2. 允许它调用 `skills/cobsidian/scripts/` 里的辅助脚本。
@@ -248,13 +259,16 @@ python skills/cobsidian/scripts/find_duplicates.py /path/to/vault
 python skills/cobsidian/scripts/suggest_backlinks.py /path/to/vault --file draft.md
 python skills/cobsidian/scripts/validate_notes.py /path/to/vault
 python skills/cobsidian/scripts/dry_run.py /path/to/vault --topic "RAG" --text "draft text" --json
+python skills/cobsidian/scripts/write_executor.py prepare /path/to/vault --action append --target-note "RAG.md" --content-file draft.md --plan-out /tmp/cobsidian-plan.json
+python skills/cobsidian/scripts/write_executor.py apply /path/to/vault --plan /tmp/cobsidian-plan.json --confirm PLAN_ID --json
+python skills/cobsidian/scripts/quality_eval.py evals/public-smoke.jsonl evals/fixtures/public-vault --mode-predictions evals/public-mode-predictions.jsonl --json
 ```
 
 当配置里写了 `vault.path` 时，这些脚本也支持 `--config cobsidian.config.yml`。
 
 ## 可选配置
 
-`cobsidian.config.example.yml` 是 `v0.5.0` 当前支持的配置面，包含 vault 路径、默认模式、模式目录、Knowledge Read 展示、反链数量、重复阈值与追加偏好，以及校验行为。需要复用本地设置时，可以复制为 `cobsidian.config.yml`。
+`cobsidian.config.example.yml` 是当前支持的配置面，包含 vault 路径、默认模式、模式目录、Knowledge Read 展示、反链数量、重复阈值与追加偏好，以及校验行为。需要复用本地设置时，可以复制为 `cobsidian.config.yml`。
 
 ```yaml
 interaction:
@@ -269,8 +283,8 @@ interaction:
 
 ## 路线图
 
-- 超越标题相似度的语义重复检测。
-- 支持使用 YAML frontmatter 的 vault。
+- 超越身份标题相似度的语义重复检测。
+- 在更大、更多样的真实标注 vault benchmark 上调优反链排序。
 - 可选笔记模板。
 - 可配置命名规则。
 - 工作流稳定后再考虑 Obsidian 插件集成。

@@ -1,0 +1,228 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" width="1600" height="1180" viewBox="0 0 1600 1180">
+  <title>Cobsidian visual direction: Vault Proof</title>
+  <desc>A design board showing Cobsidian matching an existing Obsidian note, reviewing and writing a patch, then revealing the new links in a colorful knowledge graph.</desc>
+  <style>
+    .display { font-family: "Helvetica Neue", Helvetica, "Aptos Display", "Segoe UI Variable Display", sans-serif; font-weight: 650; letter-spacing: -0.025em; }
+    .body { font-family: "Aptos", "Segoe UI Variable", "Segoe UI", sans-serif; }
+    .utility { font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace; }
+    .ink { fill: #171822; }
+    .muted { fill: #5e6372; }
+    .small { font-size: 14px; }
+    .micro { font-size: 11px; letter-spacing: 0.035em; }
+    .rule { stroke: #d4d7e0; stroke-width: 1; }
+    .link { fill: none; stroke: #7367e8; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .graph-line { fill: none; stroke: #aeb2c1; stroke-width: 1.2; stroke-opacity: .92; }
+    .graph-line-hot { fill: none; stroke: #7367e8; stroke-width: 1.8; stroke-opacity: .9; }
+  </style>
+
+  <rect width="1600" height="1180" fill="#e7e9ef"/>
+  <text x="80" y="66" class="utility micro muted">Visual direction / Vault proof</text>
+  <text x="80" y="116" class="display ink" font-size="42">A note changes. The whole vault responds.</text>
+  <text x="1520" y="108" class="utility micro muted" text-anchor="end">Concept 02 · 1200×360 + 1280×720</text>
+
+  <!-- Banner artboard -->
+  <g id="banner-artboard">
+    <rect x="200" y="150" width="1200" height="360" rx="14" fill="#f8f9fb"/>
+    <path d="M214 150 H560 V510 H214 Q200 510 200 496 V164 Q200 150 214 150Z" fill="#eceafd"/>
+
+    <g transform="translate(246 196)">
+      <g aria-label="Cobsidian abstract linked-note mark">
+        <rect x="0" y="0" width="42" height="52" rx="6" fill="none" stroke="#6254f3" stroke-width="2"/>
+        <rect x="17" y="11" width="42" height="52" rx="6" fill="none" stroke="#171822" stroke-width="2"/>
+        <path d="M13 34 H45" stroke="#6254f3" stroke-width="2" stroke-dasharray="4 4"/>
+      </g>
+      <text x="0" y="126" class="display" fill="#171822" font-size="56">Cobsidian</text>
+      <text x="2" y="169" class="body" fill="#424655" font-size="20">From agent output</text>
+      <text x="2" y="197" class="body" fill="#424655" font-size="20">to a living vault.</text>
+      <g class="utility micro" fill="#5548cf">
+        <text x="2" y="260">Match</text>
+        <text x="82" y="260">→</text>
+        <text x="108" y="260">Review</text>
+        <text x="204" y="260">→</text>
+        <text x="230" y="260">Connect</text>
+      </g>
+    </g>
+
+    <!-- Stylized Obsidian vault -->
+    <g id="banner-vault" transform="translate(590 170)">
+      <rect width="780" height="320" rx="10" fill="#f4f5f8" stroke="#d5d8e2"/>
+      <rect width="780" height="34" rx="10" fill="#ebecef"/>
+      <rect y="24" width="780" height="10" fill="#ebecef"/>
+      <g fill="#a3a6b2">
+        <circle cx="18" cy="17" r="4"/><circle cx="32" cy="17" r="4"/><circle cx="46" cy="17" r="4"/>
+      </g>
+      <text x="390" y="21" class="body" fill="#4f5361" font-size="11" text-anchor="middle">Cobsidian Demo Vault</text>
+
+      <!-- sidebar -->
+      <rect y="34" width="144" height="286" fill="#eff0f4"/>
+      <text x="16" y="58" class="utility micro" fill="#6f7382">VAULT</text>
+      <g class="body" font-size="12" fill="#4f5361">
+        <text x="20" y="86">Agent Workflows</text>
+        <rect x="10" y="100" width="124" height="30" rx="6" fill="#5f55c8"/>
+        <text x="20" y="120" fill="#ffffff">RAG Pipeline</text>
+        <text x="20" y="151">Vector Search</text>
+        <text x="20" y="179">Embeddings</text>
+        <text x="20" y="207">Evaluation</text>
+      </g>
+      <text x="16" y="300" class="utility micro" fill="#69d0ac">Saved · Validated</text>
+
+      <!-- note editor -->
+      <rect x="144" y="34" width="374" height="286" fill="#f8f9fb"/>
+      <text x="170" y="68" class="utility micro muted">RAG Pipeline.md</text>
+      <text x="170" y="104" class="display ink" font-size="24">RAG Retrieval Pipeline</text>
+      <text x="170" y="128" class="body muted" font-size="12">aliases: RAG · 检索增强生成</text>
+      <line x1="170" y1="143" x2="492" y2="143" class="rule"/>
+      <text x="170" y="169" class="body ink" font-size="13">Retrieval augments a model with grounded context</text>
+      <text x="170" y="190" class="body ink" font-size="13">before generation.</text>
+      <rect x="166" y="208" width="328" height="70" rx="7" fill="#e7f7f0"/>
+      <text x="178" y="229" class="utility micro" fill="#167656">APPENDED BY COBSIDIAN</text>
+      <text x="178" y="251" class="body" fill="#214b3d" font-size="12">Evaluate retrieval quality before tuning generation.</text>
+      <text x="178" y="270" class="body" fill="#6254f3" font-size="12">[[Vector Search]] · [[Embeddings]] · [[Evaluation]]</text>
+
+      <!-- graph view -->
+      <rect x="518" y="34" width="262" height="286" fill="#fbfbfd"/>
+      <text x="536" y="58" class="utility micro" fill="#686c7a">GRAPH VIEW</text>
+      <g transform="translate(518 34)">
+        <path d="M131 135 L73 85 M131 135 L190 76 M131 135 L210 153 M131 135 L174 221 M131 135 L68 213 M73 85 L44 140 M190 76 L222 112 M210 153 L174 221 M68 213 L44 140 M73 85 L190 76" class="graph-line"/>
+        <path d="M131 135 L73 85 M131 135 L190 76 M131 135 L210 153 M131 135 L174 221" class="graph-line-hot"/>
+        <g class="body" font-size="9">
+          <circle cx="131" cy="135" r="14" fill="#7568ef" stroke="#c9c4ff" stroke-width="2"/>
+          <text x="131" y="160" fill="#493dbb" text-anchor="middle">RAG</text>
+          <circle cx="73" cy="85" r="9" fill="#28a6bb"/><text x="73" y="69" fill="#176b78" text-anchor="middle">Vector Search</text>
+          <circle cx="190" cy="76" r="8" fill="#e8a43b"/><text x="190" y="59" fill="#865a14" text-anchor="middle">Embeddings</text>
+          <circle cx="210" cy="153" r="9" fill="#d86786"/><text x="210" y="177" fill="#91364f" text-anchor="middle">Evaluation</text>
+          <circle cx="174" cy="221" r="8" fill="#32b783"/><text x="174" y="243" fill="#176847" text-anchor="middle">Agents</text>
+          <circle cx="68" cy="213" r="6" fill="#5987ed"/>
+          <circle cx="44" cy="140" r="5" fill="#9f70dc"/>
+          <circle cx="222" cy="112" r="5" fill="#e1ce55"/>
+        </g>
+      </g>
+    </g>
+  </g>
+
+  <!-- GIF storyboard -->
+  <text x="80" y="580" class="display ink" font-size="28">GIF storyboard</text>
+  <text x="1520" y="580" class="body small muted" text-anchor="end">12.8s loop · extended graph growth · English-first UI</text>
+
+  <!-- Frame 1: vault -->
+  <g id="frame-1" transform="translate(80 612)">
+    <rect width="272" height="270" rx="12" fill="#f8f9fb"/>
+    <text x="20" y="30" class="utility micro muted">01 · Open the vault</text>
+    <rect x="16" y="48" width="240" height="188" rx="8" fill="#ffffff" stroke="#d4d7e0"/>
+    <rect x="16" y="48" width="240" height="22" rx="8" fill="#ebecef"/>
+    <rect x="16" y="62" width="240" height="8" fill="#ebecef"/>
+    <rect x="16" y="70" width="62" height="166" fill="#eff0f4"/>
+    <rect x="23" y="96" width="48" height="20" rx="4" fill="#5f55c8"/>
+    <text x="29" y="109" class="body" fill="#ffffff" font-size="7">RAG Pipeline</text>
+    <text x="29" y="133" class="body" fill="#aeb0bc" font-size="7">Vector Search</text>
+    <rect x="78" y="70" width="178" height="166" fill="#f8f9fb"/>
+    <text x="92" y="98" class="display ink" font-size="14">RAG Retrieval Pipeline</text>
+    <text x="92" y="119" class="body muted" font-size="8">Existing note found in the vault.</text>
+    <line x1="92" y1="131" x2="238" y2="131" class="rule"/>
+    <text x="92" y="151" class="body ink" font-size="8">Retrieval adds grounded context</text>
+    <text x="92" y="164" class="body ink" font-size="8">before generation.</text>
+    <text x="20" y="256" class="body muted" font-size="11">Start with the real knowledge base.</text>
+  </g>
+
+  <!-- Frame 2: identity match -->
+  <g id="frame-2" transform="translate(372 612)">
+    <rect width="272" height="270" rx="12" fill="#f8f9fb"/>
+    <text x="20" y="30" class="utility micro muted">02 · Match the note</text>
+    <g class="body" font-size="10">
+      <rect x="18" y="52" width="102" height="28" rx="6" fill="#eceafc"/><text x="28" y="70" fill="#4e459c">filename</text>
+      <rect x="18" y="88" width="102" height="28" rx="6" fill="#eceafc"/><text x="28" y="106" fill="#4e459c">H1</text>
+      <rect x="18" y="124" width="102" height="28" rx="6" fill="#eceafc"/><text x="28" y="142" fill="#4e459c">title</text>
+      <rect x="18" y="160" width="102" height="28" rx="6" fill="#eceafc"/><text x="28" y="178" fill="#4e459c">aliases</text>
+    </g>
+    <path d="M120 66 C146 66 144 120 166 120 M120 102 C146 102 144 120 166 120 M120 138 C146 138 144 120 166 120 M120 174 C146 174 144 120 166 120" class="link" opacity=".55"/>
+    <rect x="166" y="82" width="88" height="76" rx="8" fill="#6254f3"/>
+    <text x="178" y="104" class="utility micro" fill="#dcd8ff">EXACT MATCH</text>
+    <text x="178" y="128" class="display" fill="#ffffff" font-size="16">Append</text>
+    <text x="178" y="146" class="body" fill="#e8e5ff" font-size="8">RAG Pipeline.md</text>
+    <text x="20" y="224" class="body ink" font-size="11">One identity, not a duplicate draft.</text>
+    <text x="20" y="244" class="body muted" font-size="10">filename · H1 · title · aliases</text>
+  </g>
+
+  <!-- Frame 3: review -->
+  <g id="frame-3" transform="translate(664 612)">
+    <rect width="272" height="270" rx="12" fill="#f8f9fb"/>
+    <text x="20" y="30" class="utility micro muted">03 · Review changes</text>
+    <text x="20" y="58" class="body ink" font-size="11">RAG Pipeline.md</text>
+    <rect x="18" y="72" width="236" height="34" rx="6" fill="#fbe9eb"/>
+    <text x="30" y="93" class="utility" fill="#a23a43" font-size="9">− create a separate draft</text>
+    <rect x="18" y="114" width="236" height="34" rx="6" fill="#e4f6ee"/>
+    <text x="30" y="135" class="utility" fill="#126a4e" font-size="9">+ append the durable concept</text>
+    <rect x="18" y="156" width="236" height="34" rx="6" fill="#e4f6ee"/>
+    <text x="30" y="177" class="utility" fill="#126a4e" font-size="9">+ [[Vector Search]] · [[Evaluation]]</text>
+    <rect x="18" y="206" width="152" height="32" rx="6" fill="#6254f3"/>
+    <text x="94" y="226" class="body" fill="#ffffff" font-size="10" text-anchor="middle">Apply reviewed patch</text>
+    <text x="20" y="258" class="body muted" font-size="10">Readable preview. Explicit action.</text>
+  </g>
+
+  <!-- Frame 4: write -->
+  <g id="frame-4" transform="translate(956 612)">
+    <rect width="272" height="270" rx="12" fill="#f8f9fb"/>
+    <text x="20" y="30" class="utility micro muted">04 · Write and validate</text>
+    <rect x="18" y="48" width="236" height="176" rx="8" fill="#ffffff" stroke="#d4d7e0"/>
+    <text x="34" y="76" class="display ink" font-size="15">RAG Retrieval Pipeline</text>
+    <text x="34" y="101" class="body ink" font-size="9">Evaluate retrieval quality before tuning</text>
+    <text x="34" y="115" class="body ink" font-size="9">generation quality.</text>
+    <rect x="30" y="132" width="206" height="54" rx="6" fill="#e4f6ee"/>
+    <text x="42" y="153" class="body" fill="#6254f3" font-size="9">[[Vector Search]]</text>
+    <text x="42" y="170" class="body" fill="#6254f3" font-size="9">[[Embeddings]] · [[Evaluation]]</text>
+    <circle cx="36" cy="207" r="6" fill="#20a779"/>
+    <text x="50" y="211" class="utility" fill="#167656" font-size="9">Saved · Validated · Rollback ready</text>
+    <text x="20" y="256" class="body muted" font-size="10">The note is now durable knowledge.</text>
+  </g>
+
+  <!-- Frame 5: graph -->
+  <g id="frame-5" transform="translate(1248 612)">
+    <rect width="272" height="270" rx="12" fill="#fbfbfd" stroke="#d4d7e0"/>
+    <text x="20" y="30" class="utility micro muted">05 · See the knowledge grow</text>
+    <g transform="translate(0 22)">
+      <path d="M136 111 L70 72 M136 111 L199 68 M136 111 L220 132 M136 111 L180 196 M136 111 L67 194 M70 72 L38 127 M199 68 L234 101 M220 132 L180 196 M67 194 L38 127 M70 72 L199 68 M67 194 L180 196" class="graph-line"/>
+      <path d="M136 111 L70 72 M136 111 L199 68 M136 111 L220 132 M136 111 L180 196" class="graph-line-hot"/>
+      <g class="body" font-size="8">
+        <circle cx="136" cy="111" r="16" fill="#7568ef" stroke="#c9c4ff" stroke-width="2"/>
+        <text x="136" y="139" fill="#493dbb" text-anchor="middle">RAG Pipeline</text>
+        <circle cx="70" cy="72" r="10" fill="#28a6bb"/><text x="70" y="55" fill="#176b78" text-anchor="middle">Vector Search</text>
+        <circle cx="199" cy="68" r="9" fill="#e8a43b"/><text x="199" y="50" fill="#865a14" text-anchor="middle">Embeddings</text>
+        <circle cx="220" cy="132" r="10" fill="#d86786"/><text x="220" y="155" fill="#91364f" text-anchor="middle">Evaluation</text>
+        <circle cx="180" cy="196" r="9" fill="#32b783"/><text x="180" y="218" fill="#176847" text-anchor="middle">Agents</text>
+        <circle cx="67" cy="194" r="7" fill="#5987ed"/>
+        <circle cx="38" cy="127" r="6" fill="#9f70dc"/>
+        <circle cx="234" cy="101" r="6" fill="#e1ce55"/>
+      </g>
+    </g>
+    <text x="20" y="254" class="body ink" font-size="10">One write becomes four useful paths.</text>
+  </g>
+
+  <!-- Direction and tokens -->
+  <g transform="translate(80 938)">
+    <text x="0" y="0" class="display ink" font-size="28">Direction</text>
+    <text x="0" y="35" class="body muted" font-size="15">Voice: lucid · mechanical · alive</text>
+    <text x="0" y="61" class="body muted" font-size="15">Signature: a single knowledge pulse moves from the edited note into the graph.</text>
+    <text x="0" y="87" class="body muted" font-size="15">Color rule: the workflow stays quiet; the connected vault earns the full palette.</text>
+
+    <line x1="590" y1="0" x2="590" y2="112" class="rule"/>
+    <g transform="translate(632 0)">
+      <text x="0" y="0" class="utility micro muted">PALETTE</text>
+      <g transform="translate(0 19)">
+        <rect width="48" height="48" rx="7" fill="#171822"/><text x="0" y="68" class="utility micro muted">INK</text>
+        <rect x="68" width="48" height="48" rx="7" fill="#6254f3"/><text x="68" y="68" class="utility micro muted">LINK</text>
+        <rect x="136" width="48" height="48" rx="7" fill="#20a779"/><text x="136" y="68" class="utility micro muted">VALID</text>
+        <rect x="204" width="48" height="48" rx="7" fill="#28a6bb"/><text x="204" y="68" class="utility micro muted">SEARCH</text>
+        <rect x="272" width="48" height="48" rx="7" fill="#e8a43b"/><text x="272" y="68" class="utility micro muted">EMBED</text>
+        <rect x="340" width="48" height="48" rx="7" fill="#d86786"/><text x="340" y="68" class="utility micro muted">EVAL</text>
+      </g>
+    </g>
+
+    <line x1="1060" y1="0" x2="1060" y2="112" class="rule"/>
+    <g transform="translate(1100 0)">
+      <text x="0" y="0" class="utility micro muted">TYPE</text>
+      <text x="0" y="36" class="display ink" font-size="25">Helvetica Neue / Aptos</text>
+      <text x="0" y="66" class="body muted" font-size="14">Sentence case for every visible action</text>
+      <text x="0" y="91" class="utility muted" font-size="12">Mono only for paths and metadata</text>
+    </g>
+  </g>
+</svg>

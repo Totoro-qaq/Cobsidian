@@ -7,7 +7,7 @@ English | [简体中文](docs/README.zh-CN.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 <p align="center">
-  <img src="docs/assets/cobsidian-banner.svg" alt="Cobsidian - Turn AI conversations into linked Obsidian knowledge, safely." width="100%" />
+  <img src="docs/assets/cobsidian-banner.svg" alt="Cobsidian - Maintain a linked Obsidian vault with your coding agent." width="100%" />
 </p>
 
 > Turn AI conversations into linked Obsidian knowledge, safely.
@@ -17,15 +17,15 @@ Cobsidian is an agent-agnostic workflow skill for maintaining Obsidian or Markdo
 [Quick Start](#quick-start) · [MCP Server](docs/mcp-server.md) · [Prompt Examples](examples/prompts.md) · [Agent Compatibility](docs/agent-compatibility.md)
 
 <p align="center">
-  <img src="docs/assets/cobsidian-demo.gif" alt="Cobsidian workflow: prompt → dry-run → linked note" width="100%" />
+  <img src="docs/assets/cobsidian-demo.gif" alt="Cobsidian workflow: match an existing note → review changes → write safely → grow the knowledge graph" width="100%" />
 </p>
 
 ## What Cobsidian Does
 
 - Turns useful AI conversations into reusable Markdown notes.
-- Searches existing notes before writing so agents append or merge instead of creating duplicates.
+- Builds a note identity from filename, cleaned H1, frontmatter `title`/`aliases`, and prefix-free core titles so agents append or merge instead of creating duplicates.
 - Explains the proposed organization through a structured Knowledge Read (`整理判读`).
-- Keeps writes reviewable with dry-run planning, capability-based degradation, backlink suggestions, and validation output.
+- Keeps writes reviewable with dry-run planning, exact plan-ID confirmation, atomic writes, validation, and rollback.
 
 ## Quick Start
 
@@ -52,8 +52,9 @@ flowchart LR
     C --> D{"Machine action<br/>create | append | blocked"}
     D --> E["Note plan<br/>single-note | multi-note | report-only<br/>split = multi-note"]
     E --> F["Clean Markdown note"]
-    F --> G["Wiki links and related notes"]
-    G --> H["Validated Obsidian vault"]
+    F --> G["Patch preview + exact confirmation"]
+    G --> H["Atomic write + validation"]
+    H --> I["Rollbackable transaction"]
 ```
 
 | Before | After |
@@ -87,7 +88,7 @@ Dry run is the default safe path: it plans the change, reports duplicate risks a
 
 ## Knowledge Read / 整理判读
 
-v0.5.0 computes a Knowledge Read before writing: the selected mode, depth, note granularity, evidence level, and display choice. `auto | always | off` controls conversational presentation only. With `off`, `display_style` becomes `hidden`, but the complete JSON object remains in dry-run output.
+Cobsidian computes a Knowledge Read before writing: the selected mode, depth, note granularity, evidence level, and display choice. `auto | always | off` controls conversational presentation only. With `off`, `display_style` becomes `hidden`, but the complete JSON object remains in dry-run output.
 
 Capability-based degradation keeps that result honest when tools are missing: a local host can become ready after checks, MCP stays read-only, and a chat-only host returns a draft or asks for a usable path instead of claiming work it could not perform.
 
@@ -144,18 +145,20 @@ The dry-run machine action is only `create | append | blocked`. A split is a sep
 ```mermaid
 flowchart TD
     U["User material"] --> R["Resolve vault path or config"]
-    R --> S["Scan notes, titles, tags, wiki links"]
+    R --> S["Build note identities and scan the vault"]
     S --> A{"Machine action<br/>create | append | blocked"}
     A --> P["Note plan<br/>single-note | multi-note | report-only<br/>split = multi-note"]
     P --> L["Suggest backlinks"]
-    L --> V["Validate note hygiene"]
-    V --> O["Report files, decision, links, validation"]
+    L --> X["Preview patch + confirm exact plan ID"]
+    X --> V["Atomic write, validate, rollback on new warnings"]
+    V --> O["Report transaction, links, validation"]
 ```
 
 ## Features
 
 - Create learning notes, project notes, comparison notes, and index notes.
 - Check existing notes before writing to reduce duplicates.
+- Match duplicates across filename titles, cleaned H1s, frontmatter titles and aliases, and prefix-free core titles.
 - Suggest `[[wiki links]]` from note titles, metadata, and body text.
 - Match Chinese related phrases with deterministic CJK bigrams and trigrams.
 - Validate missing wiki-link targets.
@@ -163,13 +166,24 @@ flowchart TD
 - Keep note structure concise and reusable.
 - Avoid writing private paths, secrets, or raw chat transcripts by default.
 - Expose paginated local MCP tools for read-only vault inspection and dry-run planning.
+- Prepare integrity-hashed diffs, require exact confirmation, write atomically, validate, and support safe rollback.
+- Evaluate labeled vault queries with duplicate precision/recall, backlink precision@3, append-target accuracy, and mode accuracy.
 
 ## Install
 
 See [INSTALL.md](INSTALL.md) for full setup, update, and uninstall instructions.
 See [Integrations](docs/integrations.md) for Codex, Obsidian vault, MCP host, and other-agent setup notes.
 
-### Codex Skill
+### Supported CLI Skills
+
+Install for Kimi Code, OpenCode, Pi, Antigravity, GitHub Copilot CLI, Codex CLI, and Claude Code CLI:
+
+```bash
+python install_cobsidian.py --host all --scope user --dry-run --json
+python install_cobsidian.py --host all --scope user
+```
+
+Or copy the shared Agent Skills path manually:
 
 ```bash
 mkdir -p ~/.agents/skills
@@ -183,11 +197,11 @@ New-Item -ItemType Directory -Force "$env:USERPROFILE\.agents\skills" | Out-Null
 Copy-Item -Recurse -Force .\skills\cobsidian "$env:USERPROFILE\.agents\skills\cobsidian"
 ```
 
-Codex currently documents `$HOME/.agents/skills` for user skills. Some local or older Codex builds may scan `$HOME/.codex/skills`; use the skills directory shown by your Codex surface.
+See [Integrations](docs/integrations.md) for each CLI's user/project discovery path and MCP setup. Pi uses the local workflow by default because it has no built-in MCP client.
 
 ### Other Agents
 
-For Hermes, Claude Code, Cursor, and other agents, use the same core workflow:
+For Hermes, Cursor, and other agents, use the same core workflow:
 
 1. Point the agent to `skills/cobsidian/SKILL.md`.
 2. Allow it to call the helper scripts in `skills/cobsidian/scripts/`.
@@ -246,13 +260,16 @@ python skills/cobsidian/scripts/find_duplicates.py /path/to/vault
 python skills/cobsidian/scripts/suggest_backlinks.py /path/to/vault --file draft.md
 python skills/cobsidian/scripts/validate_notes.py /path/to/vault
 python skills/cobsidian/scripts/dry_run.py /path/to/vault --topic "RAG" --text "draft text" --json
+python skills/cobsidian/scripts/write_executor.py prepare /path/to/vault --action append --target-note "RAG.md" --content-file draft.md --plan-out /tmp/cobsidian-plan.json
+python skills/cobsidian/scripts/write_executor.py apply /path/to/vault --plan /tmp/cobsidian-plan.json --confirm PLAN_ID --json
+python skills/cobsidian/scripts/quality_eval.py evals/public-smoke.jsonl evals/fixtures/public-vault --mode-predictions evals/public-mode-predictions.jsonl --json
 ```
 
 Each script also accepts `--config cobsidian.config.yml` when the config contains `vault.path`.
 
 ## Optional Config
 
-`cobsidian.config.example.yml` is the current `v0.5.0` supported config surface. It covers the vault path, default mode, mode directories, Knowledge Read presentation, backlink limit, duplicate threshold and append preference, plus validation behavior. Copy it to `cobsidian.config.yml` for reusable local settings.
+`cobsidian.config.example.yml` is the current supported config surface. It covers the vault path, default mode, mode directories, Knowledge Read presentation, backlink limit, duplicate threshold and append preference, plus validation behavior. Copy it to `cobsidian.config.yml` for reusable local settings.
 
 ```yaml
 interaction:
@@ -267,8 +284,8 @@ Naming templates, redaction, and write-policy customization are not enforced by 
 
 ## Roadmap
 
-- Semantic duplicate detection beyond title similarity.
-- Frontmatter support for vaults that use YAML metadata.
+- Semantic duplicate detection beyond identity-title similarity.
+- Tune backlink ranking against a larger, diverse labeled vault benchmark.
 - Optional note templates.
 - Configurable naming rules.
 - Optional Obsidian plugin integration after the workflow stabilizes.

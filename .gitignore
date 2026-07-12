@@ -18,5 +18,7 @@ cobsidian.config.yml
 # Local/private Obsidian vaults and exports
 vault/
 private-vault/
+evals/private/
+.cobsidian/
 *.zip
 *.7z
