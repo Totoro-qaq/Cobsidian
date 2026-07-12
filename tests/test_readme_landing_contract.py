@@ -143,7 +143,7 @@ class ReadmeLandingContractTests(unittest.TestCase):
         self.assertNotIn("readme-typing-svg", english_readme + chinese_readme)
         self.assertNotIn("capsule-render", english_readme + chinese_readme)
 
-    def test_readmes_present_the_v05_adaptive_surface_concisely(self) -> None:
+    def test_readmes_present_the_adaptive_and_transaction_surfaces_concisely(self) -> None:
         english_readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
         chinese_readme = (REPO_ROOT / "docs" / "README.zh-CN.md").read_text(
             encoding="utf-8"
@@ -154,12 +154,12 @@ class ReadmeLandingContractTests(unittest.TestCase):
             "整理判读",
             "auto | always | off",
             "capability-based degradation",
-            "v0.5.0",
+            "write_executor.py",
         ]
         for readme in (english_readme, chinese_readme):
             for fragment in shared_fragments:
                 with self.subTest(fragment=fragment):
-                    self.assertIn(fragment, readme)
+                    self.assertIn(fragment.casefold(), readme.casefold())
             self.assertIn("skills/cobsidian/references/", readme)
             self.assertNotIn("## Default Knowledge Read", readme)
             self.assertNotIn("## Append, Single-Note, and Split Criteria", readme)
@@ -278,12 +278,10 @@ class ReadmeLandingContractTests(unittest.TestCase):
         required_fragments = [
             'width="1200" height="360" viewBox="0 0 1200 360"',
             "<title>Cobsidian banner</title>",
-            "Turn AI conversations into linked Obsidian knowledge, safely.",
-            "neutral-surface",
+            "A minimal light banner",
             "linked-note-mark",
-            "glass-panel",
-            "linearGradient",
-            "feGaussianBlur",
+            "Maintain a linked Obsidian vault with your coding agent.",
+            "signature-edge",
         ]
 
         for fragment in required_fragments:
@@ -296,22 +294,32 @@ class ReadmeLandingContractTests(unittest.TestCase):
         self.assertNotIn("obsidian-icon", banner.lower())
         self.assertNotIn("obsidian-crystal", banner.lower())
 
-    def test_banner_labels_use_centered_layout(self) -> None:
+    def test_banner_keeps_a_single_brand_thesis(self) -> None:
         banner_path = REPO_ROOT / "docs" / "assets" / "cobsidian-banner.svg"
         banner = banner_path.read_text(encoding="utf-8")
 
         required_fragments = [
-            '<text x="77" y="-9" class="micro" text-anchor="middle" dominant-baseline="middle">LOCAL FIRST</text>',
-            '<text x="66" y="19" class="chip-text" text-anchor="middle" dominant-baseline="middle">dry-run first</text>',
-            '<text x="212" y="19" class="chip-text" text-anchor="middle" dominant-baseline="middle">wiki links</text>',
-            '<text x="354" y="19" class="chip-text" text-anchor="middle" dominant-baseline="middle">MCP ready</text>',
-            '<text x="143" y="126" class="micro" text-anchor="middle">7 modes · auto-link · dry-run</text>',
-            '<path d="M770 316 C850 302 930 306 990 322 S1080 334 1140 310" class="circuit-line"/>',
+            'font-size="90">Cobsidian</text>',
+            "One note growing into useful connections",
+            'fill="#28a6bb"',
+            'fill="#e8a43b"',
+            'fill="#32b783"',
         ]
 
         for fragment in required_fragments:
             with self.subTest(fragment=fragment):
                 self.assertIn(fragment, banner)
+
+        forbidden_fragments = [
+            "Cobsidian Demo Vault",
+            "RAG Retrieval Pipeline",
+            "GRAPH VIEW",
+            "Saved · Validated",
+            "[[Vector Search]]",
+        ]
+        for fragment in forbidden_fragments:
+            with self.subTest(fragment=fragment):
+                self.assertNotIn(fragment, banner)
 
 
 if __name__ == "__main__":

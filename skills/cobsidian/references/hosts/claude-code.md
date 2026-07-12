@@ -19,7 +19,7 @@ Record the chosen level through [preflight](../preflight.md) after detection, no
 
 ## Execution Path
 
-Map currently exposed Claude Code read, search, shell, edit, and MCP calls to the canonical workflow. Local execution runs helper scripts for scan, duplicates, backlinks, dry-run, and validation; an edit call is used only after approval. MCP calls remain read-only.
+Map currently exposed Claude Code CLI read, search, shell, edit, and MCP calls to the canonical workflow. Local execution runs identity-aware scan, duplicates, backlinks, and dry-run helpers, then uses `write_executor.py prepare`, exact plan-ID confirmation, and `write_executor.py apply`. MCP calls remain read-only. Do not use a direct edit for the vault when the deterministic executor can run.
 
 ## Degradation
 

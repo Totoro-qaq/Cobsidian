@@ -58,10 +58,12 @@ Use abstract note-link diagrams with concrete note titles (e.g., three connected
 - Recording demos use a 1280x720 fixed artboard.
 - README banner uses a 1200x360 SVG artboard.
 - Use split-screen operational layouts: terminal or dry-run plan on the left, note/vault preview on the right.
+- Current demos must show the real safety story: identity match, patch preview, exact plan confirmation, atomic write, validation, and rollback availability. Do not depict a dry run jumping directly to a completed note.
 - Keep all demo content synthetic. Never use a private vault path, private note title, API key, token, or screenshot from a real workspace.
 
 ## Last Updated
 
+2026-07-12: Kept the established visual system, refreshed banner copy, and changed the demo narrative to the deterministic transaction workflow.
 2026-07-08: Replaced abstract [[ ]] marks with concrete knowledge-graph nodes in banner and demo. Added macOS font fallbacks. Improved demo content to show real knowledge notes instead of product meta-descriptions.
 2026-07-07: Added recording-safe pseudo-terminal and Obsidian note demo direction.
 2026-07-07: Removed the prior purple-crystal direction because it could be confused with vendor iconography.

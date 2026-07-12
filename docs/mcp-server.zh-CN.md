@@ -70,7 +70,22 @@ python skills/cobsidian/mcp_server.py
 | `cobsidian_validate_notes` | 报告缺失双链目标、重复标题和空笔记。 |
 | `cobsidian_dry_run` | 只规划新建/追加行为，不写文件。 |
 
-现在故意不提供写入 tool。写入流程应该先 dry-run，再由用户在 host 里确认。
+MCP 内故意不提供写入 tool。具备写入能力的 host 可以在 MCP 规划后调用独立的本地确定性执行器；server 本身始终只读。
+
+## 配套本地写入器
+
+Host 获得批准的 shell 能力后，在 MCP 之外使用这条链路：
+
+```bash
+python skills/cobsidian/scripts/write_executor.py prepare /path/to/vault \
+  --action append --target-note "RAG.md" --content-file draft.md \
+  --plan-out /tmp/cobsidian-plan.json
+
+python skills/cobsidian/scripts/write_executor.py apply /path/to/vault \
+  --plan /tmp/cobsidian-plan.json --confirm PLAN_ID --json
+```
+
+`prepare` 只写计划文件，输出 unified diff 和由内容完整性派生的 plan ID。`apply` 要求精确 ID、拒绝过期 target hash、通过原子替换写入并校验 vault；若新增 warning，会自动恢复旧内容。Transaction 保存在 vault 私有的 `.cobsidian/transactions/` 下；目标笔记在 apply 后没有被再次修改时，可用 `rollback` 子命令恢复。
 
 ## 自适应 Dry-run 契约
 

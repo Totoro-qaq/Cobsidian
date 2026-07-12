@@ -6,460 +6,595 @@
   <title>Cobsidian</title>
   <style>
     :root {
-      --neutral-surface: oklch(0.98 0.008 85);
-      --bg: oklch(0.96 0.012 90);
-      --bg-deep: oklch(0.91 0.018 250);
-      --surface: oklch(1 0 0 / 0.76);
-      --surface-strong: oklch(0.99 0.006 90 / 0.88);
-      --fg: oklch(0.23 0.025 260);
-      --muted: oklch(0.48 0.035 255);
-      --dim: oklch(0.62 0.035 255);
-      --accent-violet: oklch(0.56 0.16 292);
-      --accent-teal: oklch(0.58 0.11 180);
-      --accent: var(--accent-violet);
-      --accent-2: var(--accent-teal);
-      --warning: oklch(0.76 0.13 78);
-      --rose: oklch(0.66 0.16 18);
-      --border: oklch(0.70 0.035 250 / 0.34);
-      --shadow: oklch(0.40 0.04 255 / 0.24);
-      --mono: "Cascadia Code", "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
-      --sans: "Aptos", "SF Pro", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
+      --neutral-surface: #eef0f5;
+      --surface: #ffffff;
+      --surface-soft: #f8f8fb;
+      --sidebar: #f0f1f5;
+      --fg: #1d1e27;
+      --muted: #5b5f6d;
+      --dim: #777b88;
+      --border: #d7d9e2;
+      --accent-violet: #6254f3;
+      --accent-violet-soft: #eceafd;
+      --green: #20a779;
+      --green-soft: #e5f6ef;
+      --cyan: #28a6bb;
+      --amber: #e8a43b;
+      --rose: #d86786;
+      --blue: #5987ed;
+      --purple: #9f70dc;
+      --yellow: #d7bd33;
+      --sans: "Aptos", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
+      --display: "Helvetica Neue", Helvetica, "Aptos Display", "Segoe UI Variable Display", sans-serif;
+      --mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
       --ease: cubic-bezier(0.16, 1, 0.3, 1);
+      --loop: 12.8s;
     }
 
-    * {
-      box-sizing: border-box;
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
     }
 
     body {
-      min-height: 100dvh;
-      margin: 0;
       display: grid;
       place-items: center;
-      background:
-        radial-gradient(circle at 18% 18%, oklch(0.82 0.08 292 / 0.34), transparent 34%),
-        radial-gradient(circle at 82% 16%, oklch(0.86 0.07 185 / 0.30), transparent 34%),
-        linear-gradient(135deg, var(--neutral-surface), var(--bg-deep));
-      color: var(--fg);
-      font-family: var(--sans);
       overflow: hidden;
+      color: var(--fg);
+      background: var(--neutral-surface);
+      font-family: var(--sans);
     }
 
     .stage {
-      position: relative;
       width: 1280px;
       height: 720px;
-      padding: 34px;
+      padding: 20px;
+      background: var(--neutral-surface);
       overflow: hidden;
-      isolation: isolate;
-      background:
-        linear-gradient(90deg, oklch(0.95 0.02 190 / 0.05) 1px, transparent 1px),
-        linear-gradient(0deg, oklch(0.45 0.02 255 / 0.07) 1px, transparent 1px);
-      background-size: 54px 54px;
     }
 
-    .stage::before,
-    .stage::after {
-      content: "";
-      position: absolute;
-      inset: auto;
-      pointer-events: none;
-      border-radius: 999px;
-      filter: blur(22px);
-      opacity: 0.6;
-      transform: translateZ(0);
-      animation: float-orb 9s var(--ease) infinite alternate;
-    }
-
-    .stage::before {
-      width: 320px;
-      height: 320px;
-      left: 72px;
-      top: 32px;
-      background: oklch(0.82 0.09 292 / 0.34);
-    }
-
-    .stage::after {
-      width: 260px;
-      height: 260px;
-      right: 58px;
-      bottom: 30px;
-      background: oklch(0.84 0.08 185 / 0.26);
-      animation-delay: -3s;
-    }
-
-    .topbar {
-      position: relative;
-      z-index: 2;
+    .brandbar {
+      height: 56px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 22px;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 13px;
     }
 
     .linked-note-mark {
-      width: 44px;
-      height: 44px;
+      width: 42px;
+      height: 42px;
       display: grid;
       place-items: center;
-      border: 1px solid var(--border);
-      border-radius: 15px;
-      background: oklch(1 0 0 / 0.76);
-      box-shadow:
-        0 1px 0 oklch(1 0 0 / 0.80) inset,
-        0 18px 44px -28px var(--shadow);
+      border-radius: 9px;
       color: var(--accent-violet);
-      font-family: var(--mono);
-      font-size: 13px;
-      font-weight: 800;
+      background: var(--accent-violet-soft);
     }
 
     h1 {
       margin: 0;
-      font-size: 34px;
+      font-family: var(--display);
+      font-size: 29px;
       line-height: 1;
-      letter-spacing: -0.035em;
-      font-weight: 760;
+      font-weight: 650;
+      letter-spacing: -0.025em;
     }
 
     .tagline {
-      margin: 6px 0 0;
+      margin: 5px 0 0;
       color: var(--muted);
-      font-size: 14px;
-      line-height: 1.55;
-      max-width: 65ch;
-    }
-
-    .timer {
-      font-family: var(--mono);
-      color: var(--accent-violet);
       font-size: 13px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 10px 14px;
-      background: oklch(1 0 0 / 0.66);
     }
 
-    .grid {
-      position: relative;
-      z-index: 2;
-      display: grid;
-      grid-template-columns: 1.02fr 0.98fr;
-      gap: 22px;
-      height: 468px;
-    }
-
-    .panel {
-      position: relative;
-      min-width: 0;
-      border: 1px solid var(--border);
-      border-radius: 30px;
-      background:
-        linear-gradient(145deg, oklch(1 0 0 / 0.78), oklch(0.95 0.012 250 / 0.70));
-      box-shadow:
-        0 1px 0 oklch(0.98 0.02 200 / 0.18) inset,
-        0 35px 90px -52px var(--shadow);
-      overflow: hidden;
-      backdrop-filter: blur(18px);
-    }
-
-    .panel::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(90deg, transparent, oklch(0.88 0.05 292 / 0.18), transparent);
-      transform: translateX(-120%);
-      animation: scan 7.2s var(--ease) infinite;
-      pointer-events: none;
-    }
-
-    .panel-header {
-      height: 52px;
+    .privacy {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      border-bottom: 1px solid var(--border);
-      background: oklch(0.98 0.008 90 / 0.72);
-    }
-
-    .window-dots {
-      display: flex;
-      gap: 8px;
-    }
-
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: var(--dim);
-    }
-
-    .dot:nth-child(1) {
-      background: var(--rose);
-    }
-
-    .dot:nth-child(2) {
-      background: var(--warning);
-    }
-
-    .dot:nth-child(3) {
-      background: var(--accent-violet);
-    }
-
-    .panel-title {
+      gap: 9px;
+      color: #4d5160;
       font-family: var(--mono);
-      color: var(--muted);
-      font-size: 12px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      font-size: 11px;
     }
 
-    .terminal {
-      padding: 20px 22px;
-      font-family: var(--mono);
-      font-size: 14px;
-      line-height: 1.56;
-      color: oklch(0.30 0.025 260);
+    .privacy-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
     }
 
-    .line {
-      opacity: 0;
-      transform: translateY(8px);
-      animation: reveal 0.72s var(--ease) forwards;
-      animation-delay: var(--delay);
-      white-space: pre-wrap;
-    }
-
-    .prompt {
-      color: var(--accent-violet);
-    }
-
-    .muted {
-      color: var(--muted);
-    }
-
-    .json {
-      display: block;
-      margin: 12px 0 0;
-      padding: 13px 15px;
-      border-radius: 12px;
+    .app {
+      height: 612px;
+      margin-top: 12px;
+      overflow: hidden;
       border: 1px solid var(--border);
-      background: oklch(0.99 0.006 90 / 0.82);
-      color: oklch(0.28 0.030 260);
-      opacity: 0;
-      transform: translateY(10px);
-      animation: reveal 0.8s var(--ease) forwards;
-      animation-delay: 4.1s;
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: 0 4px 8px rgba(31, 34, 47, 0.08);
     }
 
-    .note-shell {
+    .windowbar {
+      height: 42px;
       display: grid;
-      grid-template-columns: 168px 1fr;
-      height: calc(100% - 52px);
+      grid-template-columns: 160px 1fr 160px;
+      align-items: center;
+      padding: 0 14px;
+      border-bottom: 1px solid var(--border);
+      background: #ebecef;
+    }
+
+    .window-dots { display: flex; gap: 7px; }
+    .window-dots span {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #a7aab5;
+    }
+
+    .vault-title {
+      color: #4f5360;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .view-mode {
+      color: #5f52d2;
+      font-family: var(--mono);
+      font-size: 10px;
+      text-align: right;
+    }
+
+    .workspace {
+      height: 514px;
+      display: grid;
+      grid-template-columns: 208px 1fr;
     }
 
     .sidebar {
+      padding: 18px 12px;
       border-right: 1px solid var(--border);
-      padding: 18px 14px;
-      background: oklch(0.95 0.012 250 / 0.70);
+      background: var(--sidebar);
     }
 
-    .folder {
-      margin-bottom: 14px;
-      color: var(--muted);
-      font-size: 12px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+    .folder-label {
+      margin: 0 8px 13px;
+      color: #696d7a;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.04em;
     }
 
     .note-tab {
-      border-radius: 14px;
-      padding: 11px 12px;
-      margin-bottom: 8px;
-      color: oklch(0.26 0.030 260);
-      font-size: 13px;
-      line-height: 1.3;
-      background: oklch(1 0 0 / 0.66);
-      border: 1px solid oklch(0.70 0.035 250 / 0.25);
-    }
-
-    .note-tab.active {
-      border-left: 3px solid var(--accent-violet);
-      background: oklch(1 0 0 / 0.88);
-    }
-
-    .note-tab.ghost {
-      opacity: 0.55;
-    }
-
-    .note {
-      padding: 24px 28px;
-      background:
-        radial-gradient(circle at 90% 12%, oklch(0.86 0.07 185 / 0.18), transparent 34%),
-        oklch(1 0 0 / 0.56);
-    }
-
-    .note h2 {
-      margin: 0 0 16px;
-      color: var(--fg);
-      font-size: 30px;
-      line-height: 1.1;
-      letter-spacing: -0.03em;
-    }
-
-    .note-row {
-      opacity: 0;
-      transform: translateY(10px);
-      animation: reveal 0.72s var(--ease) forwards;
-      animation-delay: var(--delay);
-    }
-
-    .pill-row {
+      min-height: 36px;
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 22px;
-    }
-
-    .pill {
-      display: inline-flex;
       align-items: center;
-      min-height: 30px;
-      border-radius: 999px;
-      padding: 0 11px;
-      color: oklch(0.32 0.06 180);
-      background: oklch(0.94 0.035 185 / 0.76);
-      border: 1px solid oklch(0.70 0.07 180 / 0.25);
-      font-family: var(--mono);
+      gap: 9px;
+      margin-bottom: 4px;
+      padding: 0 10px;
+      border-radius: 7px;
+      color: #4e5260;
       font-size: 12px;
     }
 
-    .note p,
-    .note li {
-      color: oklch(0.36 0.030 260);
-      font-size: 14px;
-      line-height: 1.58;
-      max-width: 65ch;
+    .note-tab::before {
+      content: "";
+      width: 7px;
+      height: 9px;
+      border: 1px solid #979ba9;
+      border-radius: 2px;
+      background: #fafafd;
     }
 
-    .note ul {
-      margin: 12px 0 0;
-      padding-left: 18px;
+    .note-tab.active {
+      color: #ffffff;
+      background: var(--accent-violet);
+      font-weight: 650;
     }
 
-    .wiki {
-      color: var(--accent-violet);
+    .note-tab.active::before { border-color: #d8d4ff; background: transparent; }
+
+    .vault-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 24px 9px 0;
+      color: #176847;
       font-family: var(--mono);
+      font-size: 9px;
+    }
+
+    .vault-status::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .canvas {
+      position: relative;
+      min-width: 0;
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    .note-panel,
+    .graph-panel {
+      position: absolute;
+      inset: 0;
+    }
+
+    .note-panel {
+      padding: 20px 24px;
+      background: var(--surface);
+      animation: note-scene var(--loop) linear forwards;
+    }
+
+    .note-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 28px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 10px;
+    }
+
+    .note-body {
+      width: min(600px, 62%);
+      padding: 16px 22px 0;
+    }
+
+    .note-body h2 {
+      margin: 0 0 8px;
+      font-family: var(--display);
+      font-size: 30px;
+      line-height: 1.12;
+      letter-spacing: -0.03em;
+    }
+
+    .aliases {
+      margin-bottom: 20px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .note-body p,
+    .note-body li {
+      color: #343640;
+      font-size: 13px;
+      line-height: 1.58;
+    }
+
+    .note-body ul { margin: 10px 0 0; padding-left: 18px; }
+
+    .wiki { color: #5548cf; font-weight: 650; }
+
+    .identity-panel {
+      position: absolute;
+      right: 28px;
+      top: 68px;
+      width: 348px;
+      padding: 16px;
+      border: 1px solid #d9d6fb;
+      border-radius: 10px;
+      background: #f7f6ff;
+      animation: identity-scene var(--loop) linear forwards;
+    }
+
+    .panel-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 13px;
+      color: #35383f;
+      font-size: 13px;
       font-weight: 700;
     }
 
-    .link-panel {
-      position: absolute;
-      left: 86px;
-      right: 86px;
-      bottom: 22px;
-      z-index: 3;
-      display: grid;
-      grid-template-columns: 1.35fr 0.9fr 1.2fr;
-      gap: 12px;
-      padding: 10px;
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      background: oklch(0.99 0.006 90 / 0.80);
-      box-shadow: 0 24px 70px -38px var(--shadow);
-      backdrop-filter: blur(18px);
-      opacity: 0;
-      transform: translateY(18px);
-      animation: reveal 0.8s var(--ease) forwards;
-      animation-delay: 8.2s;
-    }
-
-    .link-card {
-      min-height: 58px;
-      padding: 10px 14px;
-      border-radius: 16px;
-      background: oklch(1 0 0 / 0.76);
-      border: 1px solid oklch(0.70 0.035 250 / 0.24);
-    }
-
-    .link-label {
-      margin-bottom: 6px;
-      color: var(--dim);
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    .link-value {
-      color: var(--fg);
-      font-size: 13.5px;
-      line-height: 1.35;
-      font-weight: 660;
-      white-space: nowrap;
-    }
-
-    .cursor {
-      display: inline-block;
-      width: 8px;
-      height: 17px;
-      margin-left: 3px;
-      vertical-align: -3px;
+    .decision {
+      border-radius: 999px;
+      padding: 5px 9px;
+      color: #ffffff;
       background: var(--accent-violet);
-      animation: blink 0.92s steps(2, end) infinite;
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 600;
     }
 
-    @keyframes reveal {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    .identity-row {
+      display: grid;
+      grid-template-columns: 70px 1fr;
+      gap: 10px;
+      margin-top: 9px;
+      color: #4f5360;
+      font-size: 10px;
     }
 
-    @keyframes scan {
-      48%, 100% {
-        transform: translateX(120%);
-      }
+    .identity-row span:first-child { color: #7368cd; font-family: var(--mono); }
+
+    .review-panel {
+      position: absolute;
+      right: 28px;
+      top: 68px;
+      width: 348px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-soft);
+      opacity: 0;
+      transform: translateY(8px);
+      animation: review-scene var(--loop) var(--ease) forwards;
     }
 
-    @keyframes blink {
-      50% {
-        opacity: 0;
-      }
+    .diff-row {
+      margin-top: 9px;
+      padding: 10px 12px;
+      border-radius: 7px;
+      font-family: var(--mono);
+      font-size: 10px;
     }
 
-    @keyframes float-orb {
-      to {
-        transform: translate3d(18px, 14px, 0) scale(1.04);
-      }
+    .diff-remove { color: #96384e; background: #fbeaec; }
+    .diff-add { color: #176847; background: var(--green-soft); }
+
+    .apply-button {
+      width: 172px;
+      height: 34px;
+      margin-top: 14px;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      color: #ffffff;
+      background: var(--accent-violet);
+      font-size: 11px;
+      font-weight: 700;
     }
+
+    .appended-block {
+      margin-top: 15px;
+      padding: 13px 15px;
+      border-radius: 8px;
+      color: #214b3d;
+      background: var(--green-soft);
+      opacity: 0;
+      transform: translateY(8px);
+      animation: appended-scene var(--loop) var(--ease) forwards;
+    }
+
+    .appended-label {
+      margin-bottom: 7px;
+      color: #167656;
+      font-family: var(--mono);
+      font-size: 9px;
+    }
+
+    .appended-block p { margin: 0 0 6px; color: #214b3d; }
+
+    .commit-state {
+      position: absolute;
+      right: 28px;
+      top: 68px;
+      width: 348px;
+      padding: 18px;
+      border-radius: 10px;
+      color: #176847;
+      background: var(--green-soft);
+      opacity: 0;
+      transform: translateY(8px);
+      animation: commit-scene var(--loop) var(--ease) forwards;
+    }
+
+    .commit-state strong { display: block; margin-bottom: 7px; font-size: 15px; }
+    .commit-state span { font-family: var(--mono); font-size: 10px; }
+
+    .graph-panel {
+      opacity: 0;
+      background: #fbfbfd;
+      animation: graph-scene var(--loop) linear forwards;
+    }
+
+    .graph-heading {
+      position: absolute;
+      top: 22px;
+      left: 26px;
+      z-index: 2;
+    }
+
+    .graph-heading h2 {
+      margin: 0 0 5px;
+      font-family: var(--display);
+      font-size: 25px;
+      letter-spacing: -0.025em;
+    }
+
+    .graph-heading p { margin: 0; color: var(--muted); font-size: 11px; }
+
+    .graph-canvas { width: 100%; height: 100%; display: block; }
+
+    .graph-edge {
+      fill: none;
+      stroke: #b9bdc9;
+      stroke-width: 1.4;
+      stroke-linecap: round;
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      animation: draw-edge 0.82s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+      animation-delay: var(--delay);
+    }
+
+    .graph-edge.primary { stroke: #7568ef; stroke-width: 2; }
+
+    .graph-node {
+      opacity: 0;
+      transform: scale(0.9);
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: node-in 0.58s var(--ease) forwards;
+      animation-delay: var(--delay);
+    }
+
+    .central-node {
+      opacity: 0;
+      transform: scale(0.92);
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: node-in 0.7s var(--ease) forwards;
+      animation-delay: 6.35s;
+    }
+
+    .pulse-ring {
+      fill: none;
+      stroke: #bdb7ff;
+      stroke-width: 2;
+      opacity: 0;
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: knowledge-pulse 1.2s var(--ease) forwards;
+      animation-delay: 6.45s;
+    }
+
+    .graph-summary {
+      position: absolute;
+      right: 28px;
+      bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 10px 13px;
+      border-radius: 8px;
+      color: #176847;
+      background: var(--green-soft);
+      font-family: var(--mono);
+      font-size: 10px;
+      opacity: 0;
+      transform: translateY(8px);
+      animation: summary-in 0.6s var(--ease) forwards;
+      animation-delay: 10.85s;
+    }
+
+    .graph-summary::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .link-panel {
+      height: 56px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      align-items: center;
+      padding: 0 42px;
+      border-top: 1px solid var(--border);
+      background: #fafafd;
+    }
+
+    .step {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: #6b6f7d;
+      font-family: var(--mono);
+      font-size: 10px;
+    }
+
+    .step::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #b9bcc7;
+    }
+
+    .step::after {
+      content: "";
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      top: 50%;
+      height: 1px;
+      background: #d5d7df;
+      transform: translateX(78px);
+    }
+
+    .step:last-child::after { display: none; }
+    .step:nth-child(1)::before { animation: step-done 0.4s forwards 1.5s; }
+    .step:nth-child(2)::before { animation: step-done 0.4s forwards 3.2s; }
+    .step:nth-child(3)::before { animation: step-done 0.4s forwards 5.4s; }
+    .step:nth-child(4)::before { animation: step-done 0.4s forwards 10.8s; }
+
+    @keyframes note-scene {
+      0%, 48% { opacity: 1; visibility: visible; }
+      52%, 100% { opacity: 0; visibility: hidden; }
+    }
+
+    @keyframes graph-scene {
+      0%, 48% { opacity: 0; visibility: hidden; }
+      52%, 100% { opacity: 1; visibility: visible; }
+    }
+
+    @keyframes identity-scene {
+      0%, 18% { opacity: 1; transform: translateY(0); visibility: visible; }
+      22%, 100% { opacity: 0; transform: translateY(-6px); visibility: hidden; }
+    }
+
+    @keyframes review-scene {
+      0%, 19% { opacity: 0; transform: translateY(8px); visibility: hidden; }
+      23%, 38% { opacity: 1; transform: translateY(0); visibility: visible; }
+      42%, 100% { opacity: 0; transform: translateY(-5px); visibility: hidden; }
+    }
+
+    @keyframes appended-scene {
+      0%, 38% { opacity: 0; transform: translateY(8px); }
+      43%, 100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes commit-scene {
+      0%, 40% { opacity: 0; transform: translateY(8px); visibility: hidden; }
+      44%, 49% { opacity: 1; transform: translateY(0); visibility: visible; }
+      52%, 100% { opacity: 0; transform: translateY(-5px); visibility: hidden; }
+    }
+
+    @keyframes draw-edge { to { stroke-dashoffset: 0; } }
+    @keyframes node-in { to { opacity: 1; transform: scale(1); } }
+
+    @keyframes knowledge-pulse {
+      0% { opacity: 0; transform: scale(0.7); }
+      30% { opacity: 0.75; }
+      100% { opacity: 0; transform: scale(1.8); }
+    }
+
+    @keyframes summary-in { to { opacity: 1; transform: translateY(0); } }
+    @keyframes step-done { to { background: var(--accent-violet); } }
 
     @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+      .note-panel { display: none; }
+      .graph-panel { opacity: 1; visibility: visible; }
+      .graph-edge { stroke-dashoffset: 0; }
+      .graph-node, .central-node { opacity: 1; transform: none; }
+      .graph-summary { opacity: 1; transform: none; }
+      .step::before { background: var(--accent-violet); }
     }
   </style>
 </head>
 <body>
-  <main class="stage" aria-label="Cobsidian workflow">
-    <header class="topbar">
+  <main class="stage" aria-label="Cobsidian Obsidian knowledge workflow">
+    <header class="brandbar">
       <div class="brand">
         <div class="linked-note-mark" aria-hidden="true">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="5" width="12" height="15" rx="2.5"/>
             <rect x="10" y="4" width="12" height="15" rx="2.5"/>
             <path d="M8 13 L16 11" stroke-dasharray="2 2"/>
@@ -467,82 +602,148 @@
         </div>
         <div>
           <h1>Cobsidian</h1>
-          <p class="tagline">From AI conversation to linked Obsidian vault — plan first, write safely.</p>
+          <p class="tagline">From agent output to a living Obsidian vault.</p>
         </div>
       </div>
-      <div class="timer">local · stdio · private</div>
+      <div class="privacy"><span class="privacy-dot"></span>Local · private · reversible</div>
     </header>
 
-    <section class="grid" aria-label="Demo panels">
-      <article class="panel" id="terminal-panel" aria-label="Pseudo terminal dry-run">
-        <div class="panel-header">
-          <div class="window-dots" aria-hidden="true">
-            <span class="dot"></span>
-            <span class="dot"></span>
-            <span class="dot"></span>
-          </div>
-          <div class="panel-title">agent terminal</div>
-        </div>
-        <div class="terminal">
-          <div class="line" style="--delay: 0.3s"><span class="prompt">$</span> Use Cobsidian to organize this material — 把 RAG 知识点整理一下<span class="cursor"></span></div>
-          <div class="line muted" style="--delay: 1.4s">vault: ~/obsidian-notes · config loaded</div>
-          <div class="line muted" style="--delay: 2.0s">mode: learning | dry-run first</div>
-          <div class="line" style="--delay: 2.7s">scan: 8 notes, 5 wiki links · found existing "RAG.md"</div>
-          <div class="line" style="--delay: 3.4s">→ append to "RAG.md" — topic overlap 0.91</div>
-          <pre class="json">{
-  "dry_run": true,
-  "status": "dry-run complete",
-  "decision": "append → RAG.md",
-  "writes": [],
-  "backlinks": ["Agent Workflows", "Vector Search"]
-}</pre>
-        </div>
-      </article>
+    <section class="app" aria-label="Cobsidian demo vault">
+      <header class="windowbar">
+        <div class="window-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="vault-title">Cobsidian Demo Vault</div>
+        <div class="view-mode">Obsidian · light</div>
+      </header>
 
-      <article class="panel" id="note-panel" aria-label="Obsidian note preview">
-        <div class="panel-header">
-          <div class="panel-title">obsidian note</div>
-          <div class="panel-title">reading view</div>
-        </div>
-        <div class="note-shell">
-          <aside class="sidebar" aria-label="Mock vault sidebar">
-            <div class="folder">obsidian-notes</div>
-            <div class="note-tab active">RAG.md</div>
-            <div class="note-tab ghost">Agent Workflows.md</div>
-            <div class="note-tab ghost">Vector Search.md</div>
-          </aside>
-          <section class="note">
-            <h2 class="note-row" style="--delay: 4.9s">RAG Pipeline</h2>
-            <div class="pill-row note-row" style="--delay: 5.5s">
-              <span class="pill">#learning</span>
-              <span class="pill">#retrieval</span>
+      <div class="workspace">
+        <aside class="sidebar" aria-label="Vault files">
+          <div class="folder-label">VAULT</div>
+          <div class="note-tab">Agent Workflows.md</div>
+          <div class="note-tab active">RAG Pipeline.md</div>
+          <div class="note-tab">Vector Search.md</div>
+          <div class="note-tab">Embeddings.md</div>
+          <div class="note-tab">Evaluation.md</div>
+          <div class="note-tab">Knowledge Graphs.md</div>
+          <div class="vault-status">Vault indexed</div>
+        </aside>
+
+        <div class="canvas">
+          <article class="note-panel" id="note-panel" aria-label="Obsidian note and reviewed patch">
+            <div class="note-toolbar"><span>RAG Pipeline.md</span><span>Reading view</span></div>
+            <section class="note-body">
+              <h2>RAG Retrieval Pipeline</h2>
+              <div class="aliases">aliases: RAG · 检索增强生成</div>
+              <p>Retrieval-Augmented Generation grounds a model in retrieved knowledge before generation.</p>
+              <ul>
+                <li>Chunk source material and create embeddings.</li>
+                <li>Retrieve relevant context for each query.</li>
+              </ul>
+              <div class="appended-block">
+                <div class="appended-label">APPENDED BY COBSIDIAN</div>
+                <p>Evaluate retrieval quality before tuning generation quality.</p>
+                <span class="wiki">[[Vector Search]] · [[Embeddings]] · [[Evaluation]] · [[Agent Workflows]]</span>
+              </div>
+            </section>
+
+            <section class="identity-panel" id="terminal-panel" aria-label="Identity match">
+              <div class="panel-heading">Match the existing note <span class="decision">Append</span></div>
+              <div class="identity-row"><span>filename</span><strong>RAG Pipeline.md</strong></div>
+              <div class="identity-row"><span>H1</span><strong>RAG Retrieval Pipeline</strong></div>
+              <div class="identity-row"><span>title</span><strong>RAG Pipeline</strong></div>
+              <div class="identity-row"><span>aliases</span><strong>RAG · 检索增强生成</strong></div>
+            </section>
+
+            <section class="review-panel" aria-label="Patch review">
+              <div class="panel-heading">Review changes</div>
+              <div class="diff-row diff-remove">− create a separate RAG draft</div>
+              <div class="diff-row diff-add">+ append the durable concept</div>
+              <div class="diff-row diff-add">+ add 4 useful wikilinks</div>
+              <div class="apply-button">Apply reviewed patch</div>
+            </section>
+
+            <section class="commit-state" aria-label="Write validation result">
+              <strong>Saved · Validated</strong>
+              <span>Atomic write complete · rollback ready</span>
+            </section>
+          </article>
+
+          <article class="graph-panel" id="graph-panel" aria-label="Obsidian knowledge graph">
+            <div class="graph-heading">
+              <h2>Knowledge graph</h2>
+              <p>The updated note grows into its existing neighborhood.</p>
             </div>
-            <p class="note-row" style="--delay: 6.1s">
-              Retrieval-Augmented Generation 让 LLM 基于检索到的领域知识回答，而非纯靠参数记忆。
-            </p>
-            <ul>
-              <li class="note-row" style="--delay: 6.7s">Chunk → Embed → 存入 vector DB，建立检索索引。</li>
-              <li class="note-row" style="--delay: 7.2s">Query → retrieve top-k → 喂给 LLM 生成最终回答。</li>
-              <li class="note-row" style="--delay: 7.7s">Related → <span class="wiki">[[Agent Workflows]]</span> · <span class="wiki">[[Vector Search]]</span></li>
-            </ul>
-          </section>
-        </div>
-      </article>
-    </section>
+            <svg class="graph-canvas" viewBox="0 0 1030 514" role="img" aria-label="RAG Pipeline connected to related Obsidian notes">
+              <g aria-hidden="true">
+                <path class="graph-edge primary" pathLength="1" style="--delay: 6.75s" d="M520 252 L337 151"/>
+                <path class="graph-edge primary" pathLength="1" style="--delay: 7.25s" d="M520 252 L575 112"/>
+                <path class="graph-edge primary" pathLength="1" style="--delay: 7.75s" d="M520 252 L758 198"/>
+                <path class="graph-edge primary" pathLength="1" style="--delay: 8.25s" d="M520 252 L704 384"/>
+                <path class="graph-edge" pathLength="1" style="--delay: 8.65s" d="M520 252 L284 347"/>
+                <path class="graph-edge" pathLength="1" style="--delay: 8.95s" d="M520 252 L454 432"/>
+                <path class="graph-edge" pathLength="1" style="--delay: 9.15s" d="M337 151 L186 197"/>
+                <path class="graph-edge" pathLength="1" style="--delay: 9.35s" d="M337 151 L284 347"/>
+                <path class="graph-edge" pathLength="1" style="--delay: 9.55s" d="M575 112 L806 104"/>
+                <path class="graph-edge" pathLength="1" style="--delay: 9.75s" d="M758 198 L875 326"/>
+                <path class="graph-edge" pathLength="1" style="--delay: 9.95s" d="M758 198 L806 104"/>
+                <path class="graph-edge" pathLength="1" style="--delay: 10.15s" d="M704 384 L875 326"/>
+                <path class="graph-edge" pathLength="1" style="--delay: 10.35s" d="M704 384 L454 432"/>
+                <path class="graph-edge" pathLength="1" style="--delay: 10.55s" d="M284 347 L186 197"/>
+              </g>
 
-    <section class="link-panel" id="link-panel" aria-label="Backlink suggestions">
-      <div class="link-card">
-        <div class="link-label">decision</div>
-        <div class="link-value">append to existing note</div>
+              <circle class="pulse-ring" cx="520" cy="252" r="31"/>
+              <g class="central-node">
+                <circle cx="520" cy="252" r="25" fill="#7568ef" stroke="#d8d4ff" stroke-width="6"/>
+                <text x="520" y="294" fill="#493dbb" font-family="Aptos, Segoe UI, sans-serif" font-size="14" font-weight="700" text-anchor="middle">RAG Pipeline</text>
+              </g>
+
+              <g class="graph-node" style="--delay: 7.45s">
+                <circle cx="337" cy="151" r="17" fill="#28a6bb"/>
+                <text x="337" y="125" fill="#176b78" font-family="Aptos, Segoe UI, sans-serif" font-size="12" text-anchor="middle">Vector Search</text>
+              </g>
+              <g class="graph-node" style="--delay: 7.95s">
+                <circle cx="575" cy="112" r="15" fill="#e8a43b"/>
+                <text x="575" y="84" fill="#865a14" font-family="Aptos, Segoe UI, sans-serif" font-size="12" text-anchor="middle">Embeddings</text>
+              </g>
+              <g class="graph-node" style="--delay: 8.45s">
+                <circle cx="758" cy="198" r="17" fill="#d86786"/>
+                <text x="758" y="171" fill="#91364f" font-family="Aptos, Segoe UI, sans-serif" font-size="12" text-anchor="middle">Evaluation</text>
+              </g>
+              <g class="graph-node" style="--delay: 8.95s">
+                <circle cx="704" cy="384" r="16" fill="#32b783"/>
+                <text x="704" y="415" fill="#176847" font-family="Aptos, Segoe UI, sans-serif" font-size="12" text-anchor="middle">Agent Workflows</text>
+              </g>
+              <g class="graph-node" style="--delay: 9.25s">
+                <circle cx="284" cy="347" r="12" fill="#5987ed"/>
+                <text x="284" y="376" fill="#315ba9" font-family="Aptos, Segoe UI, sans-serif" font-size="11" text-anchor="middle">Chunking</text>
+              </g>
+              <g class="graph-node" style="--delay: 9.45s">
+                <circle cx="454" cy="432" r="12" fill="#9f70dc"/>
+                <text x="454" y="460" fill="#6d3fa8" font-family="Aptos, Segoe UI, sans-serif" font-size="11" text-anchor="middle">Knowledge Graphs</text>
+              </g>
+              <g class="graph-node" style="--delay: 9.65s">
+                <circle cx="186" cy="197" r="10" fill="#58bfd0"/>
+                <text x="186" y="174" fill="#247582" font-family="Aptos, Segoe UI, sans-serif" font-size="11" text-anchor="middle">Semantic Search</text>
+              </g>
+              <g class="graph-node" style="--delay: 10.05s">
+                <circle cx="806" cy="104" r="10" fill="#d7bd33"/>
+                <text x="806" y="81" fill="#796a13" font-family="Aptos, Segoe UI, sans-serif" font-size="11" text-anchor="middle">Retrieval Metrics</text>
+              </g>
+              <g class="graph-node" style="--delay: 10.45s">
+                <circle cx="875" cy="326" r="11" fill="#e889a1"/>
+                <text x="875" y="354" fill="#985067" font-family="Aptos, Segoe UI, sans-serif" font-size="11" text-anchor="middle">Prompt Evaluation</text>
+              </g>
+            </svg>
+            <div class="graph-summary">4 backlinks added · 9 notes connected</div>
+          </article>
+        </div>
       </div>
-      <div class="link-card">
-        <div class="link-label">backlinks</div>
-        <div class="link-value">[[Agent Workflows]] +1 suggested</div>
-      </div>
-      <div class="link-card">
-        <div class="link-label">validation</div>
-        <div class="link-value">0 issues, dry-run clean</div>
-      </div>
+
+      <footer class="link-panel" id="link-panel" aria-label="Cobsidian workflow progress">
+        <div class="step">Match existing note</div>
+        <div class="step">Review changes</div>
+        <div class="step">Write safely</div>
+        <div class="step">Grow connections</div>
+      </footer>
     </section>
   </main>
 </body>

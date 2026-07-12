@@ -63,6 +63,11 @@ Detect the host's actual tools before loading only the matching host reference. 
 
 - [Codex](references/hosts/codex.md)
 - [Claude Code](references/hosts/claude-code.md)
+- [Kimi Code](references/hosts/kimi-code.md)
+- [OpenCode](references/hosts/opencode.md)
+- [Pi](references/hosts/pi.md)
+- [Antigravity](references/hosts/antigravity.md)
+- [GitHub Copilot CLI](references/hosts/github-copilot-cli.md)
 - [Cursor](references/hosts/cursor.md)
 - [Hermes](references/hosts/hermes.md)
 - [Generic MCP host](references/hosts/mcp.md)
@@ -83,12 +88,13 @@ Mode defaults apply before duplicate resolution. A requested `granularity=append
 
 1. Detect host tools, map the scan/write capability level, report validation capability independently, and load one host reference.
 2. Resolve the vault and target topic.
-3. Scan existing notes and complete duplicate and backlink checks.
+3. Scan existing notes, build note identities from filename, cleaned H1, frontmatter `title` and `aliases`, and prefix-free core titles, then complete duplicate and backlink checks across all identity candidates.
 4. Select or infer one mode and load one mode reference.
 5. Compute Knowledge Read and the mode-level note plan: `single-note | multi-note | report-only`; split means `multi-note`.
 6. Produce dry-run output with `decision.action`: `create | append | blocked`, then evaluate preflight.
-7. Request or consume approval; write only through an available approved path.
-8. Validate actual changes and report only completed actions.
+7. For local writes, prepare a deterministic patch preview with `write_executor.py prepare`, show the plan ID and diff, and require explicit confirmation of that exact plan ID.
+8. Apply the confirmed plan atomically with `write_executor.py apply`; validate the result, retain the transaction record, and auto-roll back when the write introduces new validation warnings.
+9. Report only completed actions. Use `write_executor.py rollback` with the exact transaction ID when the user requests a safe rollback.
 
 ## Write Rules
 
@@ -98,6 +104,8 @@ Mode defaults apply before duplicate resolution. A requested `granularity=append
 - Prefer durable concepts over chat transcript summaries.
 - Local operational records still use minimum necessary disclosure; redact credentials, tokens, private identifiers, and unnecessary raw log content.
 - Add `[[wiki links]]` only to notes confirmed to exist; report missing targets instead of creating broken links.
+- Treat filename, cleaned H1, frontmatter title and aliases, and prefix-free core titles as one note identity when checking duplicates.
+- Do not bypass the deterministic executor with a direct edit when its local Python path is available. A preview is not approval, and a plan ID is valid only while the target hash is unchanged.
 - Do not fabricate sources, filenames, scans, writes, or validation results.
 - Use stable headings and keep each note responsible for one maintainable knowledge boundary.
 
@@ -116,10 +124,13 @@ Stop and reconsider when any of these thoughts appear:
 ## Helper Scripts
 
 - `scripts/scan_vault.py`: summarize notes, titles, tags, and wiki links.
+- `scripts/note_identity.py`: derive filename, H1, frontmatter, alias, and prefix-free identity candidates.
 - `scripts/find_duplicates.py`: detect duplicate or similar note titles.
 - `scripts/suggest_backlinks.py`: suggest related existing notes.
 - `scripts/validate_notes.py`: report missing wiki links and hygiene issues.
 - `scripts/dry_run.py`: return the zero-write plan, Knowledge Read, and preflight.
+- `scripts/write_executor.py`: preview, confirm, atomically apply, validate, and roll back local writes.
+- `scripts/quality_eval.py`: measure duplicate precision/recall, backlink precision@k, target accuracy, and mode accuracy on labeled JSONL cases.
 - `scripts/knowledge_read.py`: validate mode defaults, evidence, granularity, and display policy.
 - `scripts/preflight.py`: derive readiness and deterministic blocked reasons.
 
@@ -138,3 +149,4 @@ End with:
 - capability level, preflight readiness, and every blocked reason
 - duplicate checks and backlink decisions
 - validation result, or the exact reason validation was unavailable
+- write plan ID and transaction status for local writes, including whether validation triggered an automatic rollback

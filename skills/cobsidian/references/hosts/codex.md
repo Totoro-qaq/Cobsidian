@@ -19,7 +19,7 @@ Record the selected level through [preflight](../preflight.md); never promote th
 
 ## Execution Path
 
-Map exposed Codex shell and file-edit calls to the local helper scripts only after capability detection. Prefer Cobsidian MCP resource and dry-run calls for read-only retrieval when they are advertised. For a local path, run scan, duplicate, backlink, dry-run, approved edit, and validation in that order.
+Map exposed Codex CLI shell and file calls to the local helper scripts only after capability detection. Prefer Cobsidian MCP resources and dry-run calls for read-only retrieval when they are advertised. For a local write, run scan, identity-aware duplicate and backlink checks, dry-run, `write_executor.py prepare`, exact plan-ID confirmation, `write_executor.py apply`, and validation in that order. Do not replace the executor with an untracked direct edit when Python execution is available.
 
 ## Degradation
 

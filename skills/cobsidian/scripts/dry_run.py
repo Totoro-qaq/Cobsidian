@@ -7,18 +7,34 @@ from dataclasses import asdict, dataclass
 from difflib import SequenceMatcher
 from pathlib import Path
 
-from cobsidian_config import CobsidianConfig, load_config, resolve_vault_path
-from knowledge_read import (
-    DEPTHS,
-    DISPLAY_POLICIES,
-    EVIDENCE_LEVELS,
-    GRANULARITIES,
-    MODES,
-    build_knowledge_read,
-)
-from preflight import CAPABILITY_LEVELS, build_preflight, validated_capability
-from retrieval import build_query, build_search_documents, rank_backlinks
-from scan_vault import NoteInfo, read_text, scan_vault
+try:
+    from cobsidian_config import CobsidianConfig, load_config, resolve_vault_path
+    from knowledge_read import (
+        DEPTHS,
+        DISPLAY_POLICIES,
+        EVIDENCE_LEVELS,
+        GRANULARITIES,
+        MODES,
+        build_knowledge_read,
+    )
+    from preflight import CAPABILITY_LEVELS, build_preflight, validated_capability
+    from retrieval import build_query, build_search_documents, rank_backlinks
+    from scan_vault import NoteInfo, read_text, scan_vault
+    from note_identity import normalize_title, note_candidate_titles, query_candidate_titles
+except ModuleNotFoundError:
+    from .cobsidian_config import CobsidianConfig, load_config, resolve_vault_path
+    from .knowledge_read import (
+        DEPTHS,
+        DISPLAY_POLICIES,
+        EVIDENCE_LEVELS,
+        GRANULARITIES,
+        MODES,
+        build_knowledge_read,
+    )
+    from .preflight import CAPABILITY_LEVELS, build_preflight, validated_capability
+    from .retrieval import build_query, build_search_documents, rank_backlinks
+    from .scan_vault import NoteInfo, read_text, scan_vault
+    from .note_identity import normalize_title, note_candidate_titles, query_candidate_titles
 
 
 @dataclass(frozen=True)
@@ -27,11 +43,8 @@ class DuplicateRisk:
     path: str
     score: float
     kind: str
-
-
-def normalize_title(title: str) -> str:
-    lowered = title.casefold()
-    return re.sub(r"[^a-z0-9\u4e00-\u9fff]+", "", lowered)
+    matched_title: str
+    match_basis: str
 
 
 def safe_filename(title: str) -> str:
@@ -46,19 +59,57 @@ def choose_target_path(topic: str, mode: str | None, config: CobsidianConfig) ->
 
 
 def find_duplicate_risks(topic: str, notes: list[NoteInfo], threshold: float) -> list[DuplicateRisk]:
-    normalized_topic = normalize_title(topic)
+    query_titles = query_candidate_titles(topic)
+    normalized_queries = {
+        normalize_title(candidate): candidate
+        for candidate in query_titles
+        if normalize_title(candidate)
+    }
     risks: list[DuplicateRisk] = []
     for note in notes:
-        normalized_title = normalize_title(note.title)
-        if not normalized_title:
+        note_titles = note_candidate_titles(note)
+        normalized_note_titles = {
+            normalize_title(candidate): candidate
+            for candidate in note_titles
+            if normalize_title(candidate)
+        }
+        if not normalized_note_titles:
             continue
-        if normalized_title == normalized_topic:
-            risks.append(DuplicateRisk(title=note.title, path=note.path, score=1.0, kind="exact"))
+        shared = sorted(set(normalized_queries) & set(normalized_note_titles))
+        if shared:
+            matched = shared[0]
+            risks.append(
+                DuplicateRisk(
+                    title=note.title,
+                    path=note.path,
+                    score=1.0,
+                    kind="exact",
+                    matched_title=normalized_note_titles[matched],
+                    match_basis="identity-exact",
+                )
+            )
             continue
-        score = SequenceMatcher(None, normalized_topic, normalized_title).ratio()
+        best_score = 0.0
+        best_title = note.title
+        for normalized_query in normalized_queries:
+            for normalized_note, note_title in normalized_note_titles.items():
+                score = SequenceMatcher(None, normalized_query, normalized_note).ratio()
+                if score > best_score:
+                    best_score = score
+                    best_title = note_title
+        score = best_score
         if score >= threshold:
-            risks.append(DuplicateRisk(title=note.title, path=note.path, score=round(score, 4), kind="similar"))
-    return sorted(risks, key=lambda risk: risk.score, reverse=True)
+            risks.append(
+                DuplicateRisk(
+                    title=note.title,
+                    path=note.path,
+                    score=round(score, 4),
+                    kind="similar",
+                    matched_title=best_title,
+                    match_basis="identity-similar",
+                )
+            )
+    return sorted(risks, key=lambda risk: (-risk.score, risk.path.casefold()))
 
 
 def choose_decision(topic: str, mode: str | None, notes: list[NoteInfo], config: CobsidianConfig) -> dict[str, str]:

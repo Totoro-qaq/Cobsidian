@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import sys
-from collections import defaultdict
 from dataclasses import asdict
 from pathlib import Path
 from typing import Annotated, Any, Literal
@@ -25,7 +24,7 @@ from dry_run import find_duplicate_risks  # noqa: E402
 from preflight import validated_capability  # noqa: E402
 from retrieval import build_query, build_search_documents, rank_backlinks  # noqa: E402
 from scan_vault import NoteInfo, read_text, scan_vault  # noqa: E402
-from validate_notes import extract_wikilinks  # noqa: E402
+from validate_notes import validate_vault  # noqa: E402
 
 
 SERVER_NAME = "cobsidian"
@@ -222,28 +221,7 @@ def tool_cobsidian_suggest_backlinks(
 
 def tool_cobsidian_validate_notes(vault: str | None = None, config: str | None = None) -> dict[str, Any]:
     vault_path, loaded_config = resolve_vault_from_inputs(vault=vault, config=config)
-    notes = scan_vault(vault_path)
-    title_to_paths: dict[str, list[str]] = defaultdict(list)
-    known_targets: set[str] = set()
-    warnings: list[str] = []
-
-    for note in notes:
-        title_to_paths[note.title].append(note.path)
-        known_targets.add(note.title)
-        known_targets.add(Path(note.path).stem)
-        known_targets.add(note.path.removesuffix(".md"))
-
-    for title, paths in sorted(title_to_paths.items()):
-        if len(paths) > 1:
-            warnings.append(f"Duplicate title '{title}': {', '.join(paths)}")
-
-    for note in notes:
-        text = read_text(vault_path / note.path)
-        if not text.strip():
-            warnings.append(f"Empty note: {note.path}")
-        for target in extract_wikilinks(text):
-            if target not in known_targets:
-                warnings.append(f"Missing wikilink target in {note.path}: [[{target}]]")
+    warnings = validate_vault(vault_path)
 
     return {
         "vault": str(vault_path),

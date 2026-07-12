@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import math
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
@@ -28,6 +29,18 @@ STOPWORDS = {
     "note",
     "notes",
 }
+CJK_STOPWORDS = {
+    "一个",
+    "什么",
+    "内容",
+    "如何",
+    "学习",
+    "整理",
+    "相关",
+    "知识",
+    "笔记",
+    "这个",
+}
 
 
 @dataclass(frozen=True)
@@ -35,13 +48,16 @@ class SearchDocument:
     title: str
     path: str
     text: str
+    aliases: tuple[str, ...] = ()
+    identity_titles: tuple[str, ...] = ()
+    metadata: str = ""
 
 
 @dataclass(frozen=True)
 class RankedBacklink:
     title: str
     path: str
-    score: int
+    score: float
 
 
 class NoteLike(Protocol):
@@ -74,7 +90,9 @@ def tokenize(text: str) -> Counter[str]:
         if token.casefold() not in STOPWORDS
     ]
     for run in CJK_RUN_RE.findall(text):
-        tokens.extend(cjk_ngrams(run))
+        tokens.extend(
+            token for token in cjk_ngrams(run) if token not in CJK_STOPWORDS
+        )
     return Counter(tokens)
 
 
@@ -102,7 +120,10 @@ def build_search_documents(
         yield SearchDocument(
             title=note.title,
             path=note.path,
-            text=f"{metadata}\n{body}",
+            text=body,
+            aliases=tuple(getattr(note, "aliases", ())),
+            identity_titles=tuple(getattr(note, "identity_titles", ())),
+            metadata=metadata,
         )
 
 
@@ -115,22 +136,80 @@ def rank_backlinks(
     if not 1 <= limit <= MAX_BACKLINK_LIMIT:
         raise ValueError(f"limit must be between 1 and {MAX_BACKLINK_LIMIT}.")
     query_tokens = tokenize(query)
+    query_terms = set(query_tokens)
     excluded = excluded_paths or set()
-    ranked: list[RankedBacklink] = []
+    candidates: list[
+        tuple[
+            SearchDocument,
+            Counter[str],
+            Counter[str],
+            Counter[str],
+            Counter[str],
+        ]
+    ] = []
+    document_frequency: Counter[str] = Counter()
+    document_count = 0
     for document in documents:
         if document.path in excluded:
             continue
-        document_tokens = tokenize(f"{document.title}\n{document.text}")
-        score = score_tokens(query_tokens, document_tokens)
-        if score > 0:
-            ranked.append(
-                RankedBacklink(
-                    title=document.title,
-                    path=document.path,
-                    score=score,
-                )
+        document_count += 1
+        title_tokens = tokenize(
+            "\n".join((document.title, *document.identity_titles))
+        )
+        alias_tokens = tokenize("\n".join(document.aliases))
+        metadata_tokens = tokenize(document.metadata)
+        body_tokens = tokenize(document.text)
+        present_terms = {
+            term
+            for term in query_terms
+            if title_tokens[term]
+            or alias_tokens[term]
+            or metadata_tokens[term]
+            or body_tokens[term]
+        }
+        if not present_terms:
+            continue
+        document_frequency.update(present_terms)
+        candidates.append(
+            (
+                document,
+                title_tokens,
+                alias_tokens,
+                metadata_tokens,
+                body_tokens,
             )
-            ranked.sort(key=lambda item: (-item.score, item.path.casefold()))
-            if len(ranked) > limit:
-                ranked.pop()
+        )
+
+    ranked: list[RankedBacklink] = []
+    for document, title_tokens, alias_tokens, metadata_tokens, body_tokens in candidates:
+        score = 0.0
+        for term, query_count in query_tokens.items():
+            if not (
+                title_tokens[term]
+                or alias_tokens[term]
+                or metadata_tokens[term]
+                or body_tokens[term]
+            ):
+                continue
+            inverse_document_frequency = math.log(
+                (document_count + 1) / (document_frequency[term] + 0.5)
+            ) + 1.0
+            query_weight = 1.0 + math.log1p(query_count)
+            field_weight = (
+                6.0 * min(1, title_tokens[term])
+                + 5.0 * min(1, alias_tokens[term])
+                + 2.5 * min(1, metadata_tokens[term])
+                + 1.0 * min(2, body_tokens[term])
+            )
+            score += inverse_document_frequency * query_weight * field_weight
+        ranked.append(
+            RankedBacklink(
+                title=document.title,
+                path=document.path,
+                score=round(score, 4),
+            )
+        )
+        ranked.sort(key=lambda item: (-item.score, item.path.casefold()))
+        if len(ranked) > limit:
+            ranked.pop()
     return ranked

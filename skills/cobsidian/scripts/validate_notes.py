@@ -5,35 +5,21 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
-from cobsidian_config import load_config, resolve_vault_path
+try:
+    from cobsidian_config import load_config, resolve_vault_path
+    from note_identity import build_note_identity
+    from scan_vault import iter_markdown_files, read_text
+except ModuleNotFoundError:
+    from .cobsidian_config import load_config, resolve_vault_path
+    from .note_identity import build_note_identity
+    from .scan_vault import iter_markdown_files, read_text
 
 
 WIKILINK_RE = re.compile(r"\[\[([^\]]+)\]\]")
 
 
-def iter_markdown_files(vault_path: Path) -> list[Path]:
-    ignored_dirs = {".obsidian", ".git", "__pycache__", ".trash"}
-    return sorted(
-        path
-        for path in vault_path.rglob("*.md")
-        if path.is_file() and not any(part in ignored_dirs for part in path.parts)
-    )
-
-
-def read_text(path: Path) -> str:
-    try:
-        return path.read_text(encoding="utf-8")
-    except UnicodeDecodeError:
-        return path.read_text(encoding="utf-8", errors="replace")
-
-
 def extract_title(path: Path, text: str) -> str:
-    for line in text.splitlines():
-        if line.startswith("# "):
-            title = line[2:].strip()
-            if title:
-                return title
-    return path.stem
+    return build_note_identity(path, text).display_title
 
 
 def extract_wikilinks(text: str) -> list[str]:
@@ -45,20 +31,8 @@ def extract_wikilinks(text: str) -> list[str]:
     return links
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate basic Obsidian Markdown note hygiene.")
-    parser.add_argument("vault", nargs="?", type=Path)
-    parser.add_argument("--config", type=Path, help="Path to cobsidian.config.yml.")
-    parser.add_argument("--strict", action="store_true", help="Exit non-zero when warnings are found.")
-    args = parser.parse_args()
-
-    config = load_config(args.config)
-    vault_path = resolve_vault_path(args.vault, config)
-    strict = args.strict or config.validation_strict
-    if not vault_path.exists() or not vault_path.is_dir():
-        raise SystemExit(f"Vault path does not exist or is not a directory: {vault_path}")
-
-    files = iter_markdown_files(vault_path)
+def validate_vault(vault_path: Path) -> list[str]:
+    files = sorted(iter_markdown_files(vault_path))
     title_to_paths: dict[str, list[str]] = defaultdict(list)
     known_targets: set[str] = set()
     texts: dict[Path, str] = {}
@@ -66,10 +40,11 @@ def main() -> int:
     for path in files:
         text = read_text(path)
         texts[path] = text
-        title = extract_title(path, text)
+        identity = build_note_identity(path, text)
+        title = identity.display_title
         relative_path = path.relative_to(vault_path).as_posix()
         title_to_paths[title].append(relative_path)
-        known_targets.add(title)
+        known_targets.update(identity.candidate_titles)
         known_targets.add(path.stem)
         known_targets.add(relative_path.removesuffix(".md"))
 
@@ -85,6 +60,24 @@ def main() -> int:
         for target in extract_wikilinks(text):
             if target not in known_targets:
                 warnings.append(f"Missing wikilink target in {relative_path}: [[{target}]]")
+
+    return warnings
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Validate basic Obsidian Markdown note hygiene.")
+    parser.add_argument("vault", nargs="?", type=Path)
+    parser.add_argument("--config", type=Path, help="Path to cobsidian.config.yml.")
+    parser.add_argument("--strict", action="store_true", help="Exit non-zero when warnings are found.")
+    args = parser.parse_args()
+
+    config = load_config(args.config)
+    vault_path = resolve_vault_path(args.vault, config)
+    strict = args.strict or config.validation_strict
+    if not vault_path.exists() or not vault_path.is_dir():
+        raise SystemExit(f"Vault path does not exist or is not a directory: {vault_path}")
+
+    warnings = validate_vault(vault_path)
 
     if warnings:
         print("Warnings:")

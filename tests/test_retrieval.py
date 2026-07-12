@@ -50,6 +50,29 @@ class RetrievalTests(unittest.TestCase):
 
         self.assertEqual(["a-note.md", "z-note.md"], [item.path for item in ranked])
 
+    def test_identity_title_weight_beats_generic_body_overlap(self) -> None:
+        documents = [
+            SearchDocument(
+                title="General Interview Bank",
+                path="interviews.md",
+                text="RAG 向量数据库 学习 笔记 检索 系统 相关问题",
+            ),
+            SearchDocument(
+                title="RAG 检索管线学习笔记",
+                path="学习-RAG检索管线.md",
+                text="检索增强生成。",
+                identity_titles=("学习-RAG检索管线", "RAG检索管线"),
+            ),
+        ]
+
+        ranked = rank_backlinks(
+            "RAG检索管线 整理学习笔记",
+            documents,
+            limit=2,
+        )
+
+        self.assertEqual("学习-RAG检索管线.md", ranked[0].path)
+
     def test_prose_punctuation_does_not_change_tokens(self) -> None:
         self.assertEqual(tokenize("SQLite"), tokenize("SQLite."))
         self.assertNotIn("##", tokenize("## Markdown heading"))

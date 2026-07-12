@@ -70,7 +70,22 @@ The server registers read/planning tools only:
 | `cobsidian_validate_notes` | Report missing wiki links, duplicate titles, and empty notes. |
 | `cobsidian_dry_run` | Plan create/append behavior without writing files. |
 
-There is intentionally no write tool yet. Write workflows should go through dry-run first and require user confirmation in the host.
+There is intentionally no MCP write tool. A write-capable host may use the separate local deterministic executor after MCP planning; the server itself remains read-only.
+
+## Companion Local Writer
+
+When the host has approved shell access, use this sequence outside MCP:
+
+```bash
+python skills/cobsidian/scripts/write_executor.py prepare /path/to/vault \
+  --action append --target-note "RAG.md" --content-file draft.md \
+  --plan-out /tmp/cobsidian-plan.json
+
+python skills/cobsidian/scripts/write_executor.py apply /path/to/vault \
+  --plan /tmp/cobsidian-plan.json --confirm PLAN_ID --json
+```
+
+`prepare` writes only the plan file and prints a unified diff plus integrity-derived plan ID. `apply` requires that exact ID, rejects stale target hashes, writes with atomic replacement, validates the vault, and automatically restores the previous note when the change introduces new warnings. Transactions live under the vault's private `.cobsidian/transactions/` directory and can be reverted with the `rollback` subcommand when the target has not changed since apply.
 
 ## Adaptive Dry-run Contract
 

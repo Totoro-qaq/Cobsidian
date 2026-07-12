@@ -35,8 +35,13 @@ Possessing a tool is not evidence that a check completed. Preflight fields refle
 
 | Host family | Adapter reference | Notes |
 |---|---|---|
-| Codex | [Codex](../skills/cobsidian/references/hosts/codex.md) | Detect MCP, shell, edit, and validation paths independently. |
-| Claude Code / OpenCode | [Claude Code](../skills/cobsidian/references/hosts/claude-code.md) | Use only tools exposed in the current session. |
+| Codex CLI | [Codex](../skills/cobsidian/references/hosts/codex.md) | Discover from `.agents/skills`; combine optional read-only MCP with the deterministic local writer. |
+| Claude Code CLI | [Claude Code](../skills/cobsidian/references/hosts/claude-code.md) | Discover from `.claude/skills`; use only tools exposed in the current session. |
+| Kimi Code | [Kimi Code](../skills/cobsidian/references/hosts/kimi-code.md) | Discover the skill, then detect local and optional MCP paths independently. |
+| OpenCode | [OpenCode](../skills/cobsidian/references/hosts/opencode.md) | Use `.agents/skills` plus an optional local MCP entry. |
+| Pi | [Pi](../skills/cobsidian/references/hosts/pi.md) | Prefer its local tools; MCP is extension-provided, not a Pi core feature. |
+| Antigravity | [Antigravity](../skills/cobsidian/references/hosts/antigravity.md) | Use workspace `.agents/skills` or the documented global skill path. |
+| GitHub Copilot CLI | [GitHub Copilot CLI](../skills/cobsidian/references/hosts/github-copilot-cli.md) | Discover from `.agents/skills`; keep CLI approval separate from plan confirmation. |
 | Cursor | [Cursor](../skills/cobsidian/references/hosts/cursor.md) | Treat editor and terminal access as separately detected capabilities. |
 | Hermes | [Hermes](../skills/cobsidian/references/hosts/hermes.md) | Map the registered workflow and tools before execution. |
 | Generic MCP host | [MCP](../skills/cobsidian/references/hosts/mcp.md) | Cobsidian's server is a zero-write inspection and planning surface. |
@@ -51,8 +56,9 @@ Any compatible host must preserve these rules:
 2. Scan before proposing a write when scan capability exists.
 3. Keep `decision.action` to `create | append | blocked`; report split separately as a `multi-note` plan.
 4. Prefer append over a near-duplicate and link only to confirmed notes.
-5. Dry-run by default, request approval before local edits, and report actual validation evidence.
-6. Keep private paths, secrets, and raw chat logs out of public or generic notes.
+5. Build one note identity from filename, cleaned H1, frontmatter title and aliases, and prefix-free core titles.
+6. Dry-run by default; for local writes require `prepare → exact plan-ID confirmation → atomic apply → validate`, with rollback support.
+7. Keep private paths, secrets, and raw chat logs out of public or generic notes.
 
 ## Suggested Prompt
 

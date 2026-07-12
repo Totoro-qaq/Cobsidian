@@ -9,6 +9,17 @@ Use this page after you have installed the product you want to use. For product 
 - Codex CLI: <https://developers.openai.com/codex/cli>
 - Codex skills: <https://developers.openai.com/codex/skills>
 - Codex MCP and configuration docs: <https://developers.openai.com/codex/mcp>
+- Kimi Code skills: <https://moonshotai.github.io/kimi-code/en/customization/skills>
+- Kimi Code MCP: <https://moonshotai.github.io/kimi-code/en/customization/mcp>
+- OpenCode skills: <https://opencode.ai/docs/skills>
+- OpenCode MCP servers: <https://opencode.ai/docs/mcp-servers>
+- Pi coding agent: <https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent>
+- Antigravity skills: <https://antigravity.google/docs/skills>
+- Antigravity MCP: <https://antigravity.google/docs/mcp>
+- GitHub Copilot CLI skills: <https://docs.github.com/en/enterprise-cloud@latest/copilot/how-tos/copilot-cli/customize-copilot/add-skills>
+- GitHub Copilot CLI command reference: <https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference>
+- Claude Code skills: <https://code.claude.com/docs/en/slash-commands>
+- Claude Code MCP: <https://code.claude.com/docs/en/mcp>
 - Obsidian vault management: <https://obsidian.md/help/manage-vaults>
 - Obsidian Brand Guidelines: <https://obsidian.md/brand>
 
@@ -52,9 +63,28 @@ python skills/cobsidian/scripts/dry_run.py --config cobsidian.config.yml --topic
 
 Keep private vault contents out of GitHub issues, screenshots, sample prompts, and bug reports.
 
-## Use As A Codex Skill
+## Install For Supported CLIs
 
-First install and configure Codex from the official Codex docs. Then copy Cobsidian's skill directory into your local Codex skills directory.
+The checked-in installer maps Cobsidian to the documented user or project discovery path for Kimi Code, OpenCode, Pi, Antigravity, GitHub Copilot CLI, Codex CLI, and Claude Code CLI. Preview before copying:
+
+```bash
+python install_cobsidian.py --host all --scope user --dry-run --json
+python install_cobsidian.py --host all --scope user
+```
+
+Use `--scope project --project /path/to/workspace` for a workspace-local install. Pass `--symlink` for a development checkout or `--force` to replace an existing installation explicitly. Shared hosts collapse into one `~/.agents/skills/cobsidian` copy; Antigravity and Claude Code use their distinct global paths.
+
+| CLI | User skill path | Project skill path | MCP support |
+|---|---|---|---|
+| Kimi Code | `~/.agents/skills/cobsidian` | `.agents/skills/cobsidian` | Native local stdio MCP |
+| OpenCode | `~/.agents/skills/cobsidian` | `.agents/skills/cobsidian` | Native local MCP in `opencode.json` |
+| Pi | `~/.agents/skills/cobsidian` | `.agents/skills/cobsidian` | No built-in MCP; extension only |
+| Antigravity | `~/.gemini/config/skills/cobsidian` | `.agents/skills/cobsidian` | Native global/workspace MCP config |
+| GitHub Copilot CLI | `~/.agents/skills/cobsidian` | `.agents/skills/cobsidian` | Native local stdio MCP |
+| Codex CLI | `~/.agents/skills/cobsidian` | `.agents/skills/cobsidian` | Native local stdio MCP |
+| Claude Code CLI | `~/.claude/skills/cobsidian` | `.claude/skills/cobsidian` | Native local stdio MCP |
+
+You can still copy a single Codex-compatible skill manually:
 
 Linux or macOS:
 
@@ -70,9 +100,9 @@ New-Item -ItemType Directory -Force "$env:USERPROFILE\.agents\skills" | Out-Null
 Copy-Item -Recurse -Force .\skills\cobsidian "$env:USERPROFILE\.agents\skills\cobsidian"
 ```
 
-Codex currently documents `$HOME/.agents/skills` for user skills. Some local or older Codex builds may scan `$HOME/.codex/skills`; use the skills directory shown by your Codex surface.
+Codex, Kimi Code, OpenCode, Pi, and GitHub Copilot CLI all document the shared `.agents/skills` convention. Product-specific directories may also be supported; the installer deliberately chooses the smallest portable set.
 
-Start a new Codex session and ask for Cobsidian explicitly:
+Start a new CLI session and ask for Cobsidian explicitly:
 
 ```text
 Use Cobsidian to organize this material into my Obsidian vault.
@@ -117,6 +147,17 @@ Configure your MCP host with an absolute path:
 ```
 
 Different hosts store MCP configuration in different places. Keep the server block the same and adapt only the host-specific wrapper.
+
+Recommended host setup:
+
+- Kimi Code: `kimi mcp add --env COBSIDIAN_CONFIG=/absolute/path/to/cobsidian.config.yml cobsidian -- python /absolute/path/to/Cobsidian/skills/cobsidian/mcp_server.py`
+- OpenCode: add the same Python command as a `type: "local"` server under the `mcp` key in `opencode.json`.
+- Antigravity: place the server in global `~/.gemini/config/mcp_config.json` or workspace `.agents/mcp_config.json`.
+- GitHub Copilot CLI: use `copilot mcp add cobsidian --env COBSIDIAN_CONFIG=/absolute/path/to/cobsidian.config.yml -- python /absolute/path/to/Cobsidian/skills/cobsidian/mcp_server.py`.
+- Codex CLI: use `codex mcp add cobsidian --env COBSIDIAN_CONFIG=/absolute/path/to/cobsidian.config.yml -- python /absolute/path/to/Cobsidian/skills/cobsidian/mcp_server.py`.
+- Claude Code CLI: use `claude mcp add --transport stdio --scope user --env COBSIDIAN_CONFIG=/absolute/path/to/cobsidian.config.yml cobsidian -- python /absolute/path/to/Cobsidian/skills/cobsidian/mcp_server.py`.
+- Pi: use the local scripts and deterministic writer by default. Only configure MCP through a Pi extension that explicitly implements it.
+
 
 See [MCP Server](mcp-server.md) for registered tools, resources, prompts, and safety notes.
 
