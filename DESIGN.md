@@ -5,7 +5,9 @@
 
 ## Aesthetic Direction
 
-Light Codex-like workbench: warm neutral surface, restrained glass panels, small violet wiki-link accents, and knowledge-vault semantics without vendor logos.
+A reviewable knowledge transaction on a quiet desktop workbench: cool neutral surfaces, precise violet identity accents, and real plan/patch artifacts instead of generic AI imagery or vendor logos.
+
+The public README tells the safety story in this order: visible product proof, one executable dry run, the decision contract, then deeper reference material. The banner is a compact transaction receipt—target note, action, patch, and suggested links—rather than a decorative knowledge-graph poster.
 
 ## Dials
 
@@ -63,6 +65,7 @@ Use abstract note-link diagrams with concrete note titles (e.g., three connected
 
 ## Last Updated
 
+2026-07-15: Rebuilt the README around proof-first product storytelling and redesigned the banner as a deterministic dry-run receipt.
 2026-07-12: Kept the established visual system, refreshed banner copy, and changed the demo narrative to the deterministic transaction workflow.
 2026-07-08: Replaced abstract [[ ]] marks with concrete knowledge-graph nodes in banner and demo. Added macOS font fallbacks. Improved demo content to show real knowledge notes instead of product meta-descriptions.
 2026-07-07: Added recording-safe pseudo-terminal and Obsidian note demo direction.

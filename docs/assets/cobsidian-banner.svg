@@ -1,14 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" role="img" width="1200" height="360" viewBox="0 0 1200 360">
+<svg xmlns="http://www.w3.org/2000/svg" role="img" width="1200" height="360" viewBox="0 0 1200 360" aria-describedby="desc">
   <title>Cobsidian banner</title>
-  <desc>A minimal light banner for Cobsidian: maintain a linked Obsidian vault with your coding agent.</desc>
+  <desc id="desc">A minimal light banner for Cobsidian: plan, review, and safely write linked knowledge with your coding agent.</desc>
   <style>
     .display {
-      font-family: "Helvetica Neue", Helvetica, "Aptos Display", "Segoe UI Variable Display", sans-serif;
-      font-weight: 650;
+      font-family: "Aptos Display", "SF Pro Display", "Segoe UI Variable Display", "Helvetica Neue", sans-serif;
+      font-weight: 700;
       letter-spacing: -0.035em;
     }
     .body {
-      font-family: "Aptos", "Segoe UI Variable", "Segoe UI", sans-serif;
+      font-family: "Aptos", "SF Pro Text", "Segoe UI Variable", "Helvetica Neue", sans-serif;
+    }
+    .utility {
+      font-family: "Cascadia Code", "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+      font-weight: 650;
+      letter-spacing: 0.06em;
     }
     .signature-edge {
       fill: none;
@@ -19,34 +24,63 @@
     }
   </style>
 
-  <rect width="1200" height="360" rx="16" fill="#eef0f5"/>
-  <path d="M812 0 H1184 Q1200 0 1200 16 V344 Q1200 360 1184 360 H748 Z" fill="#eceafd"/>
+  <rect width="1200" height="360" rx="16" fill="#f3f4f8"/>
+  <path d="M0 36H1200M0 324H1200" stroke="#d9dce7"/>
+  <rect x="34" y="35" width="4" height="290" rx="2" fill="#6254f3"/>
 
-  <g transform="translate(74 78)">
+  <g transform="translate(76 62)">
     <g class="linked-note-mark" aria-label="Cobsidian linked-note mark">
-      <rect width="44" height="56" rx="7" fill="none" stroke="#6254f3" stroke-width="2.4"/>
-      <rect x="18" y="12" width="44" height="56" rx="7" fill="none" stroke="#1d1e27" stroke-width="2.4"/>
-      <path d="M13 37 H48" fill="none" stroke="#6254f3" stroke-width="2.4" stroke-dasharray="4 4"/>
+      <rect x="0" y="0" width="38" height="48" rx="6" fill="#f3f4f8" stroke="#6254f3" stroke-width="2.4"/>
+      <rect x="16" y="12" width="38" height="48" rx="6" fill="#ffffff" stroke="#262836" stroke-width="2.4"/>
+      <path d="M11 32H43" stroke="#6254f3" stroke-width="2.4" stroke-dasharray="4 4"/>
     </g>
 
-    <text x="0" y="143" class="display" fill="#1d1e27" font-size="90">Cobsidian</text>
-    <text x="3" y="190" class="body" fill="#424655" font-size="23">Maintain a linked Obsidian vault with your coding agent.</text>
+    <text x="0" y="143" class="display" fill="#262836" font-size="90">Cobsidian</text>
+    <text x="3" y="187" class="body" fill="#4f5364" font-size="22">Maintain a linked Obsidian vault with your coding agent.</text>
+
+    <g transform="translate(3 224)" class="utility" font-size="10">
+      <text fill="#6254f3">SEARCH</text>
+      <circle cx="69" cy="-3" r="3" fill="#aeb2c0"/>
+      <text x="84" fill="#4f5364">PLAN</text>
+      <circle cx="134" cy="-3" r="3" fill="#aeb2c0"/>
+      <text x="149" fill="#4f5364">CONFIRM</text>
+      <circle cx="224" cy="-3" r="3" fill="#aeb2c0"/>
+      <text x="239" fill="#4f5364">WRITE</text>
+      <circle cx="289" cy="-3" r="3" fill="#aeb2c0"/>
+      <text x="304" fill="#4f5364">VALIDATE</text>
+    </g>
   </g>
 
-  <g transform="translate(840 62)" aria-label="One note growing into useful connections">
-    <path d="M91 117 C139 117 143 72 194 72" class="signature-edge"/>
-    <path d="M91 117 C139 117 145 117 221 117" class="signature-edge"/>
-    <path d="M91 117 C139 117 143 163 194 163" class="signature-edge"/>
+  <g transform="translate(720 48)" class="body">
+    <rect width="418" height="264" rx="12" fill="#ffffff" stroke="#cfd3df" stroke-width="1.5"/>
+    <path d="M0 48H418M0 213H418" stroke="#d9dce7"/>
 
-    <g transform="translate(12 72)">
-      <rect width="78" height="98" rx="12" fill="#ffffff" stroke="#6254f3" stroke-width="2.5"/>
-      <rect x="16" y="14" width="78" height="98" rx="12" fill="#f9f9fd" stroke="#1d1e27" stroke-width="2.5"/>
-      <path d="M31 47 H79 M31 64 H70 M31 81 H60" fill="none" stroke="#8a8e9b" stroke-width="2" stroke-linecap="round"/>
-      <circle cx="79" cy="97" r="7" fill="#6254f3"/>
+    <g transform="translate(22 20)" class="utility" font-size="10">
+      <circle cx="5" cy="4" r="5" fill="#6254f3"/>
+      <text x="19" y="8" fill="#4f5364">DRY RUN · PLAN 8F3A</text>
+      <text x="374" y="8" text-anchor="end" fill="#32a578">READY</text>
     </g>
 
-    <circle cx="204" cy="72" r="13" fill="#28a6bb"/>
-    <circle cx="231" cy="117" r="13" fill="#e8a43b"/>
-    <circle cx="204" cy="163" r="13" fill="#32b783"/>
+    <g transform="translate(24 70)">
+      <text class="utility" fill="#777b8b" font-size="9">TARGET NOTE</text>
+      <text y="25" fill="#262836" font-size="17" font-weight="700">AI Conversations.md</text>
+      <rect x="305" y="1" width="87" height="27" rx="5" fill="#efedff"/>
+      <text x="348.5" y="19" text-anchor="middle" class="utility" fill="#6254f3" font-size="9">APPEND</text>
+
+      <g transform="translate(0 55)">
+        <rect width="370" height="77" rx="7" fill="#f6f7fa"/>
+        <rect x="14" y="14" width="4" height="49" rx="2" fill="#6254f3"/>
+        <path d="M31 20H226M31 37H331M31 54H274" stroke="#9b9fad" stroke-width="3" stroke-linecap="round"/>
+        <path d="M31 20H139" stroke="#6254f3" stroke-width="3" stroke-linecap="round"/>
+      </g>
+    </g>
+
+    <g transform="translate(24 231)" aria-label="One note growing into useful connections">
+      <text class="utility" fill="#777b8b" font-size="9">SUGGESTED LINKS</text>
+      <path d="M129 2C169 2 175 2 212 2M212 2C243 2 247 -8 273 -8M212 2C243 2 247 12 303 12" class="signature-edge"/>
+      <circle cx="273" cy="-8" r="7" fill="#28a6bb"/>
+      <circle cx="303" cy="12" r="7" fill="#e8a43b"/>
+      <circle cx="212" cy="2" r="7" fill="#32b783"/>
+    </g>
   </g>
 </svg>
