@@ -25,7 +25,7 @@ Cobsidian 使用 natural-language routing（自然语言路由），用户不需
 | 对比方案并明确展示取舍 | `comparison` | `standard` | `single-note` | [对比模式](../skills/cobsidian/references/modes/comparison.md) |
 | 创建主题总览、知识地图、学习路线或导航页 | `index` | `deep` | `multi-note` | [索引模式](../skills/cobsidian/references/modes/index.md) |
 | 尽量不打断当前工作，快速保存有价值的粗糙材料 | `capture` | `capture` | `single-note` | [捕获模式](../skills/cobsidian/references/modes/capture.md) |
-| 从工具、仓库、skill、prompt 或工作流提取内部机制与可复用模式 | `dissection` | `deep` | `multi-note` | [拆解模式](../skills/cobsidian/references/modes/dissection.md) |
+| 解释一个产品或技术为什么出现、如何产生效果、采用后改变了什么，以及它在同类与演进路线中的优势从何而来 | `dissection` | `deep` | `multi-note` | [拆解模式](../skills/cobsidian/references/modes/dissection.md) |
 
 这些默认值会进入 Knowledge Read。证据级别仍从 `conversation` 开始。证据升级必须提交 host-completed facts（host 已完成动作的事实）：`source-grounded` 要求 `source_read_completed=true`，`verified` 同时要求 `source_read_completed=true` 和 `verification_completed=true`。模式选择或用户声称都不会自动升级证据。
 
@@ -46,6 +46,6 @@ Dry-run 的机器动作和 mode-level note plan 是两份不同契约：
 - `comparison`：由明确取舍支撑的简洁结论。
 - `index`：可导航的链接和已有笔记阅读路径。
 - `capture`：简短、可检索，并明确留待后续整理的记录。
-- `dissection`：入口、内部流程、证据、可复用模式和边界。
+- `dissection`：原问题与原状态、解决思路、因果机制、采用后的变化、横向竞品、纵向演进、有证据支撑的独特优势、取舍与可复用模式。
 
 详细标题、证据规则、拆分条件和校验要求只放在 [`skills/cobsidian/references/modes/`](../skills/cobsidian/references/modes/) 中。本文只讲用户可见结果和路由，不复制完整操作 prompt。

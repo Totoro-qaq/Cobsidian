@@ -50,7 +50,7 @@ Do not guess a private vault path. If no valid vault path is available, ask for 
 | `comparison` / 对比 | which should I choose / 哪个更好 | Requirements-based decisions | [comparison](references/modes/comparison.md) |
 | `index` / 索引 | learning path / 学习路线 | Maps, paths, and hub notes | [index](references/modes/index.md) |
 | `capture` / 捕获 | just save this / 先记下来 | Low-friction temporary capture | [capture](references/modes/capture.md) |
-| `dissection` / 拆解 | how does X work internally / 这个怎么实现的 | Internal mechanics and reusable patterns | [dissection](references/modes/dissection.md) |
+| `dissection` / 拆解 | how does X work internally / 拆解这个产品为什么有效 / 这个怎么实现的 | Problem-to-outcome causal analysis, internal mechanics, horizontal peers, vertical evolution, and reusable advantages | [dissection](references/modes/dissection.md) |
 
 - Explicit mode -> load only its mode reference.
 - Clear inferred mode -> state it and load only its mode reference.

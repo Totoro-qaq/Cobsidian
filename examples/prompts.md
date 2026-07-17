@@ -98,9 +98,18 @@ Save the following material as a short capture note. Keep it searchable, but do 
 ```text
 Use Cobsidian in dissection mode.
 Vault: /path/to/vault
-Object: <repo, framework, tool, prompt system, skill, or agent workflow>
+Object: <product, technology, repo, framework, tool, prompt system, skill, or agent workflow>
 
-Break down purpose, entry points, core flow, key files or components, reusable patterns, limits, and related notes.
+Build the analysis around:
+- the problem and prior state before this object existed or was adopted
+- the solution thesis and `problem -> design choice -> mechanism -> outcome -> evidence` chain
+- observed, claimed, inferred, or unknown changes after adoption
+- a horizontal comparison with contemporary peers on shared dimensions
+- a vertical comparison with the predecessor, prior approach, or earlier version
+- distinctive advantages derived from evidence, plus trade-offs and failure boundaries
+- reusable patterns and related notes
+
+Do not invent competitors, metrics, historical facts, or advantages when evidence is missing. Record the gap explicitly.
 ```
 
 ## Backlink Cleanup

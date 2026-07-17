@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## v0.7.0
+
+- Expand dissection mode from source-structure teardown into an evidence-aware causal analysis of the prior problem, solution mechanism, adoption effects, horizontal peers, vertical evolution, distinctive advantages, and trade-offs.
+
 ## v0.6.0
 
 - Add a real note identity model spanning filename title, cleaned H1, frontmatter `title` and `aliases`, and prefix-free core titles.
