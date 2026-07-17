@@ -60,21 +60,24 @@ Recommended sections:
 
 ## Dissection Note
 
-Use for reverse engineering an existing tool, repository, framework, prompt system, agent workflow, or codebase.
+Use for explaining why a specific product, technology, tool, repository, framework, prompt system, agent workflow, or codebase exists; how it creates outcomes; and how it differs across peers and time.
 
 Recommended sections:
 
-- Object of Study
-- Purpose
-- Entry Points
-- Core Concepts
-- Architecture or Flow
-- Key Files or Components
+- Object and Scope
+- Problem and Prior State
+- Solution Thesis
+- Mechanism Chain
+- Adoption Effects
+- Horizontal Comparison
+- Vertical Evolution
+- Distinctive Advantages
+- Trade-offs and Limits
 - Reusable Patterns
-- Limits and Open Questions
+- Evidence and Open Questions
 - Related Notes
 
-Use this for source-code and workflow breakdowns such as agent frameworks, skill repositories, prompt systems, orchestration tools, and automation harnesses.
+Use `problem -> design choice -> mechanism -> outcome -> evidence` as the central chain. Horizontal comparison covers contemporary peers through shared dimensions; vertical evolution covers the predecessor, prior approach, or earlier version. Keep claimed, observed, inferred, and unknown outcomes distinguishable.
 
 ## Comparison Note
 

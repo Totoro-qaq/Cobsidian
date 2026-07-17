@@ -139,6 +139,100 @@ class AdaptiveSkillContractTests(unittest.TestCase):
                 for fragment in fragments:
                     self.assertIn(fragment, text)
 
+    def test_dissection_requires_causal_before_after_and_comparative_analysis(self) -> None:
+        text = self.read_reference(
+            REFERENCES_PATH / "modes" / "dissection.md"
+        )
+        sections = h2_sections(text)
+
+        for heading in (
+            "Object and Scope",
+            "Problem and Prior State",
+            "Solution Thesis",
+            "Mechanism Chain",
+            "Adoption Effects",
+            "Horizontal Comparison",
+            "Vertical Evolution",
+            "Distinctive Advantages",
+            "Trade-offs and Limits",
+            "Reusable Patterns",
+            "Evidence and Open Questions",
+        ):
+            with self.subTest(heading=heading):
+                self.assertIn(heading, sections["Recommended Note Shape"])
+
+        self.assertIn(
+            "problem -> design choice -> mechanism -> outcome -> evidence",
+            sections["Recommended Note Shape"],
+        )
+        self.assertIn(
+            "differentiator -> causal mechanism -> conditions -> evidence",
+            sections["Recommended Note Shape"],
+        )
+        for effect_dimension in (
+            "capability",
+            "quality",
+            "cost",
+            "latency",
+            "user experience",
+            "operations",
+            "risk",
+            "regressions",
+        ):
+            with self.subTest(effect_dimension=effect_dimension):
+                self.assertIn(effect_dimension, sections["Recommended Note Shape"])
+        for evidence_status in ("observed", "claimed", "inferred", "unknown"):
+            with self.subTest(evidence_status=evidence_status):
+                self.assertIn(evidence_status, sections["Evidence Rules"])
+        for comparison_guard in (
+            "compatible versions",
+            "deployment models",
+            "Evaluation Dimensions",
+            "named versions",
+            "prior approaches",
+        ):
+            with self.subTest(comparison_guard=comparison_guard):
+                self.assertIn(comparison_guard, sections["Evidence Rules"])
+
+        self.assertIn("main goal is choosing among options", sections["When to Use"])
+        self.assertIn("`comparison`", sections["When to Use"])
+
+    def test_public_guides_and_prompt_expose_the_expanded_dissection_outcome(self) -> None:
+        english = (REPO_ROOT / "docs" / "modes.md").read_text(encoding="utf-8")
+        chinese = (REPO_ROOT / "docs" / "modes.zh-CN.md").read_text(
+            encoding="utf-8"
+        )
+        prompts = (REPO_ROOT / "examples" / "prompts.md").read_text(
+            encoding="utf-8"
+        )
+
+        for fragment in (
+            "problem and prior state",
+            "adoption effects",
+            "horizontal peers",
+            "vertical evolution",
+            "supported advantages",
+        ):
+            with self.subTest(language="english", fragment=fragment):
+                self.assertIn(fragment, english)
+        for fragment in (
+            "原问题与原状态",
+            "采用后的变化",
+            "横向竞品",
+            "纵向演进",
+            "有证据支撑的独特优势",
+        ):
+            with self.subTest(language="chinese", fragment=fragment):
+                self.assertIn(fragment, chinese)
+        for fragment in (
+            "problem -> design choice -> mechanism -> outcome -> evidence",
+            "horizontal comparison",
+            "vertical comparison",
+            "Do not invent competitors",
+        ):
+            with self.subTest(source="prompt", fragment=fragment):
+                self.assertIn(fragment, prompts)
+
     def test_review_and_project_note_types_match_the_mode_boundary(self) -> None:
         note_type_sections = h2_sections(
             NOTE_TYPES_PATH.read_text(encoding="utf-8")

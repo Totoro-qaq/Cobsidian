@@ -25,7 +25,7 @@ Cobsidian uses natural-language routing; users do not need to memorize mode IDs.
 | Compare options and make tradeoffs visible | `comparison` | `standard` | `single-note` | [Comparison](../skills/cobsidian/references/modes/comparison.md) |
 | Build a topic hub, knowledge map, learning path, or navigation page | `index` | `deep` | `multi-note` | [Index](../skills/cobsidian/references/modes/index.md) |
 | Save useful rough material with minimal interruption | `capture` | `capture` | `single-note` | [Capture](../skills/cobsidian/references/modes/capture.md) |
-| Extract internals and reusable patterns from a tool, repo, skill, prompt, or workflow | `dissection` | `deep` | `multi-note` | [Dissection](../skills/cobsidian/references/modes/dissection.md) |
+| Explain why a product or technology exists, how it creates outcomes, what adoption changes, and where its advantages come from across peers and time | `dissection` | `deep` | `multi-note` | [Dissection](../skills/cobsidian/references/modes/dissection.md) |
 
 These defaults feed Knowledge Read. Evidence still begins at `conversation`. Evidence upgrades use host-completed facts: `source-grounded` requires `source_read_completed=true`, while `verified` requires both `source_read_completed=true` and `verification_completed=true`. A mode or user claim never upgrades evidence by itself.
 
@@ -46,6 +46,6 @@ A split request is reported as a `multi-note` plan, not as a fourth machine acti
 - `comparison`: a concise conclusion backed by explicit tradeoffs.
 - `index`: navigable links and a useful path through existing notes.
 - `capture`: a short retrievable record with deferred cleanup made clear.
-- `dissection`: entry points, internal flow, evidence, reusable patterns, and limits.
+- `dissection`: problem and prior state, solution thesis, causal mechanisms, adoption effects, horizontal peers, vertical evolution, supported advantages, trade-offs, and reusable patterns.
 
 The detailed headings, evidence rules, split criteria, and validation additions live only in [`skills/cobsidian/references/modes/`](../skills/cobsidian/references/modes/). This page describes user-visible outcomes and routing rather than duplicating operational prompts.
